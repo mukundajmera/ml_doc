@@ -1,0 +1,626 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>LSTMs &#8211; Adventures in Machine Learning</title>
+	<atom:link href="http://adventuresinmachinelearning.com/category/deep-learning/lstms/feed/" rel="self" type="application/rss+xml" />
+	<link>http://adventuresinmachinelearning.com</link>
+	<description>Learn and explore machine learning</description>
+	<lastBuildDate>Sun, 09 Sep 2018 07:53:16 +0000</lastBuildDate>
+	<language>en-AU</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.9.8</generator>
+	<item>
+		<title>Keras LSTM tutorial &#8211; How to easily build a powerful deep learning language model</title>
+		<link>http://adventuresinmachinelearning.com/keras-lstm-tutorial/</link>
+		<comments>http://adventuresinmachinelearning.com/keras-lstm-tutorial/#comments</comments>
+		<pubDate>Sat, 03 Feb 2018 03:30:37 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[Keras]]></category>
+		<category><![CDATA[LSTMs]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=690</guid>
+		<description><![CDATA[<p>In previous posts, I introduced Keras for building convolutional neural networks and performing word embedding. The next natural step is to talk about implementing recurrent <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/" title="Keras LSTM tutorial &#8211; How to easily build a powerful deep learning language model">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/">Keras LSTM tutorial &#8211; How to easily build a powerful deep learning language model</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In previous posts, I introduced Keras for building <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener">convolutional neural networks</a> and performing <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">word embedding</a>. The next natural step is to talk about implementing recurrent neural networks in Keras. In a <a href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/" target="_blank" rel="noopener">previous tutorial of mine</a>, I gave a very comprehensive introduction to recurrent neural networks and long short term memory (LSTM) networks, implemented in TensorFlow. In this tutorial, I&#8217;ll concentrate on creating LSTM networks in Keras, briefly giving a recap or overview of how LSTMs work. In this Keras LSTM tutorial, we&#8217;ll implement a sequence-to-sequence text prediction model by utilizing a large text data set called the PTB corpus. All the code in this tutorial can be found on this <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">site&#8217;s Github repository</a>.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you are more of a video course learner, I&#8217;d recommend this inexpensive Udemy course to learn more about Keras and LSTM networks: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>A brief introduction to LSTM networks</h1>
+<h2>Recurrent neural networks</h2>
+<p>A LSTM network is a kind of recurrent neural network. A recurrent neural network is a neural network that attempts to model time or sequence dependent behaviour &#8211; such as language, stock prices, electricity demand and so on. This is performed by feeding back the output of a neural network layer at time <em>t</em> to the input of the same network layer at time <em>t + 1</em>. It looks like this:</p>
+<figure id="attachment_537" style="width: 363px" class="wp-caption aligncenter"><img class="size-full wp-image-537" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN.jpg" alt="Recurrent LSTM tutorial - RNN diagram with nodes" width="363" height="229" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN.jpg 363w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN-300x189.jpg 300w" sizes="(max-width: 363px) 100vw, 363px" /><figcaption class="wp-caption-text">Recurrent neural network diagram with nodes shown</figcaption></figure>
+<p>Recurrent neural networks are &#8220;unrolled&#8221; programmatically during training and prediction, so we get something like the following:</p>
+<figure id="attachment_541" style="width: 619px" class="wp-caption aligncenter"><img class=" wp-image-541" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network.png" alt="Recurrent LSTM tutorial - unrolled RNN" width="619" height="202" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network.png 772w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network-300x98.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network-768x251.png 768w" sizes="(max-width: 619px) 100vw, 619px" /><figcaption class="wp-caption-text">Unrolled recurrent neural network</figcaption></figure>
+<p>Here you can see that at each time step, a new word is being supplied &#8211; the output of the previous <em>F</em> (i.e. <em>$h_{t-1}$</em>) is supplied to the network at each time step also. If you&#8217;re wondering what those example words are referring to, it is an example sentence I used in my <a href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/" target="_blank" rel="noopener">previous LSTM tutorial in TensorFlow</a>: “A girl walked into a bar, and she said ‘Can I have a drink please?’.  The bartender said ‘Certainly&#8217;”.</p>
+<p>The problem with vanilla recurrent neural networks, constructed from regular neural network nodes, is that as we try to model dependencies between words or sequence values that are separated by a significant number of other words, we experience the vanishing gradient problem (and also sometimes  the exploding gradient problem) &#8211; to learn more about the vanishing gradient problem, see <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/" target="_blank" rel="noopener">my post on the topic</a>. This is because small gradients or weights (values less than 1) are multiplied many times over through the multiple time steps, and the gradients shrink asymptotically to zero. This means the weights of those earlier layers won&#8217;t be changed significantly and therefore the network won&#8217;t learn long-term dependencies.</p>
+<p>LSTM networks are a way of solving this problem.</p>
+<h2>LSTM networks</h2>
+<p>As mentioned previously, in this Keras LSTM tutorial we will be building an LSTM network for text prediction. An LSTM network is a recurrent neural network that has LSTM cell blocks in place of our standard neural network layers. These cells have various components called the input gate, the forget gate and the output gate &#8211; these will be explained more fully later. Here is a graphical representation of the LSTM cell:</p>
+<figure id="attachment_564" style="width: 600px" class="wp-caption aligncenter"><img class=" wp-image-564" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram.png" alt="Recurrent neural network LSTM tutorial - LSTM cell diagram" width="600" height="289" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram.png 669w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram-300x144.png 300w" sizes="(max-width: 600px) 100vw, 600px" /><figcaption class="wp-caption-text">LSTM cell diagram</figcaption></figure>
+<p>Notice first, on the left hand side, we have our new word/sequence value <em>$x_t$</em> being concatenated to the previous output from the cell <em>$h_{t-1}$</em>. The first step for this combined input is for it to be squashed via a <em>tanh</em> layer. The second step is that this input is passed through an <em>input gate</em>. An input gate is a layer of sigmoid activated nodes whose output is multiplied by the squashed input. These input gate sigmoids can act to &#8220;kill off&#8221; any elements of the input vector that aren&#8217;t required. A sigmoid function outputs values between 0 and 1, so the weights connecting the input to these nodes can be trained to output values close to zero to &#8220;switch off&#8221; certain input values (or, conversely, outputs close to 1 to &#8220;pass through&#8221; other values).</p>
+<p>The next step in the flow of data through this cell is the internal state / forget gate loop. LSTM cells have an internal state variable <em>$s_t$</em>. This variable, lagged one time step i.e. <em>$s_{t-1}$</em> is <em>added</em> to the input data to create an effective layer of recurrence. This <em>addition</em> operation, instead of a multiplication operation, helps to reduce the risk of vanishing gradients. However, this recurrence loop is controlled by a forget gate &#8211; this works the same as the input gate, but instead helps the network learn which state variables should be &#8220;remembered&#8221; or &#8220;forgotten&#8221;.</p>
+<p>Finally, we have an output layer <em>tanh</em> squashing function, the output of which is controlled by an <em>output </em><em>gate. </em>This gate determines which values are actually allowed as an output from the cell <em>$h_t$</em>.</p>
+<p>The mathematics of the LSTM cell looks like this:</p>
+<p><strong>Input</strong></p>
+<p>First, the input is squashed between -1 and 1 using a <em>tanh</em> activation function. This can be expressed by:</p>
+<p>$$g = tanh(b^g + x_tU^g + h_{t-1}V^g)$$</p>
+<p>Where $U^g$ and $V^g$ are the weights for the input and previous cell output, respectively, and $b^g$ is the input bias. Note that the exponents <i>g</i> are not a raised power, but rather signify that these are the input weights and bias values (as opposed to the input gate, forget gate, output gate etc.).</p>
+<p>This squashed input is then multiplied element-wise by the output of the <em>input gate, </em>which, as discussed above, is a series of sigmoid activated nodes:</p>
+<p>$$i = \sigma(b^i + x_tU^i + h_{t-1}V^i)$$</p>
+<p>The output of the input section of the LSTM cell is then given by:</p>
+<p>$$g \circ i$$</p>
+<p>Where the $\circ$ operator expresses element-wise multiplication.</p>
+<p><strong>Forget gate and state loop</strong></p>
+<p>The forget gate output is expressed as:</p>
+<p>$$f = \sigma(b^f + x_tU^f + h_{t-1}V^f)$$</p>
+<p>The output of the element-wise product of the previous state and the forget gate is expressed as $s_{t-1} \circ f$. The output from the forget gate / state loop stage is:</p>
+<p>$$s_t = s_{t-1} \circ f + g \circ i$$</p>
+<p><strong>Output gate</strong></p>
+<p>The output gate is expressed as:</p>
+<p>$$o = \sigma(b^o + x_tU^o + h_{t-1}V^o)$$</p>
+<p>So the final output of the cell , with the <em>tanh </em>squashing, can be shown as:</p>
+<p>$$h_t = tanh(s_t) \circ o$$</p>
+<h2>LSTM word embedding and hidden layer size</h2>
+<p>It should be remembered that in all of the mathematics above we are dealing with vectors i.e. the input <em>$x_t$</em> and <em>$h_{t-1}$</em> are not single valued scalars, but rather vectors of a certain length. Likewise, all the weights and bias values are matrices and vectors respectively. Now, you may be wondering, how do we represent words to input them to a neural network? The answer is word embedding. I&#8217;ve written about this extensively in previous tutorials, in particular <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/">Word2Vec word embedding tutorial in Python and TensorFlow</a> and <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/">A Word2Vec Keras tutorial</a>. Basically it involves taking a word and finding a vector representation of that word which captures some meaning of the word. In Word2Vec, this meaning is usually quantified by context &#8211; i.e. word vectors which are close together in vector space are those words which appear in sentences close to the same words.</p>
+<p>The word vectors can be learnt separately, as in <a href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/" target="_blank" rel="noopener">this tutorial</a>, or they can be learnt during the training of your Keras LSTM network. In the example to follow, we&#8217;ll be setting up what is called an <em>embedding </em>layer, to convert each word into a meaningful word vector. We have to specify the size of the embedding layer &#8211; this is the length of the vector each word is represented by &#8211; this is usually in the region of between 100-500. In other words, if the embedding layer size is 250, each word will be represented by a 250-length vector i.e. [$x_1, x_2, x_3,\ldots, x_{250}$].</p>
+<p><strong>LSTM hidden layer size</strong></p>
+<p>We usually match up the size of the embedding layer output with the number of hidden layers in the LSTM cell. You might be wondering where the hidden layers in the LSTM cell come from. In my LSTM overview diagram, I simply showed &#8220;data rails&#8221; through which our input data flowed. However, each <em>sigmoid</em>, <em>tanh</em> or <em>hidden state</em> layer in the cell is actually a set of nodes, whose number is equal to the <em>hidden layer </em>size. Therefore each of the &#8220;nodes&#8221; in the LSTM cell is actually a cluster of normal neural network nodes, as in each layer of a <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">densely connected neural network</a>.</p>
+<h2>The Keras LSTM architecture</h2>
+<p>This section will illustrate what a full LSTM architecture looks like, and show the architecture of the network that we are building in Keras. This will further illuminate some of the ideas expressed above, including the embedding layer and the tensor sizes flowing around the network. The proposed architecture looks like the following:</p>
+<p>&nbsp;</p>
+<figure id="attachment_747" style="width: 522px" class="wp-caption aligncenter"><img class=" wp-image-747" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-architecture.png" alt="Keras LSTM tutorial architecture" width="522" height="545" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-architecture.png 642w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-architecture-288x300.png 288w" sizes="(max-width: 522px) 100vw, 522px" /><figcaption class="wp-caption-text">Keras LSTM tutorial architecture</figcaption></figure>
+<p>The input shape of the text data is ordered as follows : (batch size, number of time steps, hidden size). In other words, for each batch sample and each word in the number of time steps, there is a 500 length embedding word vector to represent the input word. These embedding vectors will be learnt as part of the overall model learning. The input data is then fed into two &#8220;stacked&#8221; layers of LSTM cells (of 500 length hidden size) &#8211; in the diagram above, the LSTM network is shown as unrolled over all the time steps. The output from these unrolled cells is still (batch size, number of time steps, hidden size).</p>
+<p>This output data is then passed to a Keras layer called TimeDistributed, which will be explained more fully below. Finally, the output layer has a <em>softmax </em>activation applied to it. This output is compared to the training <em>y</em> data for each batch, and the error and gradient back propagation is performed from there in Keras. The training <em>y </em>data in this case is the input <em>x </em>words advanced one time step &#8211; in other words, at each time step the model is trying to predict the very next word in the sequence. However, it does this at <em>every </em>time step &#8211; hence the output layer has the same number of time steps as the input layer. This will be made more clear later.</p>
+<h1>Building the Keras LSTM model</h1>
+<p>In this section, each line of code to create the Keras LSTM architecture shown above will be stepped through and discussed. However, I&#8217;ll only briefly discuss the text preprocessing code which mostly uses the code found on the TensorFlow site <a href="https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb" target="_blank" rel="noopener">here</a>. The complete code for this Keras LSTM tutorial can be found at <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">this site&#8217;s Github repository</a> and is called keras_lstm.py. Note, you first have to download the <a href="http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz" target="_blank" rel="noopener">Penn Tree Bank (PTB)</a> dataset which will be used as the training and validation corpus. You&#8217;ll need to change the <em>data_path </em>variable in the Github code to match the location of this downloaded data.</p>
+<h2>The text preprocessing code</h2>
+<p>In order to get the text data into the right shape for input into the Keras LSTM model, each unique word in the corpus must be assigned a unique integer index. Then the text corpus needs to be re-constituted in order, but rather than text words we have the integer identifiers in order. The three functions which do this in the code are <em>read_words, build_vocab </em>and <em>file_to_word_ids. </em>I won’t go into these functions in detail, but basically, they first split the given text file into separate words and sentence based characters (i.e. end-of-sentence &lt;eos&gt;). Then, each unique word is identified and assigned a unique integer. Finally, the original text file is converted into a list of these unique integers, where each word is substituted with its new integer identifier. This allows the text data to be consumed in the neural network.</p>
+<p>The <em>load_data</em> function which I created to run these functions is shown below:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def load_data():
+    # get the data paths
+    train_path = os.path.join(data_path, &quot;ptb.train.txt&quot;)
+    valid_path = os.path.join(data_path, &quot;ptb.valid.txt&quot;)
+    test_path = os.path.join(data_path, &quot;ptb.test.txt&quot;)
+
+    # build the complete vocabulary, then convert text data to list of integers
+    word_to_id = build_vocab(train_path)
+    train_data = file_to_word_ids(train_path, word_to_id)
+    valid_data = file_to_word_ids(valid_path, word_to_id)
+    test_data = file_to_word_ids(test_path, word_to_id)
+    vocabulary = len(word_to_id)
+    reversed_dictionary = dict(zip(word_to_id.values(), word_to_id.keys()))
+
+    print(train_data[:5])
+    print(word_to_id)
+    print(vocabulary)
+    print(&quot; &quot;.join([reversed_dictionary[x] for x in train_data[:10]]))
+    return train_data, valid_data, test_data, vocabulary, reversed_dictionary</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>To call this function, we can run:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">train_data, valid_data, test_data, vocabulary, reversed_dictionary = load_data()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The three outputs from this function are the training data, validation data and test data from the data set, respectively, but with each word represented as an integer in a list. Some information is printed out during the running of <em>load_data()</em>, one of which is <em>print(train_data[:5]) &#8211; </em>this produces the following output:</p>
+<blockquote>[9970, 9971, 9972, 9974, 9975]</blockquote>
+<p>As you can observe, the training data is comprised of a list of integers, as expected.</p>
+<p>Next, the output <em>vocabulary</em> is simply the size of our text corpus. When words are incorporated into the training data, every single unique word is not considered &#8211; rather, in natural language processing, the text data is usually limited to a certain <em>N </em>number of the most common words. In this case <em>N = vocabulary = 10,000</em>.</p>
+<p>Finally, <em>reversed_dictionary </em>is a Python dictionary where the key is the unique integer identifier of a word, and the associated value is the word in text. This allows us to work backwards from predicted integer words that our model will produce, and translate them back to real text. For instance, the following code converts the integers in <em>train_data </em>back to text which is then printed: <em>print(&#8221; &#8220;.join([reversed_dictionary[x] for x in train_data[100:110]]))</em>. This code snippet produces:</p>
+<blockquote><p>workers exposed to it more than N years ago researchers</p></blockquote>
+<p>That&#8217;s about all the explanation required with regard to the text pre-processing, so let&#8217;s progress to setting up the input data generator which will feed samples into our Keras LSTM model.</p>
+<h2>Creating the Keras LSTM data generators</h2>
+<p>When training neural networks, we generally feed data into them in small batches, called mini-batches or just &#8220;batches&#8221; (for more information on mini-batch gradient descent, see my tutorial <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener">here</a>). Keras has  some handy functions which can extract training data automatically from a pre-supplied Python iterator/generator object and input it to the model. One of these Keras functions is called <em>fit_generator. </em>The first argument to <em>fit_generator</em> is the Python iterator function that we will create, and it will be used to extract batches of data during the training process. This function in Keras will handle all of the data extraction, input into the model, executing gradient steps, logging metrics such as accuracy and executing <em>callbacks</em> (these will be discussed later). The Python iterator function needs to have a form like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">while True:
+    #do some things to create a batch of data (x, y)
+   yield x, y</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In this case, I have created a generator class which contains a method which implements such a structure. The initialization of this class looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class KerasBatchGenerator(object):
+
+    def __init__(self, data, num_steps, batch_size, vocabulary, skip_step=5):
+        self.data = data
+        self.num_steps = num_steps
+        self.batch_size = batch_size
+        self.vocabulary = vocabulary
+        # this will track the progress of the batches sequentially through the
+        # data set - once the data reaches the end of the data set it will reset
+        # back to zero
+        self.current_idx = 0
+        # skip_step is the number of words which will be skipped before the next
+        # batch is skimmed from the data set
+        self.skip_step = skip_step</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Here the <em>KerasBatchGenerator</em> object takes our data as the first argument. Note, this data can be either training, validation or test data &#8211; multiple instances of the same class can be created and used in the various stages of our machine learning development cycle &#8211; training, validation tuning, test. The next argument supplied is called <em>num_steps &#8211; </em>this is the number of words that we will feed into the time distributed input layer of the network. In other words (pun intended), this is the set of words that the model will learn from to predict the words coming after. The argument <em>batch_size </em>is pretty self-explanatory, and we&#8217;ve discussed <em>vocabulary</em> already (it is equal to 10,000 in this case). Finally <em>skip_steps </em>is the number of words we want to skip over between training samples within each batch. To make this a bit clearer, consider the following sentence:</p>
+<p><em>&#8220;The cat sat on the mat, and ate his</em> <em>hat. </em><em>Then he jumped up and spat</em>&#8220;</p>
+<p>If <em>num_steps </em>is set to 5, the data consumed as the input data for a given sample would be &#8220;The cat sat on the&#8221;. In this case, because we are predicted the very next word in the sequence via our model, for each time step, the matching output <em>y </em>or target data would be &#8220;cat sat on the mat&#8221;. Finally, the <em>skip_steps</em> is the number of words to skip over before the next data batch is taken. If, in this example, it is <em>skip_steps=num_steps</em> the next 5 input words for the next batch would be &#8220;mat and ate his hat&#8221;. Hopefully that makes sense.</p>
+<p>One final item in the initialization of the class needs to be discussed. This is variable <em>current_idx</em> which is initialized at zero. This variable is required to track the extraction of data through the full data set &#8211; once the full data set has been consumed in the training, we need to reset <em>current_idx</em> to zero so that the data consumption starts from the beginning of the data set again. In other words it is basically a data set location pointer.</p>
+<p>Ok, now we need to discuss the <em>generator </em>method that will be called during <em>fit_generator</em>:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def generate(self):
+    x = np.zeros((self.batch_size, self.num_steps))
+    y = np.zeros((self.batch_size, self.num_steps, self.vocabulary))
+    while True:
+        for i in range(self.batch_size):
+            if self.current_idx + self.num_steps &gt;= len(self.data):
+                # reset the index back to the start of the data set
+                self.current_idx = 0
+            x[i, :] = self.data[self.current_idx:self.current_idx + self.num_steps]
+            temp_y = self.data[self.current_idx + 1:self.current_idx + self.num_steps + 1]
+            # convert all of temp_y into a one hot representation
+            y[i, :, :] = to_categorical(temp_y, num_classes=self.vocabulary)
+            self.current_idx += self.skip_step
+        yield x, y</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the first couple of lines our x and y output arrays are created. The size of variable <em>x </em>is fairly straight forward to understand &#8211; it&#8217;s first dimension is the number of samples we specify in the batch. The second dimension is the number of words we are going to base our predictions on. The size of variable <em>y</em> is a little more complicated. First it has the batch size as the first dimension, then it has the number of time steps as the second, as discussed above. However, <em>y</em> has an additional third dimension, equal to the size of our vocabulary, in this case 10,000.</p>
+<p>The reason for this is that the output layer of our Keras LSTM network will be a standard <em>softmax </em>layer, which will assign a probability to each of the 10,000 possible words. The one word with the highest probability will be the predicted word &#8211; in other words, the Keras LSTM network will predict one word out of 10,000 possible <em>categories</em>. Therefore, in order to train this network, we need to create a training sample for each word that has a 1 in the location of the <em>true</em> word, and zeros in all the other 9,999 locations. It will look something like this: (0, 0, 0, &#8230;, 1, 0, &#8230;, 0, 0) &#8211; this is called a one-hot representation, or alternatively, a categorical representation. Therefore, for each target word, there needs to be a 10,000 length vector with only one of the elements in this vector set to 1.</p>
+<p>Ok, now onto the <em>while True: yield x, y</em> paradigm that was discussed earlier for the generator. In the first line, we enter into a for loop of size <em>batch_size, </em>to populate all the data in the batch. Next, there is a condition to test regarding whether we need to reset the <em>current_idx </em>pointer. Remember that for each training sample we consume <em>num_steps</em> words. Therefore, if the current index point plus <em>num_steps </em>is greater than the length of the data set, then the <em>current_idx</em> pointer needs to be reset to zero to start over with the data set.</p>
+<p>After this check is performed, the input data is consumed into the <em>x </em>array. The data indices consumed is pretty straight-forward to understand &#8211; it is the current index to the current-index-plus-<em>nu</em><em>m_steps </em>number of words. Next, a temporary <em>y </em>variable is populated which works in pretty much the same way &#8211; the only difference is that the starting point and the end point of the data consumption is advanced by 1 (i.e. + 1). If this is confusing, please refer to the &#8220;cat sat on the mat etc.&#8221; example discussed above.</p>
+<p>The final step is converting each of the target words in each sample into the one-hot or categorical representation that was discussed previously. To do this, you can use the Keras <em>to_categorical </em>function. This function takes a series of integers as its first arguments and adds an additional dimension to the vector of integers &#8211; this dimension is the one-hot representation of each integer. It&#8217;s size is specified by the second argument passed to the function. So say we have a series of integers with a shape (100, 1) and we pass it to the <em>to_categorical </em>function and specify the size to be equal to 10,000 &#8211; the returned shape will be (100, 10000). For instance, let&#8217;s say the series / vector of integers looked like: (0, 1, 2, 3, &#8230;.), the <em>to_categorical</em> output would look like:</p>
+<p>(1, 0, 0, 0, 0, &#8230;.)</p>
+<p>(0, 1, 0, 0, 0, &#8230;.)</p>
+<p>(0, 0, 1, 0, 0, &#8230;.)</p>
+<p>and so on&#8230;</p>
+<p>Here the &#8220;&#8230;&#8221; represents a whole lot of zeroes ensuring that the total number of elements associated with each integer is 10,000. Hopefully that makes sense.</p>
+<p>The final two lines of the generator function are straight-forward &#8211; first, the <em>current_idx</em> pointer is incremented by <em>skip_step</em> whose role was discussed previously. The last line yields the batch of <em>x </em>and <em>y </em>data.</p>
+<p>Now that the generator class has been created, we need to create instances of it. As mentioned previously, we can setup instances of the same class to correspond to the training and validation data. In the code, this looks like the following:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">train_data_generator = KerasBatchGenerator(train_data, num_steps, batch_size, vocabulary,
+                                           skip_step=num_steps)
+valid_data_generator = KerasBatchGenerator(valid_data, num_steps, batch_size, vocabulary,
+                                           skip_step=num_steps)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now that the input data for our Keras LSTM code is all setup and ready to go, it is time to create the LSTM network itself.</p>
+<h2>Creating the Keras LSTM structure</h2>
+<p>In this example, the Sequential way of building deep learning networks will be used. This way of building networks was introduced in my <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras tutorial – build a convolutional neural network in 11 lines</a>. The alternate way of building networks in Keras is the Functional API, which I used in my <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" target="_blank" rel="noopener">Word2Vec Keras tutorial</a>. Basically, the sequential methodology allows you to easily stack layers into your network without worrying too much about all the tensors (and their shapes) flowing through the model. However, you still have to keep your wits about you for some of the more complicated layers, as will be discussed below. In this example, it looks like the following:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = Sequential()
+model.add(Embedding(vocabulary, hidden_size, input_length=num_steps))
+model.add(LSTM(hidden_size, return_sequences=True))
+model.add(LSTM(hidden_size, return_sequences=True))
+if use_dropout:
+    model.add(Dropout(0.5))
+model.add(TimeDistributed(Dense(vocabulary)))
+model.add(Activation(&#039;softmax&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first step involves creating a Keras model with the Sequential() constructor. The first layer in the network, as per the architecture diagram shown previously, is a word embedding layer. This will convert our words (referenced by integers in the data) into meaningful embedding vectors. This Embedding() layer takes the size of the vocabulary as its first argument, then the size of the resultant embedding vector that you want as the next argument. Finally, because this layer is the first layer in the network, we must specify the &#8220;length&#8221; of the input i.e. the number of steps/words in each sample.</p>
+<p>It&#8217;s worthwhile keeping track of the Tensor shapes in the network &#8211; in this case, the input to the embedding layer is (batch_size, num_steps) and the output is (batch_size, num_steps, hidden_size). Note that Keras, in the Sequential model, always maintains the batch size as the first dimension. It receives the batch size from the Keras fitting function (i.e. <em>fit_generator</em> in this case), and therefore it is rarely (never?) included in the definitions of the Sequential model layers.</p>
+<p>The next layer is the first of our two LSTM layers. To specify an LSTM layer, first you have to provide the number of nodes in the hidden layers within the LSTM cell, e.g. the number of cells in the forget gate layer, the <em>tanh </em>squashing input layer and so on. The next argument that is specified in the code above is the <em>return_sequences=True </em>argument. What this does is ensure that the LSTM cell returns all of the outputs from the unrolled LSTM cell through time. If this argument is left out, the LSTM cell will simply provide the output of the LSTM cell from the last time step. The diagram below shows what I mean:</p>
+<figure id="attachment_737" style="width: 647px" class="wp-caption aligncenter"><img class=" wp-image-737" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram.png" alt="Keras LSTM tutorial - return sequences argument comparison" width="647" height="174" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram.png 1124w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram-300x81.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram-768x206.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram-1024x275.png 1024w" sizes="(max-width: 647px) 100vw, 647px" /><figcaption class="wp-caption-text">Keras LSTM return sequences argument comparison</figcaption></figure>
+<p>As can be observed in the diagram above, there is only one output when <em>return_sequences=False</em> &#8211; $<em>h_t$ . </em>However, when <em>return_sequences=True</em> all of the unrolled outputs from the LSTM cells are returned <em>$h_0 &#8230; h_t$</em>. In this case, we want the latter arrangement. Why? Well, in this example we are trying to predict the very next word in the sequence. However, if we are trying to train the model, it is best to be able to compare the LSTM cell output at each time step with the very next word in the sequence &#8211; in this way we get <em>num_steps</em> sources to correct errors in the model (via <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/">back-propagation</a>) rather than just one for each sample.</p>
+<p>Therefore, for both stacked LSTM layers, we want to return all the sequences. The output shape of each LSTM layer is (<em>batch_size, num_steps, hidden_size).</em></p>
+<p>The next layer in our Keras LSTM network is a dropout layer to prevent overfitting. After that, there is a special Keras layer for use in recurrent neural networks called TimeDistributed. This function adds an independent layer for each time step in the recurrent model. So, for instance, if we have 10 time steps in a model, a TimeDistributed layer operating on a Dense layer would produce 10 independent Dense layers, one for each time step. The activation for these dense layers is set to be softmax in the final layer of our Keras LSTM model.</p>
+<h2>Compiling and running the Keras LSTM model</h2>
+<p>The next step in Keras, once you&#8217;ve completed your model, is to run the compile command on the model. It looks like this:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.compile(loss=&#039;categorical_crossentropy&#039;, optimizer=&#039;adam&#039;, metrics=[&#039;categorical_accuracy&#039;])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In this command, the type of loss that Keras should use to train the model needs to be specified. In this case, we are using &#8216;categorical_crossentropy&#8217; which is cross entropy applied in cases where there are many classes or categories, of which only one is true. Next, in this example, the optimizer that will be used is the <a href="https://arxiv.org/abs/1412.6980" target="_blank" rel="noopener">Adam optimizer</a> &#8211; an effective &#8220;all round&#8221; optimizer with adaptive stepping. Finally, a metric is specified &#8211; &#8216;categorical_accuracy&#8217;, which can let us see how the accuracy is improving during training.</p>
+<p>The next line of code involves creating a Keras <em>callback </em>&#8211; callbacks are certain functions which Keras can optionally call, usually after the end of a training epoch. For more on callbacks, see my <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras tutorial</a>. The callback that is used in this example is a model checkpoint callback &#8211; this callback saves the model after each epoch, which can be handy for when you are running long-term training.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">checkpointer = ModelCheckpoint(filepath=data_path + &#039;/model-{epoch:02d}.hdf5&#039;, verbose=1)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Note that the model checkpoint function can include the epoch in its naming of the model, which is good for keeping track of things.</p>
+<p>The final step in training the Keras LSTM model is to call the aforementioned <em>fit_generator </em>function. The line below shows you how to do this:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.fit_generator(train_data_generator.generate(), len(train_data)//(batch_size*num_steps), num_epochs,
+                        validation_data=valid_data_generator.generate(),
+                        validation_steps=len(valid_data)//(batch_size*num_steps), callbacks=[checkpointer])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first argument to <em>fit_generator</em> is our generator function that was explained earlier. The next argument is the number of iterations to run for each training epoch. The value given <em>len(train_data)//(batch_size*num_steps)</em> ensures that the whole data set is run through the model in each epoch. Likewise, a generator for the smaller validation data set is called, with the same argument for the number of iterations to run. At the end of each epoch, the validation data will be run through the model and the accuracy will be returned. Finally, the model checkpoint callback explained above is supplied via the callbacks argument in <em>fit_generator</em>. Now the model is good to go!</p>
+<p>Before some results are presented &#8211; some caveats are required. First the PTB data set is a <em>serious </em>text data set &#8211; not a toy problem to demonstrate how good LSTM models are. Therefore, in order to get good results, you&#8217;ll likely have to run the model over many epochs, and the model will need to have a significant level of complexity. Therefore, it is likely to take a long time on a CPU machine, and I&#8217;d suggest running it on a machine with a good GPU if you want to try and replicate things. If you don&#8217;t have a GPU machine yourself, you can create an Amazon EC2 instance as shown in <a href="http://adventuresinmachinelearning.com/tensorflow-amazon-aws/" target="_blank" rel="noopener">my Amazon AWS tutorial</a>. I&#8217;m in the latter camp, and wasn&#8217;t looking to give <em>too </em>many dollars to Amazon to train, optimize learning parameters and so on. However, I&#8217;ve run the model up to 40 epochs and gotten some reasonable initial results. My model parameters for the results presented below are as follows:</p>
+<blockquote><p><em>num_steps=30</em></p>
+<p><em>batch_size=20</em></p>
+<p><em>hidden_size=500</em></p></blockquote>
+<p>After 40 epochs, training data set accuracy was around 40%, while validation set accuracy reached approximately 20-25%. This is the sort of output you&#8217;ll see while running the training session:</p>
+<figure id="attachment_749" style="width: 1122px" class="wp-caption alignnone"><img class="size-full wp-image-749" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output.png" alt="Keras LSTM tutorial - example training output" width="1122" height="48" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output.png 1122w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output-300x13.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output-768x33.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output-1024x44.png 1024w" sizes="(max-width: 1122px) 100vw, 1122px" /><figcaption class="wp-caption-text">Keras LSTM tutorial &#8211; example training output</figcaption></figure>
+<h2>The Keras LSTM results</h2>
+<p>In order to test the trained Keras LSTM model, one can compare the predicted word outputs against what the actual word sequences are in the training and test data set. The code below is a snippet of how to do this, where the comparison is against the predicted model output and the <em>training </em>data set (the same can be done with the <em>test_data </em>data).</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = load_model(data_path + &quot;\model-40.hdf5&quot;)
+dummy_iters = 40
+example_training_generator = KerasBatchGenerator(train_data, num_steps, 1, vocabulary,
+                                                     skip_step=1)
+print(&quot;Training data:&quot;)
+for i in range(dummy_iters):
+    dummy = next(example_training_generator.generate())
+num_predict = 10
+true_print_out = &quot;Actual words: &quot;
+pred_print_out = &quot;Predicted words: &quot;
+for i in range(num_predict):
+    data = next(example_training_generator.generate())
+    prediction = model.predict(data[0])
+    predict_word = np.argmax(prediction[:, num_steps-1, :])
+    true_print_out += reversed_dictionary[train_data[num_steps + dummy_iters + i]] + &quot; &quot;
+    pred_print_out += reversed_dictionary[predict_word] + &quot; &quot;
+print(true_print_out)
+print(pred_print_out)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the code above, first the model is reloaded from the trained data (in the example above, it is the checkpoint from the 40th epoch of training). Then another KerasBatchGenerator class is created, as was discussed previously &#8211; in this case, a batch of length 1 is used, as we only want one <em>num_steps</em> worth of text data to compare. Then a loop of dummy data extractions from the generator is created &#8211; this is to control where in the data-set the comparison sentences are drawn from. The second loop, from 0 to <em>num_predict </em>is where the interesting stuff is happening.</p>
+<p>First, a batch of data is extracted from the generator and this is passed to the <em>model.predict() </em>method. This returns <em>num_steps </em>worth of predicted words &#8211; however, each word is represented by a <em>categorical</em> or one hot output. In other words, each word is represented by a vector of 10,000 items, with most being zero and only one element being equal to 1. The index of this &#8220;1&#8221; is the integer representation of the actual English word. So to extract the index where this &#8220;1&#8221; occurs, we can use the<em> np.argmax() </em>function. This function identifies the index where the maximum value occurs in a vector &#8211; in this case the maximum value is 1, compared to all the zeros, so this is a handy function for us to use.</p>
+<p>Once the index has been identified, it can be translated into an actual English word by using the <em>reverse_dictionary </em>that was constructed during the data pre-processing. This English word is then added to the predicted words string, and finally the actual and predicted words are returned.</p>
+<p>The output below is the comparison between the actual and predicted words after 10 epochs of training on the <em>training</em> data set:</p>
+<figure id="attachment_743" style="width: 885px" class="wp-caption aligncenter"><img class="size-full wp-image-743" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-10-epochs-training.png" alt="Keras LSTM tutorial - comparison on the training data set after 10 epochs" width="885" height="50" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-10-epochs-training.png 885w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-10-epochs-training-300x17.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-10-epochs-training-768x43.png 768w" sizes="(max-width: 885px) 100vw, 885px" /><figcaption class="wp-caption-text">Comparison on the training data set after 10 epochs of training</figcaption></figure>
+<p>As can be observed, while some words match, after 10 epochs of training the match is pretty poor. By the way &#8220;&lt;unk&gt;&#8221; refers to words not included in the 10,000 length vocabulary of the data set. Alternatively, if we look at the comparison after 40 epochs of training (again, just on the <em>training </em>data set):</p>
+<figure id="attachment_744" style="width: 869px" class="wp-caption aligncenter"><img class="size-full wp-image-744" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training.png" alt="Keras LSTM tutorial - comparison on the training data set after 40 epochs" width="869" height="57" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training.png 869w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-300x20.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-768x50.png 768w" sizes="(max-width: 869px) 100vw, 869px" /><figcaption class="wp-caption-text">Comparison on the training data set after 40 epochs of training</figcaption></figure>
+<p>It can be observed that the match is quite good between the actual and predicted words in the <em>training</em> set.</p>
+<p>However, when we look at the test data set, the match after 40 epochs of training isn&#8217;t quite as good:</p>
+<figure id="attachment_745" style="width: 687px" class="wp-caption aligncenter"><img class=" wp-image-745" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-test-set.png" alt="Keras LSTM tutorial - comparison on the test data set after 40 epochs" width="687" height="53" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-test-set.png 749w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-test-set-300x23.png 300w" sizes="(max-width: 687px) 100vw, 687px" /><figcaption class="wp-caption-text">Comparison on the test data set after 40 epochs of training</figcaption></figure>
+<p>Despite there not being a perfect correspondence between the predicted and actual words, you can see that there is a rough correspondence and the predicted sub-sentence at least makes some grammatical sense. So not so bad after all. However, in order to train a Keras LSTM network which can perform well on this realistic, large text corpus, more training and optimization is required. I will leave it up to you, the reader, to experiment further if you desire. However, the current code is sufficient for you to gain an understanding of how to build a Keras LSTM network, along with an understanding of the theory behind LSTM networks.</p>
+<p>I hope this (large) tutorial is a help to you in understanding Keras LSTM networks, and LSTM networks in general.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you are more of a video course learner, I&#8217;d recommend this inexpensive Udemy course to learn more about Keras and LSTM networks: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/">Keras LSTM tutorial &#8211; How to easily build a powerful deep learning language model</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/keras-lstm-tutorial/feed/</wfw:commentRss>
+		<slash:comments>10</slash:comments>
+		</item>
+		<item>
+		<title>Recurrent neural networks and LSTM tutorial in Python and TensorFlow</title>
+		<link>http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/</link>
+		<comments>http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/#comments</comments>
+		<pubDate>Mon, 09 Oct 2017 20:34:37 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[LSTMs]]></category>
+		<category><![CDATA[Recurrent neural networks]]></category>
+		<category><![CDATA[TensorFlow]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=432</guid>
+		<description><![CDATA[<p>In the deep learning journey so far on this website, I&#8217;ve introduced dense neural networks and convolutional neural networks (CNNs) which explain how to perform classification <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/" title="Recurrent neural networks and LSTM tutorial in Python and TensorFlow">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/">Recurrent neural networks and LSTM tutorial in Python and TensorFlow</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In the deep learning journey so far on this website, I&#8217;ve introduced <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">dense neural networks</a> and <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener">convolutional neural networks</a> (CNNs) which explain how to perform classification tasks on static images.  We&#8217;ve seen good results, especially with CNN&#8217;s. However, what happens if we want to analyze dynamic data? What about videos, voice recognition or sequences of text? There are ways to do some of this using CNN&#8217;s, but the most popular method of performing classification and other analysis on <em>sequences</em> of data is recurrent neural networks.  This tutorial will be a very comprehensive introduction to recurrent neural networks and a subset of such networks &#8211; long-short term memory networks (or LSTM networks). I&#8217;ll also show you how to implement such networks in TensorFlow &#8211; including the data preparation step. It&#8217;s going to be a long one, so settle in and enjoy these pivotal networks in deep learning &#8211; at the end of this post, you&#8217;ll have a very solid understanding of recurrent neural networks and LSTMs. By the way, if you&#8217;d like to learn how to build LSTM networks in Keras, see <a href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/" target="_blank" rel="noopener">this tutorial</a>.</p>
+<p>As always, all the code for this post can be found on <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">this site&#8217;s Github repository</a>.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you are more of a video course learner, I&#8217;d recommend this inexpensive Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.887814&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fdeep-learning-recurrent-neural-networks-in-python%2F">Deep Learning: Recurrent Neural Networks in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.887814&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>An introduction to recurrent neural networks</h1>
+<p>A recurrent neural network, at its most fundamental level, is simply a type of densely connected neural network (for an introduction to such networks, <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">see my tutorial</a>). However, the key difference to normal feed forward networks is the introduction of <em>time</em> &#8211; in particular, the output of the hidden layer in a recurrent neural network is <em>fed back </em><em>into itself</em>. Diagrams help here, so observe:</p>
+<figure id="attachment_537" style="width: 363px" class="wp-caption aligncenter"><img class="size-full wp-image-537" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN.jpg" alt="Recurrent LSTM tutorial - RNN diagram with nodes" width="363" height="229" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN.jpg 363w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN-300x189.jpg 300w" sizes="(max-width: 363px) 100vw, 363px" /><figcaption class="wp-caption-text">Recurrent neural network diagram with nodes shown</figcaption></figure>
+<p>In the diagram above, we have a simple recurrent neural network with three input nodes.  These input nodes are fed into a hidden layer, with sigmoid activations, as per any normal <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">densely connected neural network</a>. What happens next is what is interesting &#8211; the output of the hidden layer is then <em>fed back</em> into the same hidden layer. As you can see the hidden layer outputs are passed through a conceptual <em>delay </em>block to allow the input of $\textbf{h}^{t-1}$ into the hidden layer.  What is the point of this? Simply, the point is that we can now model <em>time </em>or sequence-dependent data.</p>
+<p>A particularly good example of this is predicting text sequences.  Consider the following text string: &#8220;A girl walked into a bar, and she said &#8216;Can I have a drink please?&#8217;.  The bartender said &#8216;Certainly {}&#8221;. There are many options for what could fill in the {} symbol in the above string, for instance, &#8220;miss&#8221;, &#8220;ma&#8217;am&#8221; and so on. However, other words could also fit, such as &#8220;sir&#8221;, &#8220;Mister&#8221; etc. In order to get the correct gender of the noun, the neural network needs to &#8220;recall&#8221; that two previous words designating the likely gender (i.e. &#8220;girl&#8221; and &#8220;she&#8221;) were used. This type of flow of information through time (or sequence) in a recurrent neural network is shown in the diagram below, which <em>unrolls </em>the sequence:</p>
+<figure id="attachment_541" style="width: 555px" class="wp-caption aligncenter"><img class=" wp-image-541" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network.png" alt="Recurrent LSTM tutorial - unrolled RNN" width="555" height="181" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network.png 772w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network-300x98.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network-768x251.png 768w" sizes="(max-width: 555px) 100vw, 555px" /><figcaption class="wp-caption-text">Unrolled recurrent neural network</figcaption></figure>
+<p>On the left-hand side of the above diagram, we have basically the same diagram as the first (the one which shows all the nodes explicitly). What the previous diagram neglected to show explicitly was that we in fact only ever supply finite length sequences to such networks &#8211; therefore we can <em>unroll </em>the network as shown on the right-hand side of the diagram above. This unrolled network shows how we can supply a stream of data to the recurrent neural network. For instance, first, we supply the word vector for &#8220;A&#8221; (more about word vectors later) to the network <em>F</em> &#8211; the output of the nodes in <em>F </em>are fed into the &#8220;next&#8221; network and also act as a stand-alone output ($h_0$).  The next network (though it is really the same network) <em>F</em> at time <em>t=1</em> takes the next word vector for &#8220;girl&#8221; and the previous output $h_0$ into its hidden nodes, producing the next output $h_1$ and so on.</p>
+<p>As discussed above, the words themselves i.e. &#8220;A&#8221;, &#8220;girl&#8221; etc. aren&#8217;t input directly into the neural network. Neither are their one-hot vector type representations &#8211; rather, an embedding vector is used for each word. An embedding vector is an efficient vector representation of the word (often between 50-300 in length), which should maintain some meaning or context of the word. Word embedding won&#8217;t be entered into detail here, as I have covered it extensively in other posts &#8211; <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">Word2Vec word embedding tutorial in Python and TensorFlow</a>, <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" target="_blank" rel="noopener">A Word2Vec Keras tutorial</a> and <a href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/" target="_blank" rel="noopener">Python gensim Word2Vec tutorial with TensorFlow and Keras</a>. It is an interesting topic and well worth the time investigating.</p>
+<p>Now, back to recurrent neural networks themselves. Recurrent neural networks are very flexible. In the implementation shown above, we have a many-to-many model &#8211; in other words, we have the input sequence &#8220;A girl walked into a bar&#8230;&#8221; and many outputs &#8211; $h_0$ to $h_t$. We could also have multiple other configurations.  Another option is one-to-many i.e. supplying one input, say &#8220;girl&#8221; and predicting multiple outputs $h_0$ to $h_t$ (i.e. trying to generate sentences based on a single starting word). A further configuration is many-to-one i.e. supplying many words as input, like the sentence &#8220;A girl walked into a bar, and she said &#8216;Can I have a drink please?&#8217;.  The bartender said &#8216;Certainly {}&#8221; and predicting the next word i.e. {}. The diagram below shows an example one-to-many and many-to-one configuration, respectively (the words next to the outputs are the target words which we would supply during training).</p>
+<figure id="attachment_546" style="width: 406px" class="wp-caption aligncenter"><img class=" wp-image-546" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/RNN-one-to-many.png" alt="Recurrent neural network LSTM - one-to-many configuration" width="406" height="227" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/RNN-one-to-many.png 502w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/RNN-one-to-many-300x168.png 300w" sizes="(max-width: 406px) 100vw, 406px" /><figcaption class="wp-caption-text">Recurrent neural network &#8211; one-to-many configuration</figcaption></figure>
+<figure id="attachment_547" style="width: 429px" class="wp-caption aligncenter"><img class=" wp-image-547" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/RNN-many-to-one.png" alt="Recurrent neural network LSTM - many-to-one configuration" width="429" height="238" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/RNN-many-to-one.png 507w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/RNN-many-to-one-300x166.png 300w" sizes="(max-width: 429px) 100vw, 429px" /><figcaption class="wp-caption-text">Recurrent neural network &#8211; many-to-one configuration</figcaption></figure>
+<p>There are also different many-to-many configurations that can be constructed &#8211; but you get the idea: recurrent neural networks are quite flexible. One last thing to note &#8211; the weights of the connections between time steps are <em>shared</em> i.e. there isn&#8217;t a different set of weights for each time step.</p>
+<p>Now you have a pretty good idea of what recurrent neural networks are, it is time to point out their dominant problem.</p>
+<h2>The problem with basic recurrent neural networks</h2>
+<p>Vanilla recurrent neural networks aren&#8217;t actually used very often in practice. Why? The main reason is the vanishing gradient problem. For recurrent neural networks, ideally, we would want to have long memories, so the network can connect data relationships at significant distances in time. That sort of network could make real progress in understanding how language and narrative works, how stock market events are correlated and so on. However, the more time steps we have, the more chance we have of back-propagation gradients either accumulating and exploding or vanishing down to nothing.</p>
+<p>Consider the following representation of a recurrent neural network:</p>
+<p>$$\textbf{h}_t = \sigma (\textbf{Ux}_t + \textbf{Vh}_{t-1})$$</p>
+<p>Where <strong><em>U </em></strong>and <strong><em>V</em></strong><em> </em>are the weight matrices connecting the inputs and the recurrent outputs respectively. We then often will perform a softmax of all the $\textbf{h}_t$ outputs (if we have some sort of many-to-many or one-to-many configuration). Notice, however, that if we go back three time steps in our recurrent neural network, we have the following:</p>
+<p>$$\textbf{h}_t = \sigma (\textbf{Ux}_t + \textbf{V}(\sigma(\textbf{Ux}_{t-1} + \textbf{V}(\sigma(\textbf{Ux}_{t-2})))$$</p>
+<p>From the above you can see, as we work our way back in time, we are essentially adding deeper and deeper layers to our network. This causes a problem &#8211; consider the gradient of the error with respect to the weight matrix <em><strong>U</strong></em> during backpropagation through time, it looks something along the lines of this:</p>
+<p>$$\frac{\partial E_3}{\partial U} = \frac{\partial E_3}{\partial out_3}\frac{\partial out_3}{\partial h_3}\frac{\partial h_3}{\partial h_2}\frac{\partial h_2}{\partial h_1}\frac{\partial h_1}{\partial U}$$</p>
+<p>The equation above is only a rough approximation of what is going on during backpropagation through time, but it will suffice for our purposes (for more on back-propagation, see my <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">comprehensive neural networks tutorial</a>). Each of these gradients will involve calculating the gradient of the sigmoid function. The problem with the sigmoid function occurs when the input values are such that the output is close to either 0 or 1 &#8211; at this point, the gradient is very small, see the plot below.</p>
+<figure id="attachment_559" style="width: 389px" class="wp-caption aligncenter"><img class="size-full wp-image-559" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Sigmoid-gradient.png" alt="Recurrent neural network and LSTM tutorial - sigmoid gradient" width="389" height="266" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Sigmoid-gradient.png 389w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Sigmoid-gradient-300x205.png 300w" sizes="(max-width: 389px) 100vw, 389px" /><figcaption class="wp-caption-text">Sigmoid gradient</figcaption></figure>
+<p>As you can observe, the values of the gradient (orange line) are always &lt;0.25 and get to very low values when the output gets close to 0 or 1. What does this mean? It means that when you multiply many sigmoid gradients together you are multiplying many values which are potentially much less than zero &#8211; this leads to a vanishing gradient $\frac{\partial E}{\partial U}$. Because the gradient will become basically zero when dealing with many prior time steps, the weights won&#8217;t adjust to take into account these values, and therefore the network won&#8217;t learn relationships separated by significant periods of time. This makes vanilla recurrent neural networks not very useful. If you&#8217;d like to learn more about the vanishing gradient problem, see my dedicated post about it <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/">here</a>.</p>
+<p>We could use <a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)" target="_blank" rel="noopener">ReLU activation functions</a> to reduce this problem, though not eliminate it. However, the most popular way of dealing with this issue in recurrent neural networks is by using long-short term memory (LSTM) networks, which will be introduced in the next section.</p>
+<h1>Introduction to LSTM networks</h1>
+<p>To reduce the vanishing (and exploding) gradient problem, and therefore allow deeper networks and recurrent neural networks to perform well in practical settings, there needs to be a way to reduce the multiplication of gradients which are less than zero. The LSTM cell is a specifically designed unit of logic that will help reduce the vanishing gradient problem sufficiently to make recurrent neural networks more useful for long-term memory tasks i.e. text sequence predictions. The way it does so is by creating an internal memory state which<em> </em>is simply <em>added</em> to the processed input, which greatly reduces the multiplicative effect of small gradients. The time dependence and effects of previous inputs are controlled by an interesting concept called a <em>forget </em><em>gate</em>, which determines which states are remembered or forgotten. Two other gates, the <em>input gate</em> and <em>output</em><em> gate</em>, are also featured in LSTM cells.</p>
+<p>Let&#8217;s first have a look at LSTM cells more carefully, then I&#8217;ll discuss how they help reduce the vanishing gradient problem.</p>
+<h2>The structure of an LSTM cell</h2>
+<p>The structure of a typical LSTM cell is shown in the diagram below:</p>
+<figure id="attachment_564" style="width: 592px" class="wp-caption aligncenter"><img class=" wp-image-564" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram.png" alt="Recurrent neural network LSTM tutorial - LSTM cell diagram" width="592" height="285" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram.png 669w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram-300x144.png 300w" sizes="(max-width: 592px) 100vw, 592px" /><figcaption class="wp-caption-text">LSTM cell diagram</figcaption></figure>
+<p>The data flow is from left-to-right in the diagram above, with the current input $x_t$ and the previous cell output $h_{t-1}$ concatenated together and entering the top &#8220;data rail&#8221;. Here&#8217;s where things get interesting.</p>
+<h3>The input gate</h3>
+<p>First, the input is squashed between -1 and 1 using a <em>tanh</em> activation function. This can be expressed by:</p>
+<p>$$g = tanh(b^g + x_tU^g + h_{t-1}V^g)$$</p>
+<p>Where $U^g$ and $V^g$ are the weights for the input and previous cell output, respectively, and $b^g$ is the input bias. Note that the exponents <i>g</i> are not a raised power, but rather signify that these are the input weights and bias values (as opposed to the input gate, forget gate, output gate etc.).</p>
+<p>This squashed input is then multiplied element-wise by the output of the <em>input gate</em>. The input gate is basically a hidden layer of sigmoid activated nodes, with weighted $x_t$ and $h_{t-1}$ input values, which outputs values of between 0 and 1 and when multiplied element-wise by the input determines which inputs are switched on and off. In other words, it is a kind of input filter or gate. The expression for the input gate is:</p>
+<p>$$i = \sigma(b^i + x_tU^i + h_{t-1}V^i)$$</p>
+<p>The output of the input stage of the LSTM cell can be expressed below, where the $\circ$ operator expresses element-wise multiplication:</p>
+<p>$$g \circ i$$</p>
+<p>As you can observe, the input gate output <em>i</em> acts as the weights for the squashed input <em>g</em>.  We now move onto the next stage of the LSTM cell &#8211; the internal state and the forget gate.</p>
+<h3>The internal state and the forget gate</h3>
+<p>This stage in the LSTM is where most of the magic happens. As can be observed, there is a new variable<em> </em>$s_t$ which is the inner state of the LSTM cell. This state is delayed by one-time step and is ultimately added to the $g \circ i$ input to provide an internal recurrence loop to learn the relationship between inputs separated by time. Two things to notice &#8211; first, there is a forget gate here &#8211; this forget gate is again a sigmoid activated set of nodes which is element-wise multiplied by $s_{t-1}$ to determine which previous states should be remembered (i.e. forget gate output close to 1) and which should be forgotten (i.e. forget gate output close to 0). This allows the LSTM cell to learn appropriate context. Consider the sentence &#8220;Clare took Helen to Paris and she was very grateful&#8221; &#8211; for the LSTM cell to learn who &#8220;she&#8221; refers to, it needs to forget the subject &#8220;Clare&#8221; and replace it with the subject &#8220;Helen&#8221;. The forget gate can facilitate such operations and is expressed as:<img class="wp-image-569 alignleft" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Forget-gate-snippet.png" alt="Recurrent neural network LSTM tutorial - forget gate snippet" width="85" height="202" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Forget-gate-snippet.png 193w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Forget-gate-snippet-126x300.png 126w" sizes="(max-width: 85px) 100vw, 85px" /></p>
+<p>$$f = \sigma(b^f + x_tU^f + h_{t-1}V^f)$$</p>
+<p>The output of the element-wise product of the previous state and the forget gate is expressed as $s_{t-1} \circ f$. Again, the forget gate output acts as weights for the internal state. The second thing to notice about this stage is that the forget-gate-&#8220;filtered&#8221; state is simply added to the input, rather than multiplied by it, or mixed with it via weights and a sigmoid activation function as occurs in a standard recurrent neural network. This is important to reduce the issue of vanishing gradients. The output from this stage, $s_t$ is expressed by:</p>
+<p>$$s_t = s_{t-1} \circ f + g \circ i$$</p>
+<p>The final stage of the LSTM cell is the output gate.</p>
+<h3>The output gate</h3>
+<p>The final stage of the LSTM cell is the output gate. The output gate has two components &#8211; another <em>tanh </em>squashing function and an output sigmoid gating function. The output sigmoid gating function, like the other gating functions in the cell, is multiplied by the squashed state $s_t$ to determine which values of the state are output from the cell. As you can tell, the LSTM cell is very flexible, with gating functions controlling what is input, what is &#8220;remembered&#8221; in the internal state variable, and finally what is output from the LSTM cell. <img class="wp-image-575 alignleft" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Output-gate-snippet.png" alt="Recurrent neural network LSTM tutorial - output gate snippet" width="115" height="203" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Output-gate-snippet.png 262w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Output-gate-snippet-169x300.png 169w" sizes="(max-width: 115px) 100vw, 115px" /></p>
+<p>The output gate is expressed as:</p>
+<p>$$o = \sigma(b^o + x_tU^o + h_{t-1}V^o)$$</p>
+<p>So the final output of the cell can be expressed as:</p>
+<p>$$h_t = tanh(s_t) \circ o$$</p>
+<p>The next question is, how does the LSTM cell reduce the vanishing gradient problem?</p>
+<h2>Reducing the vanishing gradient problem</h2>
+<p>Recall before that the issue with vanilla recurrent neural networks is that calculating the gradient to update the weights involves cascading terms like:</p>
+<p>$$\frac {\partial h_n}{\partial h_{n-1}} \frac {\partial h_{n-1}}{\partial h_{n-2}} \frac {\partial h_{n-2}}{\partial h_{n-3}} &#8230;$$</p>
+<p>This is a problem because of the sigmoid derivative, which is present in all of the partial derivatives above, being &lt;0.25 (often greatly so). There is also a factorial of the weights involved, so if they are consistently &lt;1, we get a similar result &#8211; a vanishing gradient.</p>
+<p>In an LSTM cell, the recurrency of the internal state of the LSTM cell involves, as shown above, an addition &#8211; like so:</p>
+<p>$$s_t = s_{t-1} \circ f + g \circ i$$</p>
+<p>If we take the partial derivative of this recurrency like we did above for a vanilla recurrent neural network, we find the following:</p>
+<p>$$\frac{\partial s_t}{\partial s_{t-1}} = f$$</p>
+<p>Notice that the $g \circ i$ term drops away and we are just left with a repeated multiplication of $f$. So for three time steps, we would have $f x f x f$. Notice that if the output of $f=1$, there will be no decay of the gradient. Generally, the bias of the sigmoid in $f$ is made large at the beginning of training so that $f$ starts out as 1 , meaning that all past input states will be &#8220;remembered&#8221; in the cell. During training, the forget gate will reduce or eliminate the memory of certain components of the state $s_{t-1}$.</p>
+<p>This might be a bit confusing, so I&#8217;ll explain another way before we move on. Imagine if we let in a single input during the first time step, but then we block all future inputs (by setting the input gate to output zeros) and remember all previous states (by setting the forget gate to output ones). We would have a kind of circulating memory of $s_t$ which never decays i.e. $s_t$ = $s_{t-1}$. A back-propagated error &#8220;entering&#8221; this loop would also never decay. With the vanilla recurrent neural network, however, if we did the same thing our back-propagated error would be continuously degraded by the gradient of the activation function of the hidden nodes, and therefore eventually decay to zero.</p>
+<p>Hopefully, that helps you to understand, at least in part, why LSTM cells are a great solution to the vanishing gradient problem, and therefore why they are currently used so extensively. Now, so far, we have been dealing with the data in the LSTM cells as if they were single values (i.e. scalars), however, in reality, they are tensors or vectors, and this can get confusing. So in the next section, I&#8217;ll spend a bit of time explaining the tensor sizes we can expect to be flowing around our unrolled LSTM networks.</p>
+<h2>The dimensions of data inside an LSTM cell</h2>
+<p>In the example code that is going to be discussed below, we are going to be performing text prediction. Now, as discussed in <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">previous tutorials on the Word2Vec algorithm</a>, words are input into neural networks using meaningful word vectors i.e. the word &#8220;cat&#8221; might be represented by, say, a 650 length vector. This vector is encoded in such a way as to capture some aspect of the meaning of the word (where meaning is usually construed as the context the word is usually found in). So each word input into our LSTM network below will be a 650 length vector. Next, because we will be inputting a sequence of words into our unrolled LSTM network, for each input row we will be inputting 35 of these word vectors. So the input for each row will be (35 x 650) in size. Finally, with TensorFlow, we can process batches of data via multi-dimensional tensors (to learn more about basic TensorFlow, see <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener">this TensorFlow tutorial</a>). If we have a batch size of 20, our <em>training</em> input data will be (20 x 35 x 650). For future reference, the way I have presented the tensor size here (i.e. (20 x 35 x 650)) is called a &#8220;batch-major&#8221; arrangement, where the batch size is the first dimension of the tensor. We could also alternatively arrange the data in &#8220;time-major&#8221; format, which would be (35 x 20 x 650) &#8211; same data, just a different arrangement.</p>
+<p>Now, the next thing to consider is that each of the input, forget and output gates, along with the inner state variable $s_t$ and the squashing functions, are not single functions with single/scalar weights. Rather, they comprise the hidden layer of the network and therefore include multiple nodes, connecting weights, bias values and so on. It is up to us to set the size of the hidden layer. The output from the unrolled LSTM network will, therefore, include the size of the hidden layer. The size of the output from the unrolled LSTM network with a size 650 hidden layer, and a 20 length batch-size and 35 time steps will be (20, 35, 650). Often, the output of an unrolled LSTM will be partially flattened and fed into a softmax layer for classification &#8211; so, for instance, the first two dimensions of the tensor are flattened to give a softmax layer input size of (700, 650). The output of the softmax is then matched against the expected training outputs during training. The diagram below shows all this:</p>
+<figure id="attachment_756" style="width: 503px" class="wp-caption aligncenter"><img class="wp-image-756 " src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/10/LSTM-many-to-many-classifier-3.png" alt="TensorFlow LSTM network architecture" width="503" height="512" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/10/LSTM-many-to-many-classifier-3.png 657w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/10/LSTM-many-to-many-classifier-3-295x300.png 295w" sizes="(max-width: 503px) 100vw, 503px" /><figcaption class="wp-caption-text">LSTM network architecture</figcaption></figure>
+<p>As can be observed in the architecture above (which we will be creating in the code below), it is possible to stack layers of LSTM cells on top of each other &#8211; this increases the model complexity and predictive power but at the expense of training times and difficulties. The architecture shown above is what we will implement in TensorFlow in the next section. Note the small batch size &#8211; this is to allow a more stochastic gradient descent which will avoid settling in local minima during many training iterations (see <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener">here</a>).</p>
+<h1>Creating an LSTM network in TensorFlow</h1>
+<p>We are now going to create an LSTM network in TensorFlow. The code will loosely follow the TensorFlow team tutorial found <a href="https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb" target="_blank" rel="noopener">here</a>, but with updates and my own substantial modifications. The text dataset that will be used and is a common benchmarking corpus is the <a href="https://catalog.ldc.upenn.edu/ldc99t42" target="_blank" rel="noopener">Penn Tree Bank</a> (PTB) dataset. As usual, all the code for this post can be found on the <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">AdventuresinML Github site</a>. To run this code, you&#8217;ll first have to download and extract the .tgz file from <a href="http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz" target="_blank" rel="noopener">here</a>. First off, we&#8217;ll go through the data preparation part of the code.</p>
+<h2>Preparing the data</h2>
+<p>This code will use, verbatim, the following functions from the <a href="https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb" target="_blank" rel="noopener">previously mentioned TensorFlow tutorial</a>: <em>read_words, build_vocab </em>and <em>file_to_word_ids. </em>I won&#8217;t go into these functions in detail, but basically, they first split the given text file into separate words and sentence based characters (i.e. end-of-sentence &lt;eos&gt;). Then, each unique word is identified and assigned a unique integer. Finally, the original text file is converted into a list of these unique integers, where each word is substituted with its new integer identifier. This allows the text data to be consumed in the neural network.</p>
+<p>The code below shows how these functions are used in my code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def load_data():
+    # get the data paths
+    train_path = os.path.join(data_path, &quot;ptb.train.txt&quot;)
+    valid_path = os.path.join(data_path, &quot;ptb.valid.txt&quot;)
+    test_path = os.path.join(data_path, &quot;ptb.test.txt&quot;)
+
+    # build the complete vocabulary, then convert text data to list of integers
+    word_to_id = build_vocab(train_path)
+    train_data = file_to_word_ids(train_path, word_to_id)
+    valid_data = file_to_word_ids(valid_path, word_to_id)
+    test_data = file_to_word_ids(test_path, word_to_id)
+    vocabulary = len(word_to_id)
+    reversed_dictionary = dict(zip(word_to_id.values(), word_to_id.keys()))
+
+    print(train_data[:5])
+    print(word_to_id)
+    print(vocabulary)
+    print(&quot; &quot;.join([reversed_dictionary[x] for x in train_data[:10]]))
+    return train_data, valid_data, test_data, vocabulary, reversed_dictionary</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First, we simply setup the directory paths for the train, validation and test datasets respectively. Then, <em>build_vocab</em>() is invoked on the training data to create a dictionary that has each word as a key, and a unique integer as the associated value. Here is a sample of what the <em>word_to_id</em> dictionary looks like:</p>
+<blockquote><p>{&#8216;write-off&#8217;: 7229, &#8216;ports&#8217;: 8314, &#8216;fundamentals&#8217;: 4478, &#8216;toronto-based&#8217;: 5034, &#8216;head&#8217;: 638, &#8216;fairness&#8217;: 6417,&#8230;</p></blockquote>
+<p>Next, we convert the text data for each file into a list of integers using the <em>word_to_id</em> dictionary. The first 5 items of the list <em>train_data </em>looks like:</p>
+<blockquote>[9970, 9971, 9972, 9974, 9975]</blockquote>
+<p>I&#8217;ve also created a reverse dictionary which allows you to go the other direction &#8211; from a unique integer identifier to the corresponding word. This will be used later when we are reconstructing the outputs of our LSTM network back into plain English sentences.</p>
+<p>The next step is to develop an input data pipeline that allows the extraction of batches of data in an efficient manner.</p>
+<h2>Creating an input data pipeline</h2>
+<p>As discussed in my <a href="http://adventuresinmachinelearning.com/introduction-tensorflow-queuing/" target="_blank" rel="noopener">TensorFlow queues and threads</a> tutorial, the use of a feed dictionary to supply data to your model during training, while common in tutorials, is not efficient &#8211; as can be read <a href="https://www.tensorflow.org/performance/performance_guide#input_pipeline_optimization" target="_blank" rel="noopener">here</a> on the TensorFlow site. Rather, it is more efficient to use TensorFlow queues and threading. Note, that there is a new way of doing things, using the Dataset API, which won&#8217;t be used in this tutorial, but I will perhaps update it in the future to include this new way of doing things. I&#8217;ve packaged up this code in a function called <em>batch_producer</em> &#8211; this function extracts batches of <em>x, y</em> training data &#8211; the <em>x </em>batch is formatted as the time stepped text data. The y batch is the same data, except delayed one time step. So, for instance, a single <em>x, y</em> sample in a batch, with the number of time steps being 8, looks like:</p>
+<ul>
+<li><em>x = </em>&#8220;A girl walked into a bar, and she&#8221;</li>
+<li>y = &#8220;girl walked into a bar, and she said&#8221;</li>
+</ul>
+<p>Remember that <em>x </em>and <em>y</em> will be batches of integer data, with the size (<em>batch_size</em>, <em>num_steps</em>), not text as shown above &#8211; however, I have shown the above <em>x </em>and <em>y </em>sample in text form to aid understanding. So, as demonstrated in the model architecture diagram above, we are producing a many-to-many LSTM model, where the model will be trained to predict the very next word in the sequence <em>for each</em> word in the number of time steps.</p>
+<p>Here&#8217;s what the code looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def batch_producer(raw_data, batch_size, num_steps):
+    raw_data = tf.convert_to_tensor(raw_data, name=&quot;raw_data&quot;, dtype=tf.int32)
+
+    data_len = tf.size(raw_data)
+    batch_len = data_len // batch_size
+    data = tf.reshape(raw_data[0: batch_size * batch_len],
+                      [batch_size, batch_len])
+
+    epoch_size = (batch_len - 1) // num_steps
+
+    i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue()
+    x = data[:, i * num_steps:(i + 1) * num_steps]
+    x.set_shape([batch_size, num_steps])
+    y = data[:, i * num_steps + 1: (i + 1) * num_steps + 1]
+    y.set_shape([batch_size, num_steps])
+    return x, y</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the code above, first, the raw text data is converted into an <em>int32</em> tensor. Next, the length of the full data set is calculated and stored in <em>data_len</em> and this is then divided by the batch size in an <em>integer division (//)</em> to get the number of full batches of data available within the dataset. The next line reshapes the <em>raw_data </em>tensor (restricted in size to the number of full batches of data i.e. 0 to <em>batch_size * batch_len</em>) into a (<em>batch_size, batch_len</em>) shape. The next line sets the number of iterations in each epoch &#8211; usually, this is set so that all the training data is passed through the algorithm in each epoch. This is what occurs here &#8211; the number of batches in the data (<em>batch_len</em>) is integer divided by the number of time steps &#8211; this gives the number of time-step-sized batches that are available to be iterated through in a single epoch.</p>
+<p>The next line sets up an input range producer queue &#8211; this is a simple queue which allows the asynchronous and threaded extraction of data batches from a pre-existing dataset. For more on threads and queues, check out <a href="http://adventuresinmachinelearning.com/introduction-tensorflow-queuing/">my tutorial</a>. Basically, each time more data is required in the training of the model, a new integer is extracted between 0 and <em>epoch_size</em> &#8211; this is then used in the following lines to extract a batch of data asynchronously from the <em>data</em> tensor. With the <em>shuffle</em> argument set to False, this integer simply cycles from 0 to <em>epoch_size</em> and then resets back at 0 to repeat.</p>
+<p>To produce the <em>x, y</em> batches of data, data slices are extracted from the data tensor based on the dequeued integer <em>i</em>. To see how this works, it is easier to imagine a dummy dataset of integers up to 20 &#8211; [0, 1, 2, 3, 4, 5, 6, &#8230;, 19, 20]. Let&#8217;s say we set the batch size to 3, and the number of steps to 2. The variables <em>batch_len </em>and <em>epoch_size </em>will therefore be equal to 6 and 2, respectively. The dummy reshaped data will look like:</p>
+<p>$$\begin{bmatrix}<br />
+1 &amp; 2 &amp; 3 &amp; 4 &amp; 5 &amp; 6 \\<br />
+7 &amp; 8 &amp; 9 &amp; 10 &amp; 11 &amp; 12 \\<br />
+13 &amp; 14 &amp; 15 &amp; 16 &amp; 17 &amp; 18 \\<br />
+\end{bmatrix}$$</p>
+<p>For the first data batch extraction, <em>i = 0</em>, therefore the extracted <em>x</em> for our dummy dataset will be <em>data[:, 0:2]</em>:</p>
+<p>$$\begin{bmatrix}<br />
+1 &amp; 2\\<br />
+7 &amp; 8\\<br />
+13 &amp; 14\\<br />
+\end{bmatrix}$$</p>
+<p>The extracted <em>y</em> will be <em>data[:, 1:3]</em>:</p>
+<p>$$\begin{bmatrix}<br />
+2 &amp; 3\\<br />
+8 &amp; 9\\<br />
+14 &amp; 15\\<br />
+\end{bmatrix}$$</p>
+<p>As can be observed, each row of the extracted <em>x </em>and <em>y </em>tensors will be an individual sample of length <em>num_steps</em> and the number of rows is the batch length. By organizing the data in this fashion, it is straight-forward to extract batch data while still maintaining the correct sentence sequence within each data sample.</p>
+<h2>Creating the model</h2>
+<p>In this code example, in order to have nice encapsulation and better-looking code, I&#8217;ll be building the model in <a href="https://docs.python.org/3/tutorial/classes.html" target="_blank" rel="noopener">Python classes</a>. The first class is a simple class that contains the input data:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class Input(object):
+    def __init__(self, batch_size, num_steps, data):
+        self.batch_size = batch_size
+        self.num_steps = num_steps
+        self.epoch_size = ((len(data) // batch_size) - 1) // num_steps
+        self.input_data, self.targets = batch_producer(data, batch_size, num_steps)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>We pass this object important input data information such as batch size, the number of recurrent time steps and finally the raw data file we wish to extract batch data from. The previously explained <em>batch_producer</em> function, when called, will return our input data batch <em>x</em> and the associated time step + 1 target data batch, <em>y</em>.</p>
+<p>The next step is to create our LSTM model. Again, I&#8217;ve used a Python class to hold all the information and TensorFlow operations:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create the main model
+class Model(object):
+    def __init__(self, input, is_training, hidden_size, vocab_size, num_layers,
+                 dropout=0.5, init_scale=0.05):
+        self.is_training = is_training
+        self.input_obj = input
+        self.batch_size = input.batch_size
+        self.num_steps = input.num_steps</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first part of initialization is pretty self-explanatory, with the input data information and batch producer operation found in <em>input_obj</em>. Another important input is the boolean <em>is_training</em> &#8211; this allows the model instance to be created either as a model setup for training, or alternatively setup for validation or testing only.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create the word embeddings
+with tf.device(&quot;/cpu:0&quot;):
+    embedding = tf.Variable(tf.random_uniform([vocab_size, self.hidden_size], -init_scale, init_scale))
+    inputs = tf.nn.embedding_lookup(embedding, self.input_obj.input_data)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The block of code above creates the word embeddings. As previously discussed and shown in <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">my tutorial</a>, word embedding creates meaningful vectors to represent each word. First, we initialize the embedding variable with size (vocab_size, hidden_size) which creates the &#8220;lookup table&#8221; where each row represents a word in the dataset, and the set of columns is the embedding vector. In this case, our embedding vector length is set equal to the size of our LSTM hidden layer.</p>
+<p>The next line performs a lookup action on the embedding tensor, where each word in the input data set is matched with a row in the embedding tensor, with the matched embedding vector being returned within <em>inputs.</em></p>
+<p>In this model, the embedding layer / vectors will be learned during the model training &#8211; however, if we so desired, we could also pre-learn embedding vectors using another model and upload these into our models. I&#8217;ve shown how to do this in <a href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/" target="_blank" rel="noopener">my gensim tutorial</a> if you want to check it out.</p>
+<p>The next step adds a <a href="https://en.wikipedia.org/wiki/Dropout_(neural_networks)" target="_blank" rel="noopener">drop-out</a> wrapper to the input data &#8211; this helps prevent overfitting by continually changing the structure of the network connections:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">if is_training and dropout &lt; 1:
+    inputs = tf.nn.dropout(inputs, dropout)</code></pre> <div class="code-embed-infos"> </div> </div>
+<h3>Creating the LSTM network</h3>
+<p>The next step is to setup the initial state TensorFlow placeholder. This placeholder will be loaded with the initial state of the LSTM cells for each training batch. At the beginning of each training epoch, the input data will reset to the beginning of the text data set, so we want to reset the state variables to zero. However, during the multiple training batches executed in each epoch, we want to load the final state variables from the previous training batch into our LSTM cells for the current training batch. This keeps a certain continuity of state in our model, as we are progressing linearly through our text data set. We define the placeholder by:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># set up the state storage / extraction
+self.init_state = tf.placeholder(tf.float32, [num_layers, 2, self.batch_size, self.hidden_size])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The second argument to the placeholder function is the size of the variable &#8211; (num_layers, 2, batch_size, hidden_size) and requires some explanation. If we consider an individual LSTM cell, for each training sample it processes it has two other inputs &#8211; the previous output from the cell ($h_{t-1}$) and the previous state variable ($s_{t-1}$). These two inputs, <em>h</em> and <em>s, </em>are what is required to load the full state data into an LSTM cell. Remember also that <em>h</em> and <em>s</em> for each sample are actually vectors with the size equal to the hidden layer size. Therefore, for all the samples in the batch, for a single LSTM cell we have state data required of shape (2, batch_size, hidden_size). Finally, if we have stacked LSTM cell layers, we need state variables for each layer &#8211; <em>num_layers. </em>This gives the final shape of the state variables: (num_layers, 2, batch_size, hidden_size).</p>
+<p>The next two steps involve setting up this state data variable in the format required to feed it into the TensorFlow LSTM data structure:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">state_per_layer_list = tf.unstack(self.init_state, axis=0)
+rnn_tuple_state = tuple(
+            [tf.contrib.rnn.LSTMStateTuple(state_per_layer_list[idx][0], state_per_layer_list[idx][1])
+             for idx in range(num_layers)]
+        )</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The TensorFlow LSTM cell can accept the state as a tuple if a flag is set to True (more on this later). The <em>tf.unstack</em> command creates a number of tensors, each of shape (2, batch_size, hidden_size), from the <em>init_state </em>tensor, one for each stacked LSTM layer <em>(num_layer)</em>. These tensors are then loaded into a specific TensorFlow data structure<em>, LSTMStateTuple</em>, which is the required for input into the LSTM cells.</p>
+<p>Next, we create an LSTM cell which will be &#8220;unrolled&#8221; over the number of time steps. Following this, we apply a drop-out wrapper to again protect against overfitting. Notice that we set the forget bias values to be equal to 1.0, which helps guard against repeated low forget gate outputs causing vanishing gradients, as explained above:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create an LSTM cell to be unrolled
+cell = tf.contrib.rnn.LSTMCell(hidden_size, forget_bias=1.0)
+# add a dropout wrapper if training
+if is_training and dropout &lt; 1:
+    cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=dropout)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next, if we include many layers of stacked LSTM cells in the model, we need to use another TensorFlow object called <em>MultiRNNCell </em>which performs the requisite cell stacking / layering:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">if num_layers &gt; 1:
+    cell = tf.contrib.rnn.MultiRNNCell([cell for _ in range(num_layers)], state_is_tuple=True)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Note that we tell <em>MultiRNNCell </em>to expect the state variables in the form of a <em>LSTMStateTuple</em> by setting the flag <em>state_is_tuple</em> to True.</p>
+<p>The final step in creating the LSTM network structure is to create a dynamic RNN object in TensorFlow. This object will dynamically perform the unrolling of the LSTM cell over each time step.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">output, self.state = tf.nn.dynamic_rnn(cell, inputs, dtype=tf.float32, initial_state=rnn_tuple_state)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The <em>dynamic_rnn </em>object takes our defined LSTM cell as the first argument, and the embedding vector tensor <em>inputs</em> as the second argument. The final argument, <em>initial_state</em> is where we load our time-step zero state variables, that we created earlier, into the unrolled LSTM network.</p>
+<p>This operation creates two outputs, the first is the output from all the unrolled LSTM cells, and will have a shape of (batch_size, num_steps, hidden_size). This data will be flattened in the next step to feed into a softmax classification layer. The second output, <em>state</em>, is the (s, h) state tuple taken from the final time step of the LSTM cells. This <em>state</em> operation / tuple will be extracted during each batch training operation to be used as inputs (via <em>init_state</em>) into the next training batch.</p>
+<h3>Creating the softmax, loss and optimizer operations</h3>
+<p>Next we have to flatten the outputs so that we can feed them into our proposed softmax classification layer. We can use the -1 notation to reshape our output tensor, with the second axis set to be equal to the hidden layer size:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># reshape to (batch_size * num_steps, hidden_size)
+output = tf.reshape(output, [-1, hidden_size])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next we setup our softmax weight variables and the standard $xw+b$ operation:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">softmax_w = tf.Variable(tf.random_uniform([hidden_size, vocab_size], -init_scale, init_scale))
+softmax_b = tf.Variable(tf.random_uniform([vocab_size], -init_scale, init_scale))
+logits = tf.nn.xw_plus_b(output, softmax_w, softmax_b)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Note that the <em>logits</em> operation is simply the output of our tensor multiplication &#8211; we haven&#8217;t yet added the softmax operation &#8211; this will occur in the loss calculations below (and also in our ancillary accuracy calculations).</p>
+<p>Following this, we have to setup our loss or cost function which will be used to train our LSTM network. In this case, we will use the specialized <a href="https://www.tensorflow.org/api_docs/python/tf/contrib/seq2seq/sequence_loss" target="_blank" rel="noopener">TensorFlow sequence to sequence loss function</a>. This loss function allows one to calculate (a potentially) weighted cross entropy loss over a sequence of values. The first argument to this loss function is the <em>logits</em> argument, which requires tensors with the shape (batch_size, num_steps, vocab_size) &#8211; so we&#8217;ll need to reshape our logits tensor. The second argument to the loss function is the <em>targets </em>tensor which has a shape (batch_size, num_steps) with each value being an integer (which corresponds to a unique word in our case) &#8211; in other words, this tensor contains the true values of the word sequence that we want our LSTM network to predict. The third important argument is the weights tensor, of shape (batch_size, num_steps), which allows you to weight different samples or time steps with respect to the loss i.e. you might want the loss to favor the latter time steps rather than the earlier ones. No weighting is applied in this model, so a tensor of ones is passed to this argument.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Reshape logits to be a 3-D tensor for sequence loss
+logits = tf.reshape(logits, [self.batch_size, self.num_steps, vocab_size])
+
+# Use the contrib sequence loss and average over the batches
+loss = tf.contrib.seq2seq.sequence_loss(
+            logits,
+            self.input_obj.targets,
+            tf.ones([self.batch_size, self.num_steps], dtype=tf.float32),
+            average_across_timesteps=False,
+            average_across_batch=True)
+# Update the cost
+self.cost = tf.reduce_sum(loss)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>There are two more important arguments for this function &#8211; <em>average_across_timesteps </em>and <em>average_across_batch</em>. If <em>average_across_timesteps </em>is set to True, the cost will be summed across the time dimension, if <em>average_across_batch</em> is True, then the cost will be summed across the batch dimension. In this case we are favoring the latter option.</p>
+<p>Finally, we produce the <em>cost</em> operation which reduces the loss to a single scalar value &#8211; we could also do something similar by setting <em>average_across_timesteps</em><em> </em>to True &#8211; however, I am keeping things consistent with the TensorFlow tutorial.</p>
+<p>In the next few steps, we set up some operations to calculate the accuracy off predictions over the batch samples:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># get the prediction accuracy
+self.softmax_out = tf.nn.softmax(tf.reshape(logits, [-1, vocab_size]))
+self.predict = tf.cast(tf.argmax(self.softmax_out, axis=1), tf.int32)
+correct_prediction = tf.equal(self.predict, tf.reshape(self.input_obj.targets, [-1]))
+self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First we apply a softmax operation to get the predicted probabilities of each word for each output of the LSTM network. We then make the network predictions equal to those words with the highest softmax probability by using the <em>argmax</em> function. These predictions are then compared to the actual target words and then averaged to get the accuracy.</p>
+<p>Now we move onto constructing the optimization operations &#8211; in this case we aren&#8217;t using a simple &#8220;out of the box&#8221; optimizer &#8211; rather we are doing a few manipulations to improve results:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">if not is_training:
+   return
+self.learning_rate = tf.Variable(0.0, trainable=False)
+
+tvars = tf.trainable_variables()
+grads, _ = tf.clip_by_global_norm(tf.gradients(self.cost, tvars), 5)
+optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
+self.train_op = optimizer.apply_gradients(
+            zip(grads, tvars),
+            global_step=tf.contrib.framework.get_or_create_global_step())</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First off, if the model has been created for predictions, validations or testing only, these operations do not need to be created. The first step if the model is being used for training, is to create a learning rate variable. This will be used so that we can decrease the learning rate during training &#8211; this improves the final outcome of the model.</p>
+<p>Next we wish to clip the size of the gradients in our network during back-propagation &#8211; this is recommended in recurrent neural networks to improve outcomes. Clipping values of between 1 and 5 are commonly used. Finally, we create the optimizer operation, using the <em>learning_rate </em>variable, and apply the clipped gradients.. Then a gradient descent step is performed &#8211; assigning this operation to <em>train_op</em>. This operation, <em>train_op</em>, will be called for each training batch.</p>
+<p>The final two lines of the model creation involve the updating of the <em>learning_rate</em>:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">self.new_lr = tf.placeholder(tf.float32, shape=[])
+self.lr_update = tf.assign(self.learning_rate, self.new_lr)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First, a placeholder is created which will be input via the <em>feed_dict</em> argument when running the training, <em>new_lr</em>. This new learning rate is then assigned to <em>learning_rate</em> via a <em>tf.assign</em> operation. This operation, <em>lr_update,</em> will be run at the beginning of each epoch.</p>
+<p>Now that the model structure is fully created, we can move onto the training loops:</p>
+<h2>Training the LSTM model</h2>
+<p>The training function will take as input the training data, along with various model parameters (batch sizes, number of steps etc.). The first part of the function looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def train(train_data, vocabulary, num_layers, num_epochs, batch_size, model_save_name,
+          learning_rate=1.0, max_lr_epoch=10, lr_decay=0.93):
+    # setup data and models
+    training_input = Input(batch_size=batch_size, num_steps=35, data=train_data)
+    m = Model(training_input, is_training=True, hidden_size=650, vocab_size=vocabulary,
+              num_layers=num_layers)
+    init_op = tf.global_variables_initializer()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First we create an Input object instance and a Model object instance, passing in the necessary parameters. Because the TensorFlow graph is being created during the initialization of these objects, the TensorFlow global variable initializer operation can only be properly run <em>after</em> the creation of these instances.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">orig_decay = lr_decay
+with tf.Session() as sess:
+    # start threads
+    sess.run([init_op])
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(coord=coord)
+    saver = tf.train.Saver()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next we start the session, and run the variable initializer operation. Because we are using queuing in the Input object, we also need to create a thread coordinator and start the running of the threads (for more information, see <a href="http://adventuresinmachinelearning.com/introduction-tensorflow-queuing/" target="_blank" rel="noopener">this tutorial</a>). If you skip this step, or put it before the creation of <em>training_input</em>, your program will hang. Finally, a saver instance is created as we want to store model training checkpoints and the final trained model.</p>
+<p>Next, the epochal training loop is entered into:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">for epoch in range(num_epochs):
+    new_lr_decay = orig_decay ** max(epoch + 1 - max_lr_epoch, 0.0)
+    m.assign_lr(sess, learning_rate * new_lr_decay)
+    current_state = np.zeros((num_layers, 2, batch_size, m.hidden_size))
+    for step in range(training_input.epoch_size):
+        if step % 50 != 0:
+            cost, _, current_state = sess.run([m.cost, m.train_op, m.state],
+                                                             feed_dict={m.init_state: current_state})
+        else:
+            cost, _, current_state, acc = sess.run([m.cost, m.train_op, m.state, m.accuracy],
+                                                      feed_dict={m.init_state: current_state})
+            print(&quot;Epoch {}, Step {}, cost: {:.3f}, accuracy: {:.3f}&quot;.format(epoch, step, cost, acc))
+    # save a model checkpoint
+    saver.save(sess, data_path + &#039;\\&#039; + model_save_name, global_step=epoch)
+# do a final save
+saver.save(sess, data_path + &#039;\\&#039; + model_save_name + &#039;-final&#039;)
+# close threads
+coord.request_stop()
+coord.join(threads)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first step in every epoch is to calculate the learning rate decay factor, which gradually decreases after <em>max_lr_epoch</em> number of epochs has been reached. This learning rate decay factor, <em>new_lr_decay</em>, is multiplied by the learning rate and assigned to the model by calling the Model method <em>assign_lr</em>. This method looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def assign_lr(self, session, lr_value):
+    session.run(self.lr_update, feed_dict={self.new_lr: lr_value})</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>As can be observed, this function simply runs the <em>lr_update </em>operation which was explained in the prior section.</p>
+<p>The next step is to create a zeroed initial state tensor for our LSTM model &#8211; we assign this zeroed tensor to the variable <em>current_state</em>. Then each training operation is looped through within our specified epoch size. Every iteration we run the following operations: <em>m.train_op</em> and <em>m.state</em>. The <em>train_op </em>operation, as previously shown, calculates the clipped gradients of the model and takes a batched step to minimize the cost. The <em>state </em>operation returns the <em>state </em>of the final unrolled LSTM cell which we will require to input as the state for the next training batch &#8211; note that it replaces the contents of the <em>current_state</em> variable. This <em>current_state </em>variable is inserted into the <em>m.init_state </em>placeholder via the <em>feed_dict.</em></p>
+<p>Every 50 iterations we also extract the current cost of the model in training, as well as the accuracy against the current training batch, to provide printed feedback during training. The outputs look like this:</p>
+<blockquote><p>Epoch 9, Step 1850, cost: 96.185, accuracy: 0.198<br />
+Epoch 9, Step 1900, cost: 94.755, accuracy: 0.235</p></blockquote>
+<p>Finally, at the end of each epoch, we use the <em>saver </em>object to save a model checkpoint, and finally at the end of the training a final save of the state of the model is performed.</p>
+<h3>Expected training outcomes</h3>
+<p>The expected cost and accuracy progress through the epochs depends on the multitude of parameters supplied to the models and also the results of the random initialization of the variables. Training time is also dependent on whether you are using only CPUs, or whether you are using GPUs too (note, I have not tested the code on the Github repository with GPUs).</p>
+<p>My model achieved an average cost and <em>training batch</em> accuracy on the order of 110-120 and 30%, respectively, after 38 epochs with the following paramters:</p>
+<p>Hidden size:650, Number of steps:35, Initialization scale:0.05, Batch size:20, Number of stacked LSTM layers:2, Keep probability / dropout: 0.5</p>
+<p>You are probably thinking the accuracy isn&#8217;t very high, and you are correct, however further training and a larger hidden layer would provide better final accuracy values. To perform further training on a larger network you really need to be using GPUs to accelerate the training &#8211; I&#8217;ll do this in a future post and present the results.</p>
+<h2>Testing the model</h2>
+<p>To test the model on the test or validation data, I&#8217;ve created another function called <em>test</em> which looks like so:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def test(model_path, test_data, reversed_dictionary):
+    test_input = Input(batch_size=20, num_steps=35, data=test_data)
+    m = Model(test_input, is_training=False, hidden_size=650, vocab_size=vocabulary,
+              num_layers=2)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        # start threads
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
+        current_state = np.zeros((2, 2, m.batch_size, m.hidden_size))
+        # restore the trained model
+        saver.restore(sess, model_path)
+        # get an average accuracy over num_acc_batches
+        num_acc_batches = 30
+        check_batch_idx = 25
+        acc_check_thresh = 5
+        accuracy = 0
+        for batch in range(num_acc_batches):
+            if batch == check_batch_idx:
+                true_vals, pred, current_state, acc = sess.run([m.input_obj.targets, m.predict, m.state, m.accuracy],
+                                                               feed_dict={m.init_state: current_state})
+                pred_string = [reversed_dictionary[x] for x in pred[:m.num_steps]]
+                true_vals_string = [reversed_dictionary[x] for x in true_vals[0]]
+                print(&quot;True values (1st line) vs predicted values (2nd line):&quot;)
+                print(&quot; &quot;.join(true_vals_string))
+                print(&quot; &quot;.join(pred_string))
+            else:
+                acc, current_state = sess.run([m.accuracy, m.state], feed_dict={m.init_state: current_state})
+            if batch &gt;= acc_check_thresh:
+                accuracy += acc
+        print(&quot;Average accuracy: {:.3f}&quot;.format(accuracy / (num_acc_batches-acc_check_thresh)))
+        # close threads
+        coord.request_stop()
+        coord.join(threads)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>We start with creating an Input and Model class that matches our training Input and Model classes. It is important that key parameters match the training model, such as the hidden size, number of steps, batch size etc. We are going to load our saved model variables into the computational graph created by the test Model instance, and if the dimensions don&#8217;t match TensorFlow will throw an error.</p>
+<p>Next we create a <em>tf.train.Saver() </em>operation &#8211; this will load all our saved model variables into our test model when we run the line <em>saver.restore(sess, model_path). </em>After dealing with all of the threads and creating a zeroed state variable, we setup some variables which relate to how we are going to assess the accuracy and look at some specific instances of predicted strings. Because we have to &#8220;warm up&#8221; the model by feeding it some data to get good state variables, we only measure the accuracy after a certain number of batches i.e. <em>acc_check_thresh.</em></p>
+<p>When the batch number is equal to <em>check_batch_idx</em> the code runs the <em>m.predict</em> operation to extract the predictions for the particular batch of data. The first prediction of the batch is passed through the reverse dictionary to convert them back to actual words (along with the batch target words) and then compared with what should have been predicted via printing.</p>
+<p>Using the trained model, we can see the following output:</p>
+<p>True values (1st line) vs <em>predicted values</em> (2nd line):<br />
+stock market is headed many traders were afraid to trust stock prices quoted on the big board &lt;eos&gt; the futures halt was even &lt;unk&gt; by big board floor traders &lt;eos&gt; it &lt;unk&gt; things up said<br />
+<em>market market is n&#8217;t for traders say willing to buy the prices &lt;eos&gt; &lt;eos&gt; the big board &lt;eos&gt; the dow market is a worse &lt;eos&gt; the board traders traders &lt;eos&gt; the &#8216;s the to to</em><br />
+Average accuracy: 0.283</p>
+<p>The accuracy isn&#8217;t fantastic, but you can see the network is matching the &#8220;gist&#8221; of the sentence i.e. not producing all of the exact words but matching the general subject matter. As I mentioned above, in a future post I&#8217;ll present the data from a model trained for longer using GPUs.</p>
+<p>I hope you enjoyed the post &#8211; it&#8217;s been a long one, but I hope that this gives you a solid foundation in understanding recurrent neural networks and LSTMs and how to implement them in TensorFlow. If you&#8217;d like to learn how to build LSTM networks in Keras, see <a href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/" target="_blank" rel="noopener">this tutorial</a>.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you are more of a video course learner, I&#8217;d recommend this inexpensive Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.887814&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fdeep-learning-recurrent-neural-networks-in-python%2F">Deep Learning: Recurrent Neural Networks in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.887814&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/">Recurrent neural networks and LSTM tutorial in Python and TensorFlow</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/feed/</wfw:commentRss>
+		<slash:comments>9</slash:comments>
+		</item>
+	</channel>
+</rss>

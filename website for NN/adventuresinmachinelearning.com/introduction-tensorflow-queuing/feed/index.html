@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	
+	>
+<channel>
+	<title>Comments on: An introduction to TensorFlow queuing and threading</title>
+	<atom:link href="http://adventuresinmachinelearning.com/introduction-tensorflow-queuing/feed/" rel="self" type="application/rss+xml" />
+	<link>http://adventuresinmachinelearning.com/introduction-tensorflow-queuing/</link>
+	<description>Learn and explore machine learning</description>
+	<lastBuildDate>Sat, 08 Sep 2018 06:45:44 +0000</lastBuildDate>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.9.8</generator>
+	<item>
+		<title>By: Andy</title>
+		<link>http://adventuresinmachinelearning.com/introduction-tensorflow-queuing/#comment-724</link>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+		<pubDate>Sun, 24 Sep 2017 20:58:56 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=453#comment-724</guid>
+		<description><![CDATA[Hi - I will be creating a new post to deal with the tf.contrib.data module sometime in the future. In the meantime, the threading and queues I have presented will give you good performance. Thanks for the comment]]></description>
+		<content:encoded><![CDATA[<p>Hi &#8211; I will be creating a new post to deal with the tf.contrib.data module sometime in the future. In the meantime, the threading and queues I have presented will give you good performance. Thanks for the comment</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>By: MD</title>
+		<link>http://adventuresinmachinelearning.com/introduction-tensorflow-queuing/#comment-723</link>
+		<dc:creator><![CDATA[MD]]></dc:creator>
+		<pubDate>Sun, 24 Sep 2017 17:41:28 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=453#comment-723</guid>
+		<description><![CDATA[Hey,
+
+Greap post!
+
+FYI, I&#039;ve followed one of the links you supplied:
+https://www.tensorflow.org/programmers_guide/threading_and_queues 
+and the first thing I saw was:
+Note: In versions of TensorFlow before 1.2, we recommended using multi-threaded, queue-based input pipelines for performance. Beginning with TensorFlow 1.2, however, we recommend using the tf.contrib.data module instead. The tf.contrib.data module offers an easier-to-use interface for constructing efficient input pipelines. Furthermore, we&#039;ve stopped developing the old multi-threaded, queue-based input pipelines. We&#039;ve retained the documentation in this file to help developers who are still maintaining older code.
+
+What&#039;s your take on this?]]></description>
+		<content:encoded><![CDATA[<p>Hey,</p>
+<p>Greap post!</p>
+<p>FYI, I&#8217;ve followed one of the links you supplied:<br />
+<a href="https://www.tensorflow.org/programmers_guide/threading_and_queues" rel="nofollow">https://www.tensorflow.org/programmers_guide/threading_and_queues</a><br />
+and the first thing I saw was:<br />
+Note: In versions of TensorFlow before 1.2, we recommended using multi-threaded, queue-based input pipelines for performance. Beginning with TensorFlow 1.2, however, we recommend using the tf.contrib.data module instead. The tf.contrib.data module offers an easier-to-use interface for constructing efficient input pipelines. Furthermore, we&#8217;ve stopped developing the old multi-threaded, queue-based input pipelines. We&#8217;ve retained the documentation in this file to help developers who are still maintaining older code.</p>
+<p>What&#8217;s your take on this?</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>By: Howard</title>
+		<link>http://adventuresinmachinelearning.com/introduction-tensorflow-queuing/#comment-449</link>
+		<dc:creator><![CDATA[Howard]]></dc:creator>
+		<pubDate>Tue, 22 Aug 2017 18:52:08 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=453#comment-449</guid>
+		<description><![CDATA[Thanks for the tutorial. The API seems unnecessarily complex.
+Basically, all we really need is an interface to get records by index.
+public interface DataReader {
+   long getTotalItems();
+   T[] getItems(long start, int length);
+}
+The developer implements that to wrap the data they need to load.
+Then it is loaded by a Utility class.
+public class DataBatcher {
+    public DataBatcher(DataReader reader, int numThreads, int batchSize, boolean returnDataInRandomOrder) {}
+    public void start() {}
+    public void stop() {}
+    public T[] getBatch() {}
+}]]></description>
+		<content:encoded><![CDATA[<p>Thanks for the tutorial. The API seems unnecessarily complex.<br />
+Basically, all we really need is an interface to get records by index.<br />
+public interface DataReader {<br />
+   long getTotalItems();<br />
+   T[] getItems(long start, int length);<br />
+}<br />
+The developer implements that to wrap the data they need to load.<br />
+Then it is loaded by a Utility class.<br />
+public class DataBatcher {<br />
+    public DataBatcher(DataReader reader, int numThreads, int batchSize, boolean returnDataInRandomOrder) {}<br />
+    public void start() {}<br />
+    public void stop() {}<br />
+    public T[] getBatch() {}<br />
+}</p>
+]]></content:encoded>
+	</item>
+</channel>
+</rss>

@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>PyTorch &#8211; Adventures in Machine Learning</title>
+	<atom:link href="http://adventuresinmachinelearning.com/category/deep-learning/pytorch/feed/" rel="self" type="application/rss+xml" />
+	<link>http://adventuresinmachinelearning.com</link>
+	<description>Learn and explore machine learning</description>
+	<lastBuildDate>Sun, 09 Sep 2018 07:53:16 +0000</lastBuildDate>
+	<language>en-AU</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.9.8</generator>
+	<item>
+		<title>Convolutional Neural Networks Tutorial in PyTorch</title>
+		<link>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/</link>
+		<comments>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/#comments</comments>
+		<pubDate>Sat, 16 Jun 2018 06:29:54 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Convolutional Neural Networks]]></category>
+		<category><![CDATA[PyTorch]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=922</guid>
+		<description><![CDATA[<p>In a previous introductory tutorial on neural networks, a three layer neural network was developed to classify the hand-written digits of the MNIST dataset. In <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/" title="Convolutional Neural Networks Tutorial in PyTorch">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/">Convolutional Neural Networks Tutorial in PyTorch</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In a <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">previous introductory tutorial on neural networks</a>, a three layer neural network was developed to classify the hand-written digits of the <a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank" rel="noopener">MNIST</a> dataset. In the end, it was able to achieve a classification accuracy around 86%. For a simple data set such as MNIST, this is actually quite poor. Further optimizations can bring densely connected networks of a modest size up to 97-98% accuracy. This is significantly better, but still not that great for MNIST. We need something more state-of-the-art, some method which can truly be called <em>deep learning</em>. This tutorial will present just such a <em>deep learning </em>method that can achieve very high accuracy in image classification tasks &#8211;  the Convolutional Neural Network. In particular, this tutorial will show you both the theory and practical application of Convolutional Neural Networks in PyTorch.</p>
+<p>PyTorch is a powerful deep learning framework which is rising in popularity, and it is thoroughly at home in Python which makes rapid prototyping very easy. This tutorial won&#8217;t assume much in regards to prior knowledge of PyTorch, but it might be helpful to checkout my <a href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/" target="_blank" rel="noopener">previous introductory tutorial to PyTorch</a>. All the code for this Convolutional Neural Networks tutorial can be found on this site&#8217;s Github repository &#8211; found <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">here</a>. Let&#8217;s get to it.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you&#8217;re more of a video learner, check out this inexpensive online course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1259546&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fpractical-deep-learning-with-pytorch%2F">Practical Deep Learning with PyTorch</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1259546&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>Why Convolutional Neural Networks?</h1>
+<p>Fully connected networks with a few layers can only do so much &#8211; to get close to state-of-the-art results in image classification it is necessary to go <em>deeper.</em> In other words, lots more layers are required in the network. However, by adding a lot of additional layers, we come across some problems. First, we can run into the <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/" target="_blank" rel="noopener">vanishing gradient problem</a>. &#8211; however, this can be solved to an extent by using sensible activation functions, such as the ReLU family of activations. Another issue for deep fully connected networks is that the number of trainable parameters in the model (i.e. the weights) can grow rapidly. This means that the training slows down or becomes practically impossible, and also exposes the model to overfitting. So what&#8217;s a solution?</p>
+<p>Convolutional Neural Networks try to solve this second problem by exploiting correlations between adjacent inputs in images (or time series). For instance, in an image of a cat and a dog, the pixels close to the cat&#8217;s eyes are more likely to be correlated with the nearby pixels which show the cat&#8217;s nose &#8211; rather than the pixels on the other side of the image that represent the dog&#8217;s nose. This means that not every node in the network needs to be connected to every other node in the next layer &#8211; and this cuts down the number of weight parameters required to be trained in the model. Convolution Neural Networks also have some other tricks which improve training, but we&#8217;ll get to these in the next section.</p>
+<h1>How does a Convolutional Neural Network work?</h1>
+<p>The first thing to understand in a Convolutional Neural Network is the actual <em>convolution</em> part. This is a fancy mathematical word for what is essentially a moving window or filter across the image being studied. This moving window applies to a certain neighborhood of nodes as shown below &#8211; here, the filter applied is (0.5 $\times$ the node value):</p>
+<figure id="attachment_262" style="width: 632px" class="wp-caption aligncenter"><img class=" wp-image-262" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter.jpg" alt="Convolutional neural network tutorial - moving filter" width="632" height="269" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter.jpg 733w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-300x128.jpg 300w" sizes="(max-width: 632px) 100vw, 632px" /><figcaption class="wp-caption-text">Moving 2&#215;2 filter (all weights = 0.5)</figcaption></figure>
+<p>Only two outputs have been shown in the diagram above, where each output node is a map from a 2 x 2 input square. The weight of the mapping of each input square, as previously mentioned, is 0.5 across all four inputs. So the output can be calculated as:</p>
+<p>$$\begin{align}<br />
+out_1 &amp;= 0.5 in_1 + 0.5 in_2 + 0.5 in_6 + 0.5 in_7 \\<br />
+&amp;= 0.5 \times 2.0 + 0.5 \times 3.0 + 0.5 \times 2.0 + 0.5 \times 1.5  \\<br />
+&amp;= 4.25 \\<br />
+out_2 &amp;= 0.5 in_2 + 0.5 in_3 + 0.5 in_7 + 0.5 in_8 \\<br />
+&amp;= 0.5 \times 3.0 + 0.5 \times 0.0 + 0.5 \times 1.5 + 0.5 \times 0.5  \\<br />
+&amp;= 2.5 \\<br />
+\end{align}$$</p>
+<p>In the convolutional part of the neural network, we can imagine this 2 x 2 moving filter sliding across all the available nodes / pixels in the input image. This operation can also be illustrated using standard neural network node diagrams:</p>
+<figure id="attachment_269" style="width: 349px" class="wp-caption aligncenter"><img class=" wp-image-269" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram.jpg" alt="Convolutional neural network tutorial - moving filter node diagram" width="349" height="379" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram.jpg 445w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram-276x300.jpg 276w" sizes="(max-width: 349px) 100vw, 349px" /><figcaption class="wp-caption-text">Moving 2&#215;2 filter &#8211; node diagram</figcaption></figure>
+<p>The first position of the moving filter connections is illustrated by the blue connections, and the second is shown with the green lines. The weights of each of these connections, as stated previously, is 0.5.</p>
+<p>There are a few things in this convolutional step which improve training by reducing parameters/weights:</p>
+<ul>
+<li><em>Sparse </em>connections &#8211; not every node in the first / input layer is connected to every node in the second layer. This is contrary to fully connected neural networks, where every node is connected to every other in the following layer.</li>
+<li>Constant filter parameters &#8211; each filter has constant parameters. In other words, as the filter moves around the image, the same weights are applied to each 2 x 2 set of nodes. Each filter, as such, can be trained to perform a certain specific transformation of the input space. Therefore, each filter has a certain set of weights that are applied for each convolution operation &#8211; this reduces the number of parameters.
+<ul>
+<li>Note &#8211; this is not to say that each weight is constant <em>within </em>the filter. In the example above, the weights were [0.5, 0.5, 0.5, 0.5] but could have just as easily been something like [0.25, 0.1, 0.8, 0.001]. It all depends on how each filter is trained</li>
+</ul>
+</li>
+</ul>
+<p>These two properties of Convolutional Neural Networks can drastically reduce the number of parameters which need to be trained compared to fully connected neural networks.</p>
+<p>The next step in the Convolutional Neural Network structure is to pass the output of the convolution operation through a non-linear activation function &#8211; generally some version of the <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/">ReLU activation function</a>. This provides the standard non-linear behavior that neural networks are known for.</p>
+<p>The process involved in this convolutional block is often called <em>feature mapping &#8211; </em>this refers to the idea that each convolutional filter can be trained to &#8220;search&#8221; for different features in an image, which can then be used in classification. Before we move onto the next main feature of Convolutional Neural Networks, called <em>pooling</em>, we will examine this idea of feature mapping and <em>channels</em> in the next section.</p>
+<h2>Feature mapping and multiple channels</h2>
+<p>As mentioned previously, because the weights of individual filters are held constant as they are applied over the input nodes, they can be trained to select certain features from the input data. In the case of images, it may learn to recognize common geometrical objects such as lines, edges and other shapes which make up objects. This is where the name <em>feature mapping</em> comes from. Because of this, any convolution layer needs multiple filters which are trained to detect different features. So therefore, the previous moving filter diagram needs to be updated to look something like this:</p>
+<figure id="attachment_273" style="width: 581px" class="wp-caption aligncenter"><img class=" wp-image-273" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters.jpg" alt="Convolutional neural networks tutorial - multiple filters" width="581" height="235" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters.jpg 771w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters-300x121.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters-768x311.jpg 768w" sizes="(max-width: 581px) 100vw, 581px" /><figcaption class="wp-caption-text">Multiple convolutional filters</figcaption></figure>
+<p>Now you can see on the right hand side of the diagram above that there are multiple, stacked outputs from the convolution operation. This is because there are multiple trained filters which produce their own 2D output (for a 2D image). These multiple filters are commonly called <em>channels</em> in deep learning. Each of these channels will end up being trained to detect certain key features in the image. The output of a convolution layer, for a gray-scale image like the MNIST dataset, will therefore actually have 3 dimensions &#8211; 2D for each of the channels, then another dimension for the number of different channels.</p>
+<p>If the input is itself multi-channelled, as in the case of a color RGB image (one channel for each R-G-B), the output will actually be <strong>4D</strong>. Thankfully, any deep learning library worth its salt, PyTorch included, will be able to handle all this mapping easily for you. Finally, don&#8217;t forget that the output of the convolution operation will be passed through an activation for each node.</p>
+<p>Now, the next vitally important part of Convolutional Neural Networks is a concept called <em>pooling</em>.</p>
+<h2>Pooling</h2>
+<p>There are two main benefits to pooling in Convolutional Neural Networks. These are:</p>
+<ul>
+<li>It reduces the number of parameters in your model by a process called <em>down-sampling</em></li>
+<li>It makes feature detection more robust to object orientation and scale changes</li>
+</ul>
+<p>So what is pooling? It is another sliding window type technique, but instead of applying weights, which can be trained, it applies a statistical function of some type over the contents of its window. The most common type of pooling is called <em>max pooling</em>, and it applies the <em>max()</em> function over the contents of the window. There are other variants such as <em>mean pooling</em> (which takes the statistical mean of the contents) which are also used in some cases. In this tutorial, we will be concentrating on max pooling. The diagram below shows an example of the max pooling operation:</p>
+<figure id="attachment_278" style="width: 588px" class="wp-caption aligncenter"><img class=" wp-image-278" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling.jpg" alt="Convolutional neural network tutorial - max pooling example" width="588" height="265" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling.jpg 807w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling-300x135.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling-768x346.jpg 768w" sizes="(max-width: 588px) 100vw, 588px" /><figcaption class="wp-caption-text">Max pooling example (with padding)</figcaption></figure>
+<p>We&#8217;ll go through a number of points relating to the diagram above:</p>
+<h3>The basics</h3>
+<p>In the diagram above, you can observe the max pooling taking effect. For the first window, the blue one, you can see that the max pooling outputs a 3.0 which is the maximum node value in the 2&#215;2 window. Likewise for the green 2&#215;2 window it outputs the maximum of 5.0 and a maximum of 7.0 for the red window. This is pretty straight-forward.</p>
+<h3>Strides and down-sampling</h3>
+<p>In the pooling diagram above, you will notice that the pooling window shifts to the right each time by 2 places. This is called a <em>stride</em> of 2. In the diagram above, the stride is only shown in the <em>x</em> direction, but, if the goal was to prevent pooling window overlap, the stride would also have to be 2 in the <em>y</em> direction as well. In other words, the stride is actually specified as [2, 2]. One important thing to notice is that, if during pooling the stride is greater than 1, then the output size will be reduced. As can be observed above, the 5 x 5 input is reduced to a 3 x 3 output. This is a good thing &#8211; it is called down-sampling, and it reduces the number of trainable parameters in the model.</p>
+<h3>Padding</h3>
+<p>Another thing to notice in the pooling diagram above is that there is an extra column and row added to the 5 x 5 input &#8211; this makes the effective size of the pooling space equal to 6 x 6. This is to ensure that the 2 x 2 pooling window can operate correctly with a stride of [2, 2] and is called <em>padding</em>. These nodes are basically dummy nodes &#8211; because the values of these dummy nodes is 0, they are basically invisible to the max pooling operation. Padding will need to be considered when constructing our Convolutional Neural Network in PyTorch.</p>
+<p>Ok, so now we understand how pooling works in Convolutional Neural Networks, and how it is useful in performing down-sampling, but what else does it do? Why is max pooling used so frequently?</p>
+<h3>Why is pooling used in convolutional neural networks?</h3>
+<p>In addition to the function of down-sampling, pooling is used in Convolutional Neural Networks to make the detection of certain features somewhat invariant to scale and orientation changes. Another way of thinking about what pooling does is that it generalizes over lower level, more complex information. Let&#8217;s imagine the case where we have convolutional filters that, during training, learn to detect the digit &#8220;9&#8221; in various orientations within the input images. In order for the Convolutional Neural Network to learn to classify the appearance of &#8220;9&#8221; in the image correctly, it needs to in some way &#8220;activate&#8221; whenever a &#8220;9&#8221; is found anywhere in the image, no matter what the size or orientation the digit is (except for when it looks like &#8220;6&#8221;, that is). Pooling can assist with this higher level, generalized feature selection, as the diagram below shows:</p>
+<figure id="attachment_289" style="width: 521px" class="wp-caption aligncenter"><img class=" wp-image-289" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2.jpg" alt="Convolutional neural networks tutorial - stylised representation of pooling" width="521" height="198" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2.jpg 793w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2-300x114.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2-768x292.jpg 768w" sizes="(max-width: 521px) 100vw, 521px" /><figcaption class="wp-caption-text">Stylized representation of pooling</figcaption></figure>
+<p>The diagram is a stylized representation of the pooling operation. If we consider that a small region of the input image has a digit &#8220;9&#8221; in it (green box) and assume we are trying to detect such a digit in the image, what will happen is that, if we have a few convolutional filters, they will learn to activate (via the ReLU) when they &#8220;see&#8221; a &#8220;9&#8221; in the image (i.e. return a large output). However, they will activate more or less strongly depending on what orientation the &#8220;9&#8221; is. We want the network to detect a &#8220;9&#8221; in the image regardless of what the orientation is and this is where the pooling comes it. It &#8220;looks&#8221; over the output of these three filters and gives a high output so long as <em>any one</em> of these filters has a high activation.</p>
+<p>Therefore, pooling acts as a <em>generalizer</em> of the lower level data, and so, in a way, enables the network to move from high resolution <em>data </em>to lower resolution <em>information. </em>In other words, pooling coupled with convolutional filters attempts to detect <em>objects</em> within an image.</p>
+<h2>The final picture</h2>
+<p>The image below from Wikipedia shows the structure of a fully developed Convolutional Neural Network:</p>
+<figure id="attachment_290" style="width: 576px" class="wp-caption aligncenter"><img class=" wp-image-290" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn.png" alt="Convolutional neural networks tutorial - full diagram" width="576" height="177" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn.png 1040w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-300x92.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-768x236.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-1024x315.png 1024w" sizes="(max-width: 576px) 100vw, 576px" /><figcaption class="wp-caption-text">Full convolutional neural network &#8211; By Aphex34 (Own work) [<a href="http://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>], <a href="https://commons.wikimedia.org/wiki/File%3ATypical_cnn.png">via Wikimedia Commons</a></figcaption></figure>If you work the image above from left to right, we first see that there is an image of a robot. Then &#8220;scanning&#8221; over this image are a series of convolutional filters or feature maps. The output of these filters is then sub-sampled by pooling operations. After this, there is another set of convolutions and pooling on the output of the first convolution-pooling operation. Finally, at the output there is &#8220;attached&#8221; a fully connected layer. The purpose of this fully connected layer at the output of the network requires some explanation.</p>
+<h3>The fully connected layer</h3>
+<p>As previously discussed, a Convolutional Neural Network takes high resolution data and effectively resolves that into representations of objects. The fully connected layer can therefore be thought of as attaching a standard classifier onto the information-rich output of the network, to &#8220;interpret&#8221; the results and finally produce a classification result. In order to attach this fully connected layer to the network, the dimensions of the output of the Convolutional Neural Network need to be flattened.</p>
+<p>Consider the previous diagram &#8211; at the output, we have multiple channels of <em>x </em>x <em>y</em> matrices/tensors. These channels need to be flattened to a single (N X 1) tensor. Consider an example &#8211; let&#8217;s say we have 100 channels of 2 x 2 matrices, representing the output of the final pooling operation of the network. Therefore, this needs to be flattened to 2 x 2 x 100 = 400 rows. This can be easily performed in PyTorch, as will be demonstrated below.</p>
+<p>Now the basics of Convolutional Neural Networks has been covered, it is time to show how they can be implemented in PyTorch.</p>
+<h1>Implementing Convolutional Neural Networks in PyTorch</h1>
+<p>Any deep learning framework worth its salt will be able to easily handle Convolutional Neural Network operations. PyTorch is such a framework. In this section, I&#8217;ll show you how to create Convolutional Neural Networks in PyTorch, going step by step. Ideally, you will already have some notion of the basics of PyTorch (if not, you can check out my <a href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/" target="_blank" rel="noopener">introductory PyTorch tutorial</a>) &#8211; otherwise, you&#8217;re welcome to wing it. The network we&#8217;re going to build will perform MNIST digit classification. The full code for the tutorial can be found at <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">this site&#8217;s Github repository</a>.</p>
+<p>The Convolutional Neural Network architecture that we are going to build can be seen in the diagram below:</p>
+<figure id="attachment_293" style="width: 1725px" class="wp-caption alignnone"><img class="size-full wp-image-293" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg" alt="PyTorch CNN tutorial - network" width="1725" height="572" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg 1725w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-300x99.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-768x255.jpg 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-1024x340.jpg 1024w" sizes="(max-width: 1725px) 100vw, 1725px" /><figcaption class="wp-caption-text">Convolutional neural network that will be built</figcaption></figure>
+<p>First up, we can see that the input images will be 28 x 28 pixel greyscale representations of digits. The first layer will consist of 32 channels of 5 x 5 convolutional filters + a ReLU activation, followed by 2 x 2 max pooling down-sampling with a stride of 2 (this gives a 14 x 14 output). In the next layer, we have the 14 x 14 output of layer 1 being scanned again with 64 channels of 5 x 5 convolutional filters and a final 2 x 2 max pooling (stride = 2) down-sampling to produce a 7 x 7 output of layer 2.</p>
+<p>After the convolutional part of the network, there will be a flatten operation which creates 7 x 7 x 64 = 3164 nodes, an intermediate layer of 1000 fully connected nodes and a softmax operation over the 10 output nodes to produce class probabilities. These layers represent the output classifier.</p>
+<h2>Loading the dataset</h2>
+<p>PyTorch has an integrated MNIST dataset (in the torchvision package) which we can use via the DataLoader functionality. In this sub-section, I&#8217;ll go through how to setup the data loader for the MNIST data set. But first, some preliminary variables need to be defined:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Hyperparameters
+num_epochs = 5
+num_classes = 10
+batch_size = 100
+learning_rate = 0.001
+
+DATA_PATH = &#039;C:\\Users\Andy\PycharmProjects\MNISTData&#039;
+MODEL_STORE_PATH = &#039;C:\\Users\Andy\PycharmProjects\pytorch_models\\&#039;</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First off, we set up some training hyperparameters. Next &#8211; there is a specification of some local drive folders to use to store the MNIST dataset (PyTorch will download the dataset into this folder for you automatically) and also a location for the trained model parameters once training is complete.</p>
+<p>Next, we setup a transform to apply to the MNIST data, and also the data set variables:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># transforms to apply to the data
+trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+
+# MNIST dataset
+train_dataset = torchvision.datasets.MNIST(root=DATA_PATH, train=True, transform=trans, download=True)
+test_dataset = torchvision.datasets.MNIST(root=DATA_PATH, train=False, transform=trans)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first thing to note above is the transforms.Compose() function. This function comes from the torchvision package. It allows the developer to setup various manipulations on the specified dataset. Numerous transforms can be chained together in a list using the Compose() function. In this case, first we specify a transform which converts the input data set to a PyTorch <em>tensor</em>. A PyTorch tensor is a specific data type used in PyTorch for all of the various data and weight operations within the network. In its essence though, it is simply a multi-dimensional matrix. In any case, PyTorch requires the data set to be transformed into a tensor so it can be consumed in the training and testing of the network.</p>
+<p>The next argument in the Compose() list is a normalization transformation. Neural networks train better when the input data is normalized so that the data ranges from -1 to 1 or 0 to 1. To do this via the PyTorch Normalize transform, we need to supply the mean and standard deviation of the MNIST dataset, which in this case is 0.1307 and 0.3081 respectively. Note, that for each input channel a mean and standard deviation must be supplied &#8211; in the MNIST case, the input data is only single channeled, but for something like the CIFAR data set, which has 3 channels (one for each color in the RGB spectrum) you would need to provide a mean and standard deviation for each channel.</p>
+<p>Next, the <em>train_dataset</em> and <em>test_dataset</em> objects need to be created. These will subsequently be passed to the data loader. In order to create these data sets from the MNIST data, we need to provide a few arguments. First, the <em>root</em> argument specifies the folder where the train.pt and test.pt data files exist. The <em>train</em> argument is a boolean which informs the data set to pickup either the train.pt data file or the test.pt data file. The next argument, <em>transform</em>, is where we supply any transform object that we&#8217;ve created to apply to the data set &#8211; here we supply the <em>trans</em> object which was created earlier. Finally, the download argument tells the MNIST data set function to download the data (if required) from an online source.</p>
+<p>Now both the train and test datasets have been created, it is time to load them into the data loader:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The data loader object in PyTorch provides a number of features which are useful in consuming training data &#8211; the ability to shuffle the data easily, the ability to easily batch the data and finally, to make data consumption more efficient via the ability to load the data in parallel using multiprocessing. As can be observed, there are three simple arguments to supply &#8211; first the data set you wish to load, second the batch size you desire and finally whether you wish to randomly shuffle the data. A data loader can be used as an iterator &#8211; so to extract the data we can just use the standard Python iterators such as enumerate. This will be shown in practice later in this tutorial.</p>
+<h2>Creating the model</h2>
+<p>Next, we need to setup our nn.Module class, which will define the Convolutional Neural Network which we are going to train:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class ConvNet(nn.Module):
+    def __init__(self):
+        super(ConvNet, self).__init__()
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2))
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2))
+        self.drop_out = nn.Dropout()
+        self.fc1 = nn.Linear(7 * 7 * 64, 1000)
+        self.fc2 = nn.Linear(1000, 10)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Ok &#8211; so this is where the model definition takes place. The most straight-forward way of creating a neural network structure in PyTorch is by creating a class which inherits from the nn.Module super class within PyTorch. The nn.Module is a very useful PyTorch class which contains all you need to construct your typical deep learning networks. It also has handy functions such as ways to move variables and operations onto a GPU or back to a CPU, apply recursive functions across all the properties in the class (i.e. resetting all the weight variables), creates streamlined interfaces for training and so on. It is worth checking out all the methods available <a href="https://pytorch.org/docs/stable/nn.html" target="_blank" rel="noopener">here</a>.</p>
+<p>The first step is to create some sequential layer objects within the class _init_ function. First, we create layer 1 (<em>self.layer1</em>) by creating a nn.Sequential object. This method allows us to create sequentially ordered layers in our network and is a handy way of creating a convolution + ReLU + pooling sequence. As can be observed, the first element in the sequential definition is the Conv2d nn.Module method &#8211; this method creates a set of convolutional filters. The first argument is the number of input channels &#8211; in this case, it is our single channel grayscale MNIST images, so the argument is 1. The second argument to Conv2d is the number of output channels &#8211; as shown in the model architecture diagram above, the first convolutional filter layer comprises of 32 channels, so this is the value of our second argument.</p>
+<p>The <em>kernel_size</em> argument is the size of the convolutional filter &#8211; in this case we want 5 x 5 sized convolutional filters &#8211; so the argument is 5. If you wanted filters with different sized shapes in the <em>x </em>and <em>y </em>directions, you&#8217;d supply a tuple (<em>x-size, y-size</em>). Finally, we want to specify the padding argument. This takes a little bit more thought. The output size of any dimension from either a convolutional filtering or pooling operation can be calculated by the following equation:</p>
+<p>$$W_{out} = \frac{(W_{in} &#8211; F + 2P)}{S} + 1$$</p>
+<p>Where $W_{in}$ is the width of the input, <em>F</em> is the filter size, <em>P </em>is the padding and <em>S</em> is the stride. The same formula applies to the height calculation, but seeing as our image and filtering are symmetrical the same formula applies to both. If we wish to keep our input and output dimensions the same, with a filter size of 5 and a stride of 1, it turns out from the above formula that we need a padding of 2. Therefore, the argument for padding in Conv2d is 2.</p>
+<p>The next element in the sequence is a simple ReLU activation. The last element that is added in the sequential definition for <em>self.layer1</em> is the max pooling operation. The first argument is the pooling size, which is 2 x 2 and hence the argument is 2. Second &#8211; we want to down-sample our data by reducing the effective image size by a factor of 2. To do this, using the formula above, we set the stride to 2 and the padding to zero. Therefore, the stride argument is equal to 2. The padding argument defaults to 0 if we don&#8217;t specify it &#8211; so that&#8217;s what is done in the code above. From these calculations, we now know that the output from <em>self.layer1</em> will be 32 channels of 14 x 14 &#8220;images&#8221;.</p>
+<p>Next, the second layer, <em>self.layer2,</em> is defined in the same way as the first layer. The only difference is that the input into the Conv2d function is now 32 channels, with an output of 64 channels. Using the same logic, and given the pooling down-sampling, the output from <em>self.layer2 </em>is 64 channels of 7 x 7 images.</p>
+<p>Next, we specify a drop-out layer to avoid over-fitting in the model. Finally, two two fully connected layers are created. The first layer will be of size 7 x 7 x 64 nodes and will connect to the second layer of 1000 nodes. To create a fully connected layer in PyTorch, we use the nn.Linear method. The first argument to this method is the number of nodes in the layer, and the second argument is the number of nodes in the following layer.</p>
+<p>With this _init_ definition, the layer definitions have now been created. The next step is to define how the data flows through these layers when performing the forward pass through the network:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">    def forward(self, x):
+        out = self.layer1(x)
+        out = self.layer2(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.drop_out(out)
+        out = self.fc1(out)
+        out = self.fc2(out)
+        return out</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>It is important to call this function &#8220;forward&#8221; as this will override the base forward function in nn.Module and allow all the nn.Module functionality to work correctly. As can be observed, it takes an input argument <em>x,</em> which is the data that is to be passed through the model (i.e. a batch of data). We pass this data into the first layer (<em>self.layer1</em>) and return the output as &#8220;out&#8221;. This output is then fed into the following layer and so on. Note, after <em>self.layer2</em>, we apply a reshaping function to <em>out</em>, which flattens the data dimensions from 7 x 7 x 64 into 3164 x 1. Next, the dropout is applied followed by the two fully connected layers, with the final output being returned from the function.</p>
+<p>Ok &#8211; so now we have defined what our Convolutional Neural Network is, and how it operates. It&#8217;s time to train the model.</p>
+<h2>Training the model</h2>
+<p>Before we train the model, we have to first create an instance of our ConvNet class, and define our loss function and optimizer:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = ConvNet()
+
+# Loss and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First, an instance of ConvNet() is created called &#8220;model&#8221;. Next, we define the loss operation that will be used to calculate the loss. In this case, we use PyTorch&#8217;s CrossEntropyLoss() function. You may have noticed that we haven&#8217;t yet defined a SoftMax activation for the final classification layer. This is because the CrossEntropyLoss function combines both a SoftMax activation and a cross entropy loss function in the same function &#8211; winning. Next, we define an Adam optimizer. The first argument passed to this function are the parameters we want the optimizer to train. This is made easy via the nn.Module class which ConvNet derives from &#8211; all we have to do is pass model.parameters() to the function and PyTorch keeps track of all the parameters within our model which are required to be trained. Finally, the learning rate is supplied.</p>
+<p>Next &#8211; the training loop is created:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Train the model
+total_step = len(train_loader)
+loss_list = []
+acc_list = []
+for epoch in range(num_epochs):
+    for i, (images, labels) in enumerate(train_loader):
+        # Run the forward pass
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss_list.append(loss.item())
+
+        # Backprop and perform Adam optimisation
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        # Track the accuracy
+        total = labels.size(0)
+        _, predicted = torch.max(outputs.data, 1)
+        correct = (predicted == labels).sum().item()
+        acc_list.append(correct / total)
+
+        if (i + 1) % 100 == 0:
+            print(&#039;Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%&#039;
+                  .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
+                          (correct / total) * 100))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The most important parts to start with are the two loops &#8211; first, the number of epochs is looped over, and within this loop, we iterate over train_loader using enumerate. Within this inner loop, first the outputs of the forward pass through the model are calculated by passing <em>images </em>(which is a batch of normalized MNIST images from <em>train_loader</em>) to it. Note, we don&#8217;t have to call <em>model.forward(images)</em> as nn.Module knows that <em>forward</em> needs to be called when it executes <em>model(images)</em>.</p>
+<p>The next step is to pass the model outputs and the true image labels to our CrossEntropyLoss function, defined as <em>criterion</em>. The loss is appended to a list that will be used later to plot the progress of the training. The next step is to perform back-propagation and an optimized training step. First, the gradients have to be zeroed, which can be done easily by calling zero_grad() on the optimizer. Next, we call .backward() on the <em>loss</em> variable to perform the back-propagation. Finally, now that the gradients have been calculated in the back-propagation, we simply call optimizer.step() to perform the Adam optimizer training step. PyTorch makes training the model very easy and intuitive.</p>
+<p>The next set of steps involves keeping track of the accuracy on the training set. The predictions of the model can be determined by using the torch.max() function, which returns the index of the maximum value in a tensor. The first argument to this function is the tensor to be examined, and the second argument is the axis over which to determine the index of the maximum. The output tensor from the model will be of size (batch_size, 10). To determine the model prediction, for each sample in the batch we need to find the maximum value over the 10 output nodes. Each of these will correspond to one of the hand written digits (i.e. output 2 will correspond to digit &#8220;2&#8221; and so on). The output node with the highest value will be the prediction of the model. Therefore, we need to set the second argument of the torch.max() function to 1 &#8211; this points the max function to examine the output node axis (axis=0 corresponds to the batch_size dimension).</p>
+<p>This returns a list of prediction integers from the model &#8211; the next line compares the predictions with the true labels (predicted == labels) and sums them to determine how many correct predictions there are. Note the output of sum() is still a tensor, so to access it&#8217;s value you need to call .item(). We divide the number of correct predictions by the batch_size (equivalent to labels.size(0)) to obtain the accuracy. Finally, during training, after every 100 iterations of the inner loop the progress is printed.</p>
+<p>The training output will look something like this:</p>
+<p>Epoch [1/6], Step [100/600], Loss: 0.2183, Accuracy: 95.00%<br />
+Epoch [1/6], Step [200/600], Loss: 0.1637, Accuracy: 95.00%<br />
+Epoch [1/6], Step [300/600], Loss: 0.0848, Accuracy: 98.00%<br />
+Epoch [1/6], Step [400/600], Loss: 0.1241, Accuracy: 97.00%<br />
+Epoch [1/6], Step [500/600], Loss: 0.2433, Accuracy: 95.00%<br />
+Epoch [1/6], Step [600/600], Loss: 0.0473, Accuracy: 98.00%<br />
+Epoch [2/6], Step [100/600], Loss: 0.1195, Accuracy: 97.00%</p>
+<p>Next, let&#8217;s create some code to determine the model accuracy on the test set.</p>
+<h2>Testing the model</h2>
+<p>To test the model, we use the following code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Test the model
+model.eval()
+with torch.no_grad():
+    correct = 0
+    total = 0
+    for images, labels in test_loader:
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+    print(&#039;Test Accuracy of the model on the 10000 test images: {} %&#039;.format((correct / total) * 100))
+
+# Save the model and plot
+torch.save(model.state_dict(), MODEL_STORE_PATH + &#039;conv_net_model.ckpt&#039;)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>As a first step, we set the model to evaluation mode by running model.eval(). This is a handy function which disables any drop-out or batch normalization layers in your model, which will befuddle your model evaluation / testing. The torch.no_grad() statement disables the autograd functionality in the model (see <a href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/">here</a> for more details) as it is not needing in model testing / evaluation, and this will act to speed up the computations. The rest is the same as the accuracy calculations during training, except that in this case, the code iterates through the <em>test_loader</em>.</p>
+<p>Finally, the result is output to the console, and the model is saved using the torch.save() function.</p>
+<p>In the the last part of the code on <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">the Github repo</a>, I perform some plotting of the loss and accuracy tracking using the Bokeh plotting library. The final results look like this:</p>
+<p>Test Accuracy of the model on the 10000 test images: 99.03 %</p>
+<figure id="attachment_951" style="width: 546px" class="wp-caption aligncenter"><img class=" wp-image-951" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results.png" alt="PyTorch Convolutional Neural Network results" width="546" height="386" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results.png 1147w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results-300x212.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results-768x542.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results-1024x723.png 1024w" sizes="(max-width: 546px) 100vw, 546px" /><figcaption class="wp-caption-text">PyTorch Convolutional Neural Network results</figcaption></figure>
+<p>As can be observed, the network quite rapidly achieves a high degree of accuracy on the training set, and the test set accuracy, after 6 epochs, arrives at 99% &#8211; not bad! Certainly better than the accuracy achieved in basic fully connected neural networks.</p>
+<p>In summary: in this tutorial you have learnt all about the benefits and structure of Convolutional Neural Networks and how they work. You have also learnt how to implement them in the awesome PyTorch deep learning framework &#8211; a framework which, in my view, has a big future. I hope it was useful &#8211; have fun in your deep learning journey!</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you&#8217;re more of a video learner, check out this inexpensive online course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1259546&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fpractical-deep-learning-with-pytorch%2F">Practical Deep Learning with PyTorch</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1259546&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/">Convolutional Neural Networks Tutorial in PyTorch</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/feed/</wfw:commentRss>
+		<slash:comments>7</slash:comments>
+		</item>
+		<item>
+		<title>A PyTorch tutorial &#8211; deep learning in Python</title>
+		<link>http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/</link>
+		<comments>http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/#respond</comments>
+		<pubDate>Thu, 26 Oct 2017 08:46:48 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[Neural networks]]></category>
+		<category><![CDATA[PyTorch]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=618</guid>
+		<description><![CDATA[<p>So &#8211; if you&#8217;re a follower of this blog and you&#8217;ve been trying out your own deep learning networks in TensorFlow and Keras, you&#8217;ve probably <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/" title="A PyTorch tutorial &#8211; deep learning in Python">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/">A PyTorch tutorial &#8211; deep learning in Python</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>So &#8211; if you&#8217;re a follower of this blog and you&#8217;ve been trying out your own deep learning networks in <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener">TensorFlow</a> and <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras</a>, you&#8217;ve probably come across the somewhat frustrating business of debugging these deep learning libraries. Sure, they have Python APIs, but it&#8217;s kinda hard to figure out what exactly is happening when something goes wrong. They also don&#8217;t seem to play well with Python libraries such as numpy, scipy, scikit-learn, Cython and so on. Enter the <a href="http://pytorch.org/" target="_blank" rel="noopener">PyTorch</a> deep learning library &#8211; one of it&#8217;s <a href="http://pytorch.org/about/" target="_blank" rel="noopener">purported benefits</a> is that is a deep learning library that is more at home in Python, which, for a Python aficionado like myself, sounds great. It also has nifty features such as dynamic computational graph construction as opposed to the static computational graphs present in TensorFlow and Keras (for more on computational graphs, see below). It&#8217;s also on the up and up, with its development supported by companies such as Facebook, Twitter, NVIDIA and so on. So let&#8217;s dive into it in this PyTorch tutorial.</p>
+<p>The first question to consider &#8211; is it better than TensorFlow? That&#8217;s a fairly subjective judgement &#8211; performance-wise there doesn&#8217;t appear to be a great deal of difference. Check out <a href="https://www.forbes.com/sites/quora/2017/07/10/is-pytorch-better-than-tensorflow/" target="_blank" rel="noopener">this article</a> for a quick comparison. In any case, its clear the PyTorch is here to stay and is likely to be a real contender in the &#8220;contest&#8221; between deep learning libraries, so let&#8217;s kick start our learning of it. I&#8217;ll leave it to you to decide which is &#8220;better&#8221;.</p>
+<p>In this PyTorch tutorial we will introduce some of the core features of PyTorch, and build a fairly simple densely connected neural network to classify hand-written digits. To learn how to build more complex models in PyTorch, check out my post <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/" target="_blank" rel="noopener">Convolutional Neural Networks Tutorial in PyTorch</a>.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you&#8217;re more of a video course learner, check out this inexpensive, highly rated, Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1259546&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fpractical-deep-learning-with-pytorch%2F" target="new">Practical Deep Learning with PyTorch</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1259546&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>A PyTorch tutorial &#8211; the basics</h1>
+<p>In this section, we&#8217;ll go through the basic ideas of PyTorch starting at tensors and computational graphs and finishing at the Variable class and the PyTorch autograd functionality.</p>
+<h2>Installing on Windows</h2>
+<p>For starters, if you are a Windows user like myself, you&#8217;ll find that there is no straight-forward installation options for that operating system on the <a href="http://pytorch.org/" target="_blank" rel="noopener">PyTorch website</a>. However, there is a successful way to do it, check out <a href="https://www.superdatascience.com/pytorch/">this website</a> for instructions. It&#8217;s well worth the effort to get this library installed if you are a Windows user like myself.</p>
+<h2>Computational graphs</h2>
+<p>The first thing to understand about any deep learning library is the idea of a computational graph. A computational graph is a set of calculations, which are called <em>nodes</em>, and these nodes are connected in a directional ordering of computation. In other words, some nodes are dependent on other nodes for their input, and these nodes in turn output the results of their calculations to other nodes. A simple example of a computational graph for the calculation $a = (b + c) * (c + 2)$ can be seen below &#8211; we can break this calculation up into the following steps/nodes:</p>
+<p>\begin{align}<br />
+d &amp;= b + c \\<br />
+e &amp;= c + 2 \\<br />
+a &amp;= d * e<br />
+\end{align}</p>
+<figure id="attachment_158" style="width: 220px" class="wp-caption aligncenter"><img class=" wp-image-158" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/03/Simple-graph-example.png" alt="PyTorch tutorial - simple computational graph" width="220" height="253" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/03/Simple-graph-example.png 296w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/03/Simple-graph-example-260x300.png 260w" sizes="(max-width: 220px) 100vw, 220px" /><figcaption class="wp-caption-text">Simple computational graph</figcaption></figure>
+<p>&nbsp;</p>
+<p>The benefits of using a computational graph is that each node is like its own independently functioning piece of code (once it receives all its required inputs). This allows various performance optimizations to be performed in running the calculations such as threading and multiple processing / parallelism. All the major deep learning frameworks (TensorFlow, Theano, PyTorch etc.) involve constructing such computational graphs, through which neural network operations can be built and through which gradients can be back-propagated (if you&#8217;re unfamiliar with back-propagation, see my <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">neural networks tutorial</a>).</p>
+<h2>Tensors</h2>
+<p>Tensors are matrix-like data structures which are essential components in deep learning libraries and efficient computation. Graphical Processing Units (GPUs) are especially effective at calculating operations between tensors, and this has spurred the surge in deep learning capability in recent times. In PyTorch, tensors can be declared simply in a number of ways:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">import torch
+x = torch.Tensor(2, 3)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This code creates a tensor of size (2, 3) &#8211; i.e. 2 rows and 3 columns, filled with zero float values i.e:</p>
+<div class="code-embed-wrapper"> <pre class="language-markdown code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-markdown code-embed-code"> 0  0  0
+ 0  0  0
+[torch.FloatTensor of size 2x3]</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>We can also create tensors filled random float values:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">x = torch.rand(2, 3)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Multiplying tensors, adding them and so forth is straight-forward:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">x = torch.ones(2,3)
+y = torch.ones(2,3) * 2
+x + y</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This returns:</p>
+<div class="code-embed-wrapper"> <pre class="language-markdown code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-markdown code-embed-code"> 3  3  3
+ 3  3  3
+[torch.FloatTensor of size 2x3]</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Another great thing is the numpy slice functionality that is available &#8211; for instance y[:, 1]
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">y[:,1] = y[:,1] + 1</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This returns:</p>
+<div class="code-embed-wrapper"> <pre class="language-markdown code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-markdown code-embed-code"> 2  3  2
+ 2  3  2
+[torch.FloatTensor of size 2x3]</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now you know how to create tensors and manipulate them in PyTorch, in the next step of this PyTorch tutorial let&#8217;s look at something a bit more complicated.</p>
+<h2>Autograd in PyTorch</h2>
+<p>In any deep learning library, there needs to be a mechanism where error gradients are calculated and back-propagated through the computational graph. This mechanism, called autograd in PyTorch, is easily accessible and intuitive. The Variable class is the main component of this autograd system in PyTorch. This Variable class wraps a tensor, and allows automatic gradient computation on the tensor when the .backward() function is called (more on this later). The object contains the data of the tensor, the gradient of the tensor (once computed with respect to some other value i.e. the loss) and also contains a reference to whatever function created the variable (if it is a user created function, this reference will be null).</p>
+<p>Let&#8217;s create a Variable from a simple tensor:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">x = Variable(torch.ones(2, 2) * 2, requires_grad=True)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the Variable declaration above, we pass in a tensor of (2, 2) 2-values and we specify that this variable requires a gradient. If we were using this in a neural network, this would mean that this Variable would be trainable. If we set this flag to False, the Variable would not be trained. For this simple example we aren&#8217;t training anything, but we do want to interrogate the gradient for this Variable as will be shown below.</p>
+<p>Next, let&#8217;s create another Variable, constructed based on operations on our original Variable <em>x</em>.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">z = 2 * (x * x) + 5 * x</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>To get the gradient of this operation with respect to <em>x</em> i.e. <em>dz/dx</em> we can analytically calculate this to by 4x +5. If all elements of <em>x</em> are 2, then we should expect the gradient <em>dz/dx</em> to be a (2, 2) shaped tensor with 13-values. However, first we have to run the .backwards() operation to compute these gradients. Of course, to compute gradients, we need to compute them with respect to something. In this case, we can supply a (2,2) tensor of 1-values to be what we compute the gradients against &#8211; so the calculation simply becomes <em>d/dx</em>:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">z.backward(torch.ones(2, 2))
+print(x.grad)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This produces the following output:</p>
+<div class="code-embed-wrapper"> <pre class="language-markdown code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-markdown code-embed-code">Variable containing:
+ 13  13
+ 13  13
+[torch.FloatTensor of size 2x2]</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>As you can observe, the gradient is equal to a (2, 2), 13-valued tensor as we predicted. Note that the gradient is stored in the <em>x </em>Variable, in the property .grad.</p>
+<p>Now that we&#8217;ve covered the basics of tensors, Variables and the autograd functionality within PyTorch, we can move onto creating a simple neural network in PyTorch which will showcase this functionality further.</p>
+<h1>Creating a neural network in PyTorch</h1>
+<p>This section is the main show of this PyTorch tutorial. To access the code for this tutorial, check out this website&#8217;s <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">Github repository</a>. Here we will create a simple 4-layer  fully connected neural network (including an &#8220;input layer&#8221; and two hidden layers) to classify the hand-written digits of the MNIST dataset. The architecture we&#8217;ll use can be seen in the figure below:</p>
+<figure id="attachment_439" style="width: 413px" class="wp-caption aligncenter"><img class="size-full wp-image-439" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/CNTK-Dense-example-architecture.jpg" alt="PyTorch tutorial - fully connected neural network example architecture" width="413" height="334" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/CNTK-Dense-example-architecture.jpg 413w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/CNTK-Dense-example-architecture-300x243.jpg 300w" sizes="(max-width: 413px) 100vw, 413px" /><figcaption class="wp-caption-text">Fully connected neural network example architecture</figcaption></figure>
+<p>The input layer consists of 28 x 28 (=784) greyscale pixels which constitute the input data of the MNIST data set. This input is then passed through two fully connected hidden layers, each with 200 nodes, with the nodes utilizing a <a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)" target="_blank" rel="noopener">ReLU</a> activation function. Finally, we have an output layer with ten nodes corresponding to the 10 possible classes of hand-written digits (i.e. 0 to 9). We will use a <a href="https://en.wikipedia.org/wiki/Softmax_function" target="_blank" rel="noopener">softmax</a> output layer to perform this classification.</p>
+<p>Let&#8217;s create the neural network.</p>
+<h2>The neural network class</h2>
+<p>In order to create a neural network in PyTorch, you need to use the included class nn.Module. To use this base class, we also need to use Python <a href="https://docs.python.org/2/tutorial/classes.html" target="_blank" rel="noopener">class inheritance</a> &#8211; this basically allows us to use all of the functionality of the nn.Module base class, but still have overwriting capabilities of the base class for the model construction / forward pass through the network. Some actual code will help explain:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">import torch.nn as nn
+import torch.nn.functional as F
+
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.fc1 = nn.Linear(28 * 28, 200)
+        self.fc2 = nn.Linear(200, 200)
+        self.fc3 = nn.Linear(200, 10)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the class definition, you can see the inheritance of the base class nn.Module. Then, in the first line of the class initialization (def __init__(self):) we have the required Python super() function, which creates an instance of the base nn.Module class. The following three lines is where we create our fully connected layers as per the architecture diagram. A fully connected neural network layer is represented by the nn.Linear object, with the first argument in the definition being the number of nodes in layer <em>l</em> and the next argument being the number of nodes in layer <em>l+1</em>. As you can observer, the first layer takes the 28 x 28 input pixels and connects to the first 200 node hidden layer. Then we have another 200 to 200 hidden layer, and finally a connection between the last hidden layer and the output layer (with 10 nodes).</p>
+<p>Now we&#8217;ve setup the &#8220;skeleton&#8221; of our network architecture, we have to define how data flows through out network. We do this by defining a <em>forward</em>() method in our class &#8211; this method overwrites a dummy method in the base class, and needs to be defined for each network:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def forward(self, x):
+    x = F.relu(self.fc1(x))
+    x = F.relu(self.fc2(x))
+    x = self.fc3(x)
+    return F.log_softmax(x)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>For the <em>forward()</em> method, we supply the input data <em>x</em> as the primary argument. We feed this into our first fully connected layer <em>(self.fc1(x))</em> and then apply a ReLU activation to the nodes in this layer using <em>F.relu()</em>. Because of the hierarchical nature of this network, we replace <em>x</em> at each stage, feeding it into the next layer. We do this through our three fully connected layers, except for the last one &#8211; instead of a ReLU activation we return a log softmax &#8220;activation&#8221;. This, combined with the negative log likelihood loss function which will be defined later, gives us a multi-class cross entropy based loss function which we will use to train the network.</p>
+<p>So that&#8217;s it &#8211; we&#8217;ve defined our neural network. Pretty easy right?</p>
+<p>The next step is to create an instance of this network architecture:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">net = Net()
+print(net)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>When we print the instance of the class Net, we get the following output:</p>
+<blockquote><p>Net (<br />
+(fc1): Linear (784 -&gt; 200)<br />
+(fc2): Linear (200 -&gt; 200)<br />
+(fc3): Linear (200 -&gt; 10)<br />
+)</p></blockquote>
+<p>This is pretty handy as it confirms the structure of our network for us.</p>
+<h2>Training the network</h2>
+<p>Next we have to setup an optimizer and a loss criterion:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create a stochastic gradient descent optimizer
+optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
+# create a loss function
+criterion = nn.NLLLoss()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the first line, we create a stochastic gradient descent optimizer, and we specify the learning rate (which I&#8217;ve passed to this function as 0.01) and a momentum of 0.9. The other ingredient we need to supply to our optimizer is all the parameters of our network &#8211; thankfully PyTorch make supplying these parameters easy by the .parameters() method of the base nn.Module class that we inherit from in the Net class.</p>
+<p>Next, we set our loss criterion to be the negative log likelihood loss &#8211; this combined with our log softmax output from the neural network gives us an equivalent cross entropy loss for our 10 classification classes.</p>
+<p>Now it&#8217;s time to train the network. During training, I will be extracting data from a data loader object which is included in the PyTorch utilities module. I won&#8217;t go into the details here (I&#8217;ll leave that for a future post), but you can find the code on this site&#8217;s <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">Github repository</a>. This data loader will supply batches of input and target data which we&#8217;ll supply to our network and loss function respectively. Here&#8217;s the full training code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># run the main training loop
+for epoch in range(epochs):
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = Variable(data), Variable(target)
+        # resize data from (batch_size, 1, 28, 28) to (batch_size, 28*28)
+        data = data.view(-1, 28*28)
+        optimizer.zero_grad()
+        net_out = net(data)
+        loss = criterion(net_out, target)
+        loss.backward()
+        optimizer.step()
+        if batch_idx % log_interval == 0:
+            print(&#039;Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}&#039;.format(
+                    epoch, batch_idx * len(data), len(train_loader.dataset),
+                           100. * batch_idx / len(train_loader), loss.data[0]))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The outer training loop is the number of epochs, whereas the inner training loop runs through the entire training set in batch sizes which are specified in the code as batch_size. On the next line, we convert <em>data</em> and <em>target</em> into PyTorch variables. The MNIST input data-set which is supplied in the <em>torchvision</em> package (which you&#8217;ll need to install using pip if you run the code for this tutorial) has the size (batch_size, 1, 28, 28) when extracted from the data loader &#8211; this 4D tensor is more suited to <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener">convolutional neural network</a> architecture, and not so much our fully connected network. Therefore we need to flatten out the (1, 28, 28) data to a single dimension of 28 x 28 =  784 input nodes.</p>
+<p>The .view() function operates on PyTorch variables to reshape them. If we want to be agnostic about the size of a given dimension, we can use the &#8220;-1&#8221; notation in the size definition. So by using <em>data.view(-1, 28*28)</em> we say that the second dimension must be equal to 28 x 28, but the first dimension should be calculated from the size of the original data variable. In practice, this means that <em>data</em> will now be of size (batch_size, 784). We can pass a batch of input data like this into our network and the magic of PyTorch will do all the hard work by efficiently performing the required operations on the tensors.</p>
+<p>On the next line, we run <em>optimizer.zero_grad()</em> &#8211; this zeroes / resets all the gradients in the model, so that it is ready to go for the next back propagation pass. In other libraries this is performed implicitly, but in PyTorch you have to remember to do it explicitly. Let&#8217;s single out the next two lines:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">net_out = net(data)
+loss = criterion(net_out, target)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first line is where we pass the input data batch into the model &#8211; this will actually call the <em>forward()</em> method in our Net class. After this line is run, the variable <em>net_out</em> will now hold the log softmax output of our neural network for the given data batch. That&#8217;s one of the great things about PyTorch, you can activate whatever normal Python debugger you usually use and instantly get a gauge of what is happening in your network. This is opposed to other deep learning libraries such as TensorFlow and Keras which require elaborate debugging sessions to be setup before you can check out what your network is actually producing. I hope you&#8217;ll play around with how useful this debugging is, by utilizing the code for this PyTorch tutorial <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">here</a>.</p>
+<p>The second line is where we get the negative log likelihood loss between the output of our network and our target batch data.</p>
+<p>Let&#8217;s look at the next two lines:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">loss.backward()
+optimizer.step()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first line here runs a back-propagation operation from the loss Variable backwards through the network. If you compare this with our review of the .backward() operation that we undertook earlier in this PyTorch tutorial, you&#8217;ll notice that we aren&#8217;t supplying the .backward() operation with an argument. Scalar variables, when we call .backward() on them, don&#8217;t require arguments &#8211; only tensors require a matching sized tensor argument to be passed to the .backward() operation.</p>
+<p>The next line is where we tell PyTorch to execute a gradient descent step based on the gradients calculated during the .backward() operation.</p>
+<p>Finally, we print out some results every time we reach a certain number of iterations:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">if batch_idx % log_interval == 0:
+    print(&#039;Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}&#039;.format(
+                    epoch, batch_idx * len(data), len(train_loader.dataset),
+                           100. * batch_idx / len(train_loader), loss.data[0]))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This print function shows our progress through the epochs and also gives the network loss at that point in the training. Note how you access the loss &#8211; you access the Variable .data property, which in this case will be a single valued array. We access the scalar loss by executing loss.data[0].</p>
+<p>Running this training loop you&#8217;ll get an output that looks something like this:</p>
+<blockquote><p>Train Epoch: 9 [52000/60000 (87%)] Loss: 0.015086</p>
+<p>Train Epoch: 9 [52000/60000 (87%)] Loss: 0.015086</p>
+<p>Train Epoch: 9 [54000/60000 (90%)] Loss: 0.030631</p>
+<p>Train Epoch: 9 [56000/60000 (93%)] Loss: 0.052631</p>
+<p>Train Epoch: 9 [58000/60000 (97%)] Loss: 0.052678</p></blockquote>
+<p>After 10 epochs, you should get a loss value down around the &lt;0.05 magnitude.</p>
+<h2>Testing the network</h2>
+<p>To test the trained network on our test MNIST data set, we can run the following code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># run a test loop
+test_loss = 0
+correct = 0
+for data, target in test_loader:
+    data, target = Variable(data, volatile=True), Variable(target)
+    data = data.view(-1, 28 * 28)
+    net_out = net(data)
+    # sum up batch loss
+    test_loss += criterion(net_out, target).data[0]
+    pred = net_out.data.max(1)[1]  # get the index of the max log-probability
+    correct += pred.eq(target.data).sum()
+
+test_loss /= len(test_loader.dataset)
+print(&#039;\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n&#039;.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / len(test_loader.dataset)))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This loop is the same as the previous training loop up until the <em>test_loss</em> line &#8211; here we extract the network loss using the .data[0] property as before, but all in the same line. Next, we have the <em>pred</em> line, where the data.max(1) method is used &#8211; this .max() method can return the index of the maximum value in a certain dimension of a tensor. Now, the output of our neural network will be of size (batch_size, 10), where each value of the 10-length second dimension is a log probability which the network assigns to each output class (i.e. it is the log probability of whether the given image is a digit between 0 and 9). So for each input sample/row in the batch, net_out.data will look something like this:</p>
+[-1.3106e+01, -1.6731e+01, -1.1728e+01, -1.1995e+01, -1.5886e+01, -1.7700e+01, -2.4950e+01, -5.9817e-04, -1.3334e+01, -7.4527e+00]
+<p>&nbsp;</p>
+<p>The value with the highest log probability is the digit that the network considers to be the most probable given the input image &#8211; this is the best prediction of the class from the network. In the example of net_out.data above, it is the value -5.9817e-04 which is maximum, which corresponds to the digit &#8220;7&#8221;. So for this sample, the predicted digit is &#8220;7&#8221;. The .max(1) function will determine this maximum value in the second dimension (if we wanted the maximum in the first dimension, we&#8217;d supply an argument of 0) and returns both the maximum value that it has found, and the index that this maximum value was found at. It therefore has a size of (batch_size, 2) &#8211; in this case we are interested in the index where the maximum value is found at, therefore we access these values by calling .max(1)[1].</p>
+<p>Now we have the prediction of the neural network for each sample in the batch determined, we can compare this with the actual target class from our training data, and count how many times in the batch the neural network got it right. We can use the PyTorch .eq() function to do this, which compares the values in two tensors and if they match, returns a 1. If they don&#8217;t match, it returns a 0:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">correct += pred.eq(target.data).sum()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>By summing the output of the .eq() function, we get a count of the number of times the neural network has produced a correct output, and we take an accumulating sum of these correct predictions so that we can determine the overall accuracy of the network on our test data set. Finally, after running through the test data in batches, we print out the averaged loss and accuracy:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">test_loss /= len(test_loader.dataset)
+print(&#039;\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n&#039;.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / len(test_loader.dataset)))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>After training the network for 10 epochs, we get the following output from the above code on the test data:</p>
+<blockquote><p>Test set: Average loss: 0.0003, Accuracy: 9783/10000 (98%)</p></blockquote>
+<p>A 98% accuracy &#8211; not bad!</p>
+<p>So there you have it &#8211; this PyTorch tutorial has shown you the basic ideas in PyTorch, from tensors to the autograd functionality, and finished with how to build a fully connected neural network using the nn.Module. I hope it was helpful. If you&#8217;d like to learn more about PyTorch, check out my post on <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/" target="_blank" rel="noopener">Convolutional Neural Networks in PyTorch</a>.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you&#8217;re more of a video course learner, check out this inexpensive, highly rated, Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1259546&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fpractical-deep-learning-with-pytorch%2F" target="new">Practical Deep Learning with PyTorch</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1259546&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/">A PyTorch tutorial &#8211; deep learning in Python</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+	</channel>
+</rss>

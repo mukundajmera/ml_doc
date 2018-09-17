@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Convolutional Neural Networks &#8211; Adventures in Machine Learning</title>
+	<atom:link href="http://adventuresinmachinelearning.com/category/deep-learning/convolutional-neural-networks/feed/" rel="self" type="application/rss+xml" />
+	<link>http://adventuresinmachinelearning.com</link>
+	<description>Learn and explore machine learning</description>
+	<lastBuildDate>Sun, 09 Sep 2018 07:53:16 +0000</lastBuildDate>
+	<language>en-AU</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.9.8</generator>
+	<item>
+		<title>Convolutional Neural Networks Tutorial in PyTorch</title>
+		<link>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/</link>
+		<comments>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/#comments</comments>
+		<pubDate>Sat, 16 Jun 2018 06:29:54 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Convolutional Neural Networks]]></category>
+		<category><![CDATA[PyTorch]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=922</guid>
+		<description><![CDATA[<p>In a previous introductory tutorial on neural networks, a three layer neural network was developed to classify the hand-written digits of the MNIST dataset. In <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/" title="Convolutional Neural Networks Tutorial in PyTorch">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/">Convolutional Neural Networks Tutorial in PyTorch</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In a <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">previous introductory tutorial on neural networks</a>, a three layer neural network was developed to classify the hand-written digits of the <a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank" rel="noopener">MNIST</a> dataset. In the end, it was able to achieve a classification accuracy around 86%. For a simple data set such as MNIST, this is actually quite poor. Further optimizations can bring densely connected networks of a modest size up to 97-98% accuracy. This is significantly better, but still not that great for MNIST. We need something more state-of-the-art, some method which can truly be called <em>deep learning</em>. This tutorial will present just such a <em>deep learning </em>method that can achieve very high accuracy in image classification tasks &#8211;  the Convolutional Neural Network. In particular, this tutorial will show you both the theory and practical application of Convolutional Neural Networks in PyTorch.</p>
+<p>PyTorch is a powerful deep learning framework which is rising in popularity, and it is thoroughly at home in Python which makes rapid prototyping very easy. This tutorial won&#8217;t assume much in regards to prior knowledge of PyTorch, but it might be helpful to checkout my <a href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/" target="_blank" rel="noopener">previous introductory tutorial to PyTorch</a>. All the code for this Convolutional Neural Networks tutorial can be found on this site&#8217;s Github repository &#8211; found <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">here</a>. Let&#8217;s get to it.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you&#8217;re more of a video learner, check out this inexpensive online course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1259546&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fpractical-deep-learning-with-pytorch%2F">Practical Deep Learning with PyTorch</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1259546&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>Why Convolutional Neural Networks?</h1>
+<p>Fully connected networks with a few layers can only do so much &#8211; to get close to state-of-the-art results in image classification it is necessary to go <em>deeper.</em> In other words, lots more layers are required in the network. However, by adding a lot of additional layers, we come across some problems. First, we can run into the <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/" target="_blank" rel="noopener">vanishing gradient problem</a>. &#8211; however, this can be solved to an extent by using sensible activation functions, such as the ReLU family of activations. Another issue for deep fully connected networks is that the number of trainable parameters in the model (i.e. the weights) can grow rapidly. This means that the training slows down or becomes practically impossible, and also exposes the model to overfitting. So what&#8217;s a solution?</p>
+<p>Convolutional Neural Networks try to solve this second problem by exploiting correlations between adjacent inputs in images (or time series). For instance, in an image of a cat and a dog, the pixels close to the cat&#8217;s eyes are more likely to be correlated with the nearby pixels which show the cat&#8217;s nose &#8211; rather than the pixels on the other side of the image that represent the dog&#8217;s nose. This means that not every node in the network needs to be connected to every other node in the next layer &#8211; and this cuts down the number of weight parameters required to be trained in the model. Convolution Neural Networks also have some other tricks which improve training, but we&#8217;ll get to these in the next section.</p>
+<h1>How does a Convolutional Neural Network work?</h1>
+<p>The first thing to understand in a Convolutional Neural Network is the actual <em>convolution</em> part. This is a fancy mathematical word for what is essentially a moving window or filter across the image being studied. This moving window applies to a certain neighborhood of nodes as shown below &#8211; here, the filter applied is (0.5 $\times$ the node value):</p>
+<figure id="attachment_262" style="width: 632px" class="wp-caption aligncenter"><img class=" wp-image-262" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter.jpg" alt="Convolutional neural network tutorial - moving filter" width="632" height="269" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter.jpg 733w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-300x128.jpg 300w" sizes="(max-width: 632px) 100vw, 632px" /><figcaption class="wp-caption-text">Moving 2&#215;2 filter (all weights = 0.5)</figcaption></figure>
+<p>Only two outputs have been shown in the diagram above, where each output node is a map from a 2 x 2 input square. The weight of the mapping of each input square, as previously mentioned, is 0.5 across all four inputs. So the output can be calculated as:</p>
+<p>$$\begin{align}<br />
+out_1 &amp;= 0.5 in_1 + 0.5 in_2 + 0.5 in_6 + 0.5 in_7 \\<br />
+&amp;= 0.5 \times 2.0 + 0.5 \times 3.0 + 0.5 \times 2.0 + 0.5 \times 1.5  \\<br />
+&amp;= 4.25 \\<br />
+out_2 &amp;= 0.5 in_2 + 0.5 in_3 + 0.5 in_7 + 0.5 in_8 \\<br />
+&amp;= 0.5 \times 3.0 + 0.5 \times 0.0 + 0.5 \times 1.5 + 0.5 \times 0.5  \\<br />
+&amp;= 2.5 \\<br />
+\end{align}$$</p>
+<p>In the convolutional part of the neural network, we can imagine this 2 x 2 moving filter sliding across all the available nodes / pixels in the input image. This operation can also be illustrated using standard neural network node diagrams:</p>
+<figure id="attachment_269" style="width: 349px" class="wp-caption aligncenter"><img class=" wp-image-269" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram.jpg" alt="Convolutional neural network tutorial - moving filter node diagram" width="349" height="379" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram.jpg 445w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram-276x300.jpg 276w" sizes="(max-width: 349px) 100vw, 349px" /><figcaption class="wp-caption-text">Moving 2&#215;2 filter &#8211; node diagram</figcaption></figure>
+<p>The first position of the moving filter connections is illustrated by the blue connections, and the second is shown with the green lines. The weights of each of these connections, as stated previously, is 0.5.</p>
+<p>There are a few things in this convolutional step which improve training by reducing parameters/weights:</p>
+<ul>
+<li><em>Sparse </em>connections &#8211; not every node in the first / input layer is connected to every node in the second layer. This is contrary to fully connected neural networks, where every node is connected to every other in the following layer.</li>
+<li>Constant filter parameters &#8211; each filter has constant parameters. In other words, as the filter moves around the image, the same weights are applied to each 2 x 2 set of nodes. Each filter, as such, can be trained to perform a certain specific transformation of the input space. Therefore, each filter has a certain set of weights that are applied for each convolution operation &#8211; this reduces the number of parameters.
+<ul>
+<li>Note &#8211; this is not to say that each weight is constant <em>within </em>the filter. In the example above, the weights were [0.5, 0.5, 0.5, 0.5] but could have just as easily been something like [0.25, 0.1, 0.8, 0.001]. It all depends on how each filter is trained</li>
+</ul>
+</li>
+</ul>
+<p>These two properties of Convolutional Neural Networks can drastically reduce the number of parameters which need to be trained compared to fully connected neural networks.</p>
+<p>The next step in the Convolutional Neural Network structure is to pass the output of the convolution operation through a non-linear activation function &#8211; generally some version of the <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/">ReLU activation function</a>. This provides the standard non-linear behavior that neural networks are known for.</p>
+<p>The process involved in this convolutional block is often called <em>feature mapping &#8211; </em>this refers to the idea that each convolutional filter can be trained to &#8220;search&#8221; for different features in an image, which can then be used in classification. Before we move onto the next main feature of Convolutional Neural Networks, called <em>pooling</em>, we will examine this idea of feature mapping and <em>channels</em> in the next section.</p>
+<h2>Feature mapping and multiple channels</h2>
+<p>As mentioned previously, because the weights of individual filters are held constant as they are applied over the input nodes, they can be trained to select certain features from the input data. In the case of images, it may learn to recognize common geometrical objects such as lines, edges and other shapes which make up objects. This is where the name <em>feature mapping</em> comes from. Because of this, any convolution layer needs multiple filters which are trained to detect different features. So therefore, the previous moving filter diagram needs to be updated to look something like this:</p>
+<figure id="attachment_273" style="width: 581px" class="wp-caption aligncenter"><img class=" wp-image-273" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters.jpg" alt="Convolutional neural networks tutorial - multiple filters" width="581" height="235" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters.jpg 771w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters-300x121.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters-768x311.jpg 768w" sizes="(max-width: 581px) 100vw, 581px" /><figcaption class="wp-caption-text">Multiple convolutional filters</figcaption></figure>
+<p>Now you can see on the right hand side of the diagram above that there are multiple, stacked outputs from the convolution operation. This is because there are multiple trained filters which produce their own 2D output (for a 2D image). These multiple filters are commonly called <em>channels</em> in deep learning. Each of these channels will end up being trained to detect certain key features in the image. The output of a convolution layer, for a gray-scale image like the MNIST dataset, will therefore actually have 3 dimensions &#8211; 2D for each of the channels, then another dimension for the number of different channels.</p>
+<p>If the input is itself multi-channelled, as in the case of a color RGB image (one channel for each R-G-B), the output will actually be <strong>4D</strong>. Thankfully, any deep learning library worth its salt, PyTorch included, will be able to handle all this mapping easily for you. Finally, don&#8217;t forget that the output of the convolution operation will be passed through an activation for each node.</p>
+<p>Now, the next vitally important part of Convolutional Neural Networks is a concept called <em>pooling</em>.</p>
+<h2>Pooling</h2>
+<p>There are two main benefits to pooling in Convolutional Neural Networks. These are:</p>
+<ul>
+<li>It reduces the number of parameters in your model by a process called <em>down-sampling</em></li>
+<li>It makes feature detection more robust to object orientation and scale changes</li>
+</ul>
+<p>So what is pooling? It is another sliding window type technique, but instead of applying weights, which can be trained, it applies a statistical function of some type over the contents of its window. The most common type of pooling is called <em>max pooling</em>, and it applies the <em>max()</em> function over the contents of the window. There are other variants such as <em>mean pooling</em> (which takes the statistical mean of the contents) which are also used in some cases. In this tutorial, we will be concentrating on max pooling. The diagram below shows an example of the max pooling operation:</p>
+<figure id="attachment_278" style="width: 588px" class="wp-caption aligncenter"><img class=" wp-image-278" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling.jpg" alt="Convolutional neural network tutorial - max pooling example" width="588" height="265" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling.jpg 807w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling-300x135.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling-768x346.jpg 768w" sizes="(max-width: 588px) 100vw, 588px" /><figcaption class="wp-caption-text">Max pooling example (with padding)</figcaption></figure>
+<p>We&#8217;ll go through a number of points relating to the diagram above:</p>
+<h3>The basics</h3>
+<p>In the diagram above, you can observe the max pooling taking effect. For the first window, the blue one, you can see that the max pooling outputs a 3.0 which is the maximum node value in the 2&#215;2 window. Likewise for the green 2&#215;2 window it outputs the maximum of 5.0 and a maximum of 7.0 for the red window. This is pretty straight-forward.</p>
+<h3>Strides and down-sampling</h3>
+<p>In the pooling diagram above, you will notice that the pooling window shifts to the right each time by 2 places. This is called a <em>stride</em> of 2. In the diagram above, the stride is only shown in the <em>x</em> direction, but, if the goal was to prevent pooling window overlap, the stride would also have to be 2 in the <em>y</em> direction as well. In other words, the stride is actually specified as [2, 2]. One important thing to notice is that, if during pooling the stride is greater than 1, then the output size will be reduced. As can be observed above, the 5 x 5 input is reduced to a 3 x 3 output. This is a good thing &#8211; it is called down-sampling, and it reduces the number of trainable parameters in the model.</p>
+<h3>Padding</h3>
+<p>Another thing to notice in the pooling diagram above is that there is an extra column and row added to the 5 x 5 input &#8211; this makes the effective size of the pooling space equal to 6 x 6. This is to ensure that the 2 x 2 pooling window can operate correctly with a stride of [2, 2] and is called <em>padding</em>. These nodes are basically dummy nodes &#8211; because the values of these dummy nodes is 0, they are basically invisible to the max pooling operation. Padding will need to be considered when constructing our Convolutional Neural Network in PyTorch.</p>
+<p>Ok, so now we understand how pooling works in Convolutional Neural Networks, and how it is useful in performing down-sampling, but what else does it do? Why is max pooling used so frequently?</p>
+<h3>Why is pooling used in convolutional neural networks?</h3>
+<p>In addition to the function of down-sampling, pooling is used in Convolutional Neural Networks to make the detection of certain features somewhat invariant to scale and orientation changes. Another way of thinking about what pooling does is that it generalizes over lower level, more complex information. Let&#8217;s imagine the case where we have convolutional filters that, during training, learn to detect the digit &#8220;9&#8221; in various orientations within the input images. In order for the Convolutional Neural Network to learn to classify the appearance of &#8220;9&#8221; in the image correctly, it needs to in some way &#8220;activate&#8221; whenever a &#8220;9&#8221; is found anywhere in the image, no matter what the size or orientation the digit is (except for when it looks like &#8220;6&#8221;, that is). Pooling can assist with this higher level, generalized feature selection, as the diagram below shows:</p>
+<figure id="attachment_289" style="width: 521px" class="wp-caption aligncenter"><img class=" wp-image-289" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2.jpg" alt="Convolutional neural networks tutorial - stylised representation of pooling" width="521" height="198" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2.jpg 793w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2-300x114.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2-768x292.jpg 768w" sizes="(max-width: 521px) 100vw, 521px" /><figcaption class="wp-caption-text">Stylized representation of pooling</figcaption></figure>
+<p>The diagram is a stylized representation of the pooling operation. If we consider that a small region of the input image has a digit &#8220;9&#8221; in it (green box) and assume we are trying to detect such a digit in the image, what will happen is that, if we have a few convolutional filters, they will learn to activate (via the ReLU) when they &#8220;see&#8221; a &#8220;9&#8221; in the image (i.e. return a large output). However, they will activate more or less strongly depending on what orientation the &#8220;9&#8221; is. We want the network to detect a &#8220;9&#8221; in the image regardless of what the orientation is and this is where the pooling comes it. It &#8220;looks&#8221; over the output of these three filters and gives a high output so long as <em>any one</em> of these filters has a high activation.</p>
+<p>Therefore, pooling acts as a <em>generalizer</em> of the lower level data, and so, in a way, enables the network to move from high resolution <em>data </em>to lower resolution <em>information. </em>In other words, pooling coupled with convolutional filters attempts to detect <em>objects</em> within an image.</p>
+<h2>The final picture</h2>
+<p>The image below from Wikipedia shows the structure of a fully developed Convolutional Neural Network:</p>
+<figure id="attachment_290" style="width: 576px" class="wp-caption aligncenter"><img class=" wp-image-290" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn.png" alt="Convolutional neural networks tutorial - full diagram" width="576" height="177" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn.png 1040w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-300x92.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-768x236.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-1024x315.png 1024w" sizes="(max-width: 576px) 100vw, 576px" /><figcaption class="wp-caption-text">Full convolutional neural network &#8211; By Aphex34 (Own work) [<a href="http://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>], <a href="https://commons.wikimedia.org/wiki/File%3ATypical_cnn.png">via Wikimedia Commons</a></figcaption></figure>If you work the image above from left to right, we first see that there is an image of a robot. Then &#8220;scanning&#8221; over this image are a series of convolutional filters or feature maps. The output of these filters is then sub-sampled by pooling operations. After this, there is another set of convolutions and pooling on the output of the first convolution-pooling operation. Finally, at the output there is &#8220;attached&#8221; a fully connected layer. The purpose of this fully connected layer at the output of the network requires some explanation.</p>
+<h3>The fully connected layer</h3>
+<p>As previously discussed, a Convolutional Neural Network takes high resolution data and effectively resolves that into representations of objects. The fully connected layer can therefore be thought of as attaching a standard classifier onto the information-rich output of the network, to &#8220;interpret&#8221; the results and finally produce a classification result. In order to attach this fully connected layer to the network, the dimensions of the output of the Convolutional Neural Network need to be flattened.</p>
+<p>Consider the previous diagram &#8211; at the output, we have multiple channels of <em>x </em>x <em>y</em> matrices/tensors. These channels need to be flattened to a single (N X 1) tensor. Consider an example &#8211; let&#8217;s say we have 100 channels of 2 x 2 matrices, representing the output of the final pooling operation of the network. Therefore, this needs to be flattened to 2 x 2 x 100 = 400 rows. This can be easily performed in PyTorch, as will be demonstrated below.</p>
+<p>Now the basics of Convolutional Neural Networks has been covered, it is time to show how they can be implemented in PyTorch.</p>
+<h1>Implementing Convolutional Neural Networks in PyTorch</h1>
+<p>Any deep learning framework worth its salt will be able to easily handle Convolutional Neural Network operations. PyTorch is such a framework. In this section, I&#8217;ll show you how to create Convolutional Neural Networks in PyTorch, going step by step. Ideally, you will already have some notion of the basics of PyTorch (if not, you can check out my <a href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/" target="_blank" rel="noopener">introductory PyTorch tutorial</a>) &#8211; otherwise, you&#8217;re welcome to wing it. The network we&#8217;re going to build will perform MNIST digit classification. The full code for the tutorial can be found at <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">this site&#8217;s Github repository</a>.</p>
+<p>The Convolutional Neural Network architecture that we are going to build can be seen in the diagram below:</p>
+<figure id="attachment_293" style="width: 1725px" class="wp-caption alignnone"><img class="size-full wp-image-293" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg" alt="PyTorch CNN tutorial - network" width="1725" height="572" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg 1725w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-300x99.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-768x255.jpg 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-1024x340.jpg 1024w" sizes="(max-width: 1725px) 100vw, 1725px" /><figcaption class="wp-caption-text">Convolutional neural network that will be built</figcaption></figure>
+<p>First up, we can see that the input images will be 28 x 28 pixel greyscale representations of digits. The first layer will consist of 32 channels of 5 x 5 convolutional filters + a ReLU activation, followed by 2 x 2 max pooling down-sampling with a stride of 2 (this gives a 14 x 14 output). In the next layer, we have the 14 x 14 output of layer 1 being scanned again with 64 channels of 5 x 5 convolutional filters and a final 2 x 2 max pooling (stride = 2) down-sampling to produce a 7 x 7 output of layer 2.</p>
+<p>After the convolutional part of the network, there will be a flatten operation which creates 7 x 7 x 64 = 3164 nodes, an intermediate layer of 1000 fully connected nodes and a softmax operation over the 10 output nodes to produce class probabilities. These layers represent the output classifier.</p>
+<h2>Loading the dataset</h2>
+<p>PyTorch has an integrated MNIST dataset (in the torchvision package) which we can use via the DataLoader functionality. In this sub-section, I&#8217;ll go through how to setup the data loader for the MNIST data set. But first, some preliminary variables need to be defined:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Hyperparameters
+num_epochs = 5
+num_classes = 10
+batch_size = 100
+learning_rate = 0.001
+
+DATA_PATH = &#039;C:\\Users\Andy\PycharmProjects\MNISTData&#039;
+MODEL_STORE_PATH = &#039;C:\\Users\Andy\PycharmProjects\pytorch_models\\&#039;</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First off, we set up some training hyperparameters. Next &#8211; there is a specification of some local drive folders to use to store the MNIST dataset (PyTorch will download the dataset into this folder for you automatically) and also a location for the trained model parameters once training is complete.</p>
+<p>Next, we setup a transform to apply to the MNIST data, and also the data set variables:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># transforms to apply to the data
+trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+
+# MNIST dataset
+train_dataset = torchvision.datasets.MNIST(root=DATA_PATH, train=True, transform=trans, download=True)
+test_dataset = torchvision.datasets.MNIST(root=DATA_PATH, train=False, transform=trans)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first thing to note above is the transforms.Compose() function. This function comes from the torchvision package. It allows the developer to setup various manipulations on the specified dataset. Numerous transforms can be chained together in a list using the Compose() function. In this case, first we specify a transform which converts the input data set to a PyTorch <em>tensor</em>. A PyTorch tensor is a specific data type used in PyTorch for all of the various data and weight operations within the network. In its essence though, it is simply a multi-dimensional matrix. In any case, PyTorch requires the data set to be transformed into a tensor so it can be consumed in the training and testing of the network.</p>
+<p>The next argument in the Compose() list is a normalization transformation. Neural networks train better when the input data is normalized so that the data ranges from -1 to 1 or 0 to 1. To do this via the PyTorch Normalize transform, we need to supply the mean and standard deviation of the MNIST dataset, which in this case is 0.1307 and 0.3081 respectively. Note, that for each input channel a mean and standard deviation must be supplied &#8211; in the MNIST case, the input data is only single channeled, but for something like the CIFAR data set, which has 3 channels (one for each color in the RGB spectrum) you would need to provide a mean and standard deviation for each channel.</p>
+<p>Next, the <em>train_dataset</em> and <em>test_dataset</em> objects need to be created. These will subsequently be passed to the data loader. In order to create these data sets from the MNIST data, we need to provide a few arguments. First, the <em>root</em> argument specifies the folder where the train.pt and test.pt data files exist. The <em>train</em> argument is a boolean which informs the data set to pickup either the train.pt data file or the test.pt data file. The next argument, <em>transform</em>, is where we supply any transform object that we&#8217;ve created to apply to the data set &#8211; here we supply the <em>trans</em> object which was created earlier. Finally, the download argument tells the MNIST data set function to download the data (if required) from an online source.</p>
+<p>Now both the train and test datasets have been created, it is time to load them into the data loader:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The data loader object in PyTorch provides a number of features which are useful in consuming training data &#8211; the ability to shuffle the data easily, the ability to easily batch the data and finally, to make data consumption more efficient via the ability to load the data in parallel using multiprocessing. As can be observed, there are three simple arguments to supply &#8211; first the data set you wish to load, second the batch size you desire and finally whether you wish to randomly shuffle the data. A data loader can be used as an iterator &#8211; so to extract the data we can just use the standard Python iterators such as enumerate. This will be shown in practice later in this tutorial.</p>
+<h2>Creating the model</h2>
+<p>Next, we need to setup our nn.Module class, which will define the Convolutional Neural Network which we are going to train:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class ConvNet(nn.Module):
+    def __init__(self):
+        super(ConvNet, self).__init__()
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2))
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2))
+        self.drop_out = nn.Dropout()
+        self.fc1 = nn.Linear(7 * 7 * 64, 1000)
+        self.fc2 = nn.Linear(1000, 10)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Ok &#8211; so this is where the model definition takes place. The most straight-forward way of creating a neural network structure in PyTorch is by creating a class which inherits from the nn.Module super class within PyTorch. The nn.Module is a very useful PyTorch class which contains all you need to construct your typical deep learning networks. It also has handy functions such as ways to move variables and operations onto a GPU or back to a CPU, apply recursive functions across all the properties in the class (i.e. resetting all the weight variables), creates streamlined interfaces for training and so on. It is worth checking out all the methods available <a href="https://pytorch.org/docs/stable/nn.html" target="_blank" rel="noopener">here</a>.</p>
+<p>The first step is to create some sequential layer objects within the class _init_ function. First, we create layer 1 (<em>self.layer1</em>) by creating a nn.Sequential object. This method allows us to create sequentially ordered layers in our network and is a handy way of creating a convolution + ReLU + pooling sequence. As can be observed, the first element in the sequential definition is the Conv2d nn.Module method &#8211; this method creates a set of convolutional filters. The first argument is the number of input channels &#8211; in this case, it is our single channel grayscale MNIST images, so the argument is 1. The second argument to Conv2d is the number of output channels &#8211; as shown in the model architecture diagram above, the first convolutional filter layer comprises of 32 channels, so this is the value of our second argument.</p>
+<p>The <em>kernel_size</em> argument is the size of the convolutional filter &#8211; in this case we want 5 x 5 sized convolutional filters &#8211; so the argument is 5. If you wanted filters with different sized shapes in the <em>x </em>and <em>y </em>directions, you&#8217;d supply a tuple (<em>x-size, y-size</em>). Finally, we want to specify the padding argument. This takes a little bit more thought. The output size of any dimension from either a convolutional filtering or pooling operation can be calculated by the following equation:</p>
+<p>$$W_{out} = \frac{(W_{in} &#8211; F + 2P)}{S} + 1$$</p>
+<p>Where $W_{in}$ is the width of the input, <em>F</em> is the filter size, <em>P </em>is the padding and <em>S</em> is the stride. The same formula applies to the height calculation, but seeing as our image and filtering are symmetrical the same formula applies to both. If we wish to keep our input and output dimensions the same, with a filter size of 5 and a stride of 1, it turns out from the above formula that we need a padding of 2. Therefore, the argument for padding in Conv2d is 2.</p>
+<p>The next element in the sequence is a simple ReLU activation. The last element that is added in the sequential definition for <em>self.layer1</em> is the max pooling operation. The first argument is the pooling size, which is 2 x 2 and hence the argument is 2. Second &#8211; we want to down-sample our data by reducing the effective image size by a factor of 2. To do this, using the formula above, we set the stride to 2 and the padding to zero. Therefore, the stride argument is equal to 2. The padding argument defaults to 0 if we don&#8217;t specify it &#8211; so that&#8217;s what is done in the code above. From these calculations, we now know that the output from <em>self.layer1</em> will be 32 channels of 14 x 14 &#8220;images&#8221;.</p>
+<p>Next, the second layer, <em>self.layer2,</em> is defined in the same way as the first layer. The only difference is that the input into the Conv2d function is now 32 channels, with an output of 64 channels. Using the same logic, and given the pooling down-sampling, the output from <em>self.layer2 </em>is 64 channels of 7 x 7 images.</p>
+<p>Next, we specify a drop-out layer to avoid over-fitting in the model. Finally, two two fully connected layers are created. The first layer will be of size 7 x 7 x 64 nodes and will connect to the second layer of 1000 nodes. To create a fully connected layer in PyTorch, we use the nn.Linear method. The first argument to this method is the number of nodes in the layer, and the second argument is the number of nodes in the following layer.</p>
+<p>With this _init_ definition, the layer definitions have now been created. The next step is to define how the data flows through these layers when performing the forward pass through the network:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">    def forward(self, x):
+        out = self.layer1(x)
+        out = self.layer2(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.drop_out(out)
+        out = self.fc1(out)
+        out = self.fc2(out)
+        return out</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>It is important to call this function &#8220;forward&#8221; as this will override the base forward function in nn.Module and allow all the nn.Module functionality to work correctly. As can be observed, it takes an input argument <em>x,</em> which is the data that is to be passed through the model (i.e. a batch of data). We pass this data into the first layer (<em>self.layer1</em>) and return the output as &#8220;out&#8221;. This output is then fed into the following layer and so on. Note, after <em>self.layer2</em>, we apply a reshaping function to <em>out</em>, which flattens the data dimensions from 7 x 7 x 64 into 3164 x 1. Next, the dropout is applied followed by the two fully connected layers, with the final output being returned from the function.</p>
+<p>Ok &#8211; so now we have defined what our Convolutional Neural Network is, and how it operates. It&#8217;s time to train the model.</p>
+<h2>Training the model</h2>
+<p>Before we train the model, we have to first create an instance of our ConvNet class, and define our loss function and optimizer:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = ConvNet()
+
+# Loss and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First, an instance of ConvNet() is created called &#8220;model&#8221;. Next, we define the loss operation that will be used to calculate the loss. In this case, we use PyTorch&#8217;s CrossEntropyLoss() function. You may have noticed that we haven&#8217;t yet defined a SoftMax activation for the final classification layer. This is because the CrossEntropyLoss function combines both a SoftMax activation and a cross entropy loss function in the same function &#8211; winning. Next, we define an Adam optimizer. The first argument passed to this function are the parameters we want the optimizer to train. This is made easy via the nn.Module class which ConvNet derives from &#8211; all we have to do is pass model.parameters() to the function and PyTorch keeps track of all the parameters within our model which are required to be trained. Finally, the learning rate is supplied.</p>
+<p>Next &#8211; the training loop is created:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Train the model
+total_step = len(train_loader)
+loss_list = []
+acc_list = []
+for epoch in range(num_epochs):
+    for i, (images, labels) in enumerate(train_loader):
+        # Run the forward pass
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss_list.append(loss.item())
+
+        # Backprop and perform Adam optimisation
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        # Track the accuracy
+        total = labels.size(0)
+        _, predicted = torch.max(outputs.data, 1)
+        correct = (predicted == labels).sum().item()
+        acc_list.append(correct / total)
+
+        if (i + 1) % 100 == 0:
+            print(&#039;Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%&#039;
+                  .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
+                          (correct / total) * 100))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The most important parts to start with are the two loops &#8211; first, the number of epochs is looped over, and within this loop, we iterate over train_loader using enumerate. Within this inner loop, first the outputs of the forward pass through the model are calculated by passing <em>images </em>(which is a batch of normalized MNIST images from <em>train_loader</em>) to it. Note, we don&#8217;t have to call <em>model.forward(images)</em> as nn.Module knows that <em>forward</em> needs to be called when it executes <em>model(images)</em>.</p>
+<p>The next step is to pass the model outputs and the true image labels to our CrossEntropyLoss function, defined as <em>criterion</em>. The loss is appended to a list that will be used later to plot the progress of the training. The next step is to perform back-propagation and an optimized training step. First, the gradients have to be zeroed, which can be done easily by calling zero_grad() on the optimizer. Next, we call .backward() on the <em>loss</em> variable to perform the back-propagation. Finally, now that the gradients have been calculated in the back-propagation, we simply call optimizer.step() to perform the Adam optimizer training step. PyTorch makes training the model very easy and intuitive.</p>
+<p>The next set of steps involves keeping track of the accuracy on the training set. The predictions of the model can be determined by using the torch.max() function, which returns the index of the maximum value in a tensor. The first argument to this function is the tensor to be examined, and the second argument is the axis over which to determine the index of the maximum. The output tensor from the model will be of size (batch_size, 10). To determine the model prediction, for each sample in the batch we need to find the maximum value over the 10 output nodes. Each of these will correspond to one of the hand written digits (i.e. output 2 will correspond to digit &#8220;2&#8221; and so on). The output node with the highest value will be the prediction of the model. Therefore, we need to set the second argument of the torch.max() function to 1 &#8211; this points the max function to examine the output node axis (axis=0 corresponds to the batch_size dimension).</p>
+<p>This returns a list of prediction integers from the model &#8211; the next line compares the predictions with the true labels (predicted == labels) and sums them to determine how many correct predictions there are. Note the output of sum() is still a tensor, so to access it&#8217;s value you need to call .item(). We divide the number of correct predictions by the batch_size (equivalent to labels.size(0)) to obtain the accuracy. Finally, during training, after every 100 iterations of the inner loop the progress is printed.</p>
+<p>The training output will look something like this:</p>
+<p>Epoch [1/6], Step [100/600], Loss: 0.2183, Accuracy: 95.00%<br />
+Epoch [1/6], Step [200/600], Loss: 0.1637, Accuracy: 95.00%<br />
+Epoch [1/6], Step [300/600], Loss: 0.0848, Accuracy: 98.00%<br />
+Epoch [1/6], Step [400/600], Loss: 0.1241, Accuracy: 97.00%<br />
+Epoch [1/6], Step [500/600], Loss: 0.2433, Accuracy: 95.00%<br />
+Epoch [1/6], Step [600/600], Loss: 0.0473, Accuracy: 98.00%<br />
+Epoch [2/6], Step [100/600], Loss: 0.1195, Accuracy: 97.00%</p>
+<p>Next, let&#8217;s create some code to determine the model accuracy on the test set.</p>
+<h2>Testing the model</h2>
+<p>To test the model, we use the following code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Test the model
+model.eval()
+with torch.no_grad():
+    correct = 0
+    total = 0
+    for images, labels in test_loader:
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+    print(&#039;Test Accuracy of the model on the 10000 test images: {} %&#039;.format((correct / total) * 100))
+
+# Save the model and plot
+torch.save(model.state_dict(), MODEL_STORE_PATH + &#039;conv_net_model.ckpt&#039;)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>As a first step, we set the model to evaluation mode by running model.eval(). This is a handy function which disables any drop-out or batch normalization layers in your model, which will befuddle your model evaluation / testing. The torch.no_grad() statement disables the autograd functionality in the model (see <a href="http://adventuresinmachinelearning.com/pytorch-tutorial-deep-learning/">here</a> for more details) as it is not needing in model testing / evaluation, and this will act to speed up the computations. The rest is the same as the accuracy calculations during training, except that in this case, the code iterates through the <em>test_loader</em>.</p>
+<p>Finally, the result is output to the console, and the model is saved using the torch.save() function.</p>
+<p>In the the last part of the code on <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">the Github repo</a>, I perform some plotting of the loss and accuracy tracking using the Bokeh plotting library. The final results look like this:</p>
+<p>Test Accuracy of the model on the 10000 test images: 99.03 %</p>
+<figure id="attachment_951" style="width: 546px" class="wp-caption aligncenter"><img class=" wp-image-951" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results.png" alt="PyTorch Convolutional Neural Network results" width="546" height="386" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results.png 1147w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results-300x212.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results-768x542.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/06/PyTorch-convnet-results-1024x723.png 1024w" sizes="(max-width: 546px) 100vw, 546px" /><figcaption class="wp-caption-text">PyTorch Convolutional Neural Network results</figcaption></figure>
+<p>As can be observed, the network quite rapidly achieves a high degree of accuracy on the training set, and the test set accuracy, after 6 epochs, arrives at 99% &#8211; not bad! Certainly better than the accuracy achieved in basic fully connected neural networks.</p>
+<p>In summary: in this tutorial you have learnt all about the benefits and structure of Convolutional Neural Networks and how they work. You have also learnt how to implement them in the awesome PyTorch deep learning framework &#8211; a framework which, in my view, has a big future. I hope it was useful &#8211; have fun in your deep learning journey!</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you&#8217;re more of a video learner, check out this inexpensive online course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1259546&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fpractical-deep-learning-with-pytorch%2F">Practical Deep Learning with PyTorch</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1259546&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/">Convolutional Neural Networks Tutorial in PyTorch</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/feed/</wfw:commentRss>
+		<slash:comments>7</slash:comments>
+		</item>
+		<item>
+		<title>Keras tutorial &#8211; build a convolutional neural network in 11 lines</title>
+		<link>http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/</link>
+		<comments>http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/#comments</comments>
+		<pubDate>Wed, 17 May 2017 19:06:04 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Convolutional Neural Networks]]></category>
+		<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[Keras]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=349</guid>
+		<description><![CDATA[<p>In a previous tutorial, I demonstrated how to create a convolutional neural network (CNN) using TensorFlow to classify the MNIST handwritten digit dataset.  TensorFlow is a brilliant tool, <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" title="Keras tutorial &#8211; build a convolutional neural network in 11 lines">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/">Keras tutorial &#8211; build a convolutional neural network in 11 lines</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">a previous tutorial</a>, I demonstrated how to create a convolutional neural network (CNN) using TensorFlow to classify the MNIST handwritten digit dataset.  TensorFlow is a brilliant tool, with lots of power and flexibility.  However, for quick prototyping work it can be a bit verbose.  Enter <a href="https://keras.io/" target="_blank" rel="noopener noreferrer">Keras</a> and this Keras tutorial.  Keras is a higher level library which operates over either TensorFlow or <a href="http://www.deeplearning.net/software/theano/" target="_blank" rel="noopener noreferrer">Theano</a>, and is intended to stream-line the process of building deep learning networks.  In fact, what was accomplished in the <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">previous tutorial in TensorFlow</a> in around 42 lines* can be replicated in only 11 lines* in Keras.  This Keras tutorial will show you how to do this.</p>
+<p>*excluding input data preparation and visualisation</p>
+<p>This Keras tutorial will show you how to build a CNN to achieve &gt;99% accuracy with the MNIST dataset.  It will be precisely the same structure as that built in <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">my previous convolutional neural network tutorial</a> and the figure below shows the architecture of the network:</p>
+<figure id="attachment_293" style="width: 1725px" class="wp-caption aligncenter"><img class="wp-image-293 size-full" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg" alt="Keras tutorial - network" width="1725" height="572" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg 1725w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-300x99.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-768x255.jpg 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-1024x340.jpg 1024w" sizes="(max-width: 1725px) 100vw, 1725px" /><figcaption class="wp-caption-text">Convolutional neural network that will be built</figcaption></figure>
+<p>The full code of this Keras tutorial can be found <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener noreferrer">here</a>. If you&#8217;d like to check out more Keras awesomeness after reading this post, have a look at my <a href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/" target="_blank" rel="noopener">Keras LSTM tutorial</a> or my <a href="http://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/">Keras Reinforcement Learning tutorial</a>. Also check out my tutorial on <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/" target="_blank" rel="noopener">Convolutional Neural Networks in PyTorch</a> if you&#8217;re interested in the PyTorch library.</p>
+<hr />
+<p><strong>Recommended online course: </strong>After you&#8217;ve finished reading, and if you&#8217;d like to dig deeper in a video course, check out this inexpensive online Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h2>The main code in this Keras tutorial</h2>
+<p>The code below is the &#8220;guts&#8221; of the CNN structure that will be used in this Keras tutorial:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = Sequential()
+model.add(Conv2D(32, kernel_size=(5, 5), strides=(1, 1),
+                 activation=&#039;relu&#039;,
+                 input_shape=input_shape))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Conv2D(64, (5, 5), activation=&#039;relu&#039;))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Flatten())
+model.add(Dense(1000, activation=&#039;relu&#039;))
+model.add(Dense(num_classes, activation=&#039;softmax&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>I&#8217;ll go through most of the lines in turn, explaining as we go.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = Sequential()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Models in Keras can come in two forms &#8211; Sequential and via the Functional API.  For most deep learning networks that you build, the Sequential model is likely what you will use.  It allows you to easily stack sequential layers (and even recurrent layers) of the network in order from input to output.  The functional API allows you to build more complicated architectures, and it won&#8217;t be covered in this tutorial.</p>
+<p>The first line declares the model type as Sequential().</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.add(Conv2D(32, kernel_size=(5, 5), strides=(1, 1),
+                 activation=&#039;relu&#039;,
+                 input_shape=input_shape))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next, we add a 2D convolutional layer to process the 2D MNIST input images.  The first argument passed to the <a href="https://keras.io/layers/convolutional/#conv2d" target="_blank" rel="noopener noreferrer">Conv2D()</a> layer function is the number of output channels &#8211; in this case we have 32 output channels (as per the architecture shown at the beginning).  The next input is the kernel_size, which in this case we have chosen to be a 5&#215;5 moving window, followed by the strides in the <em>x </em>and <em>y </em>directions (1, 1).  Next, the activation function is a rectified linear unit and finally we have to supply the model with the size of the input to the layer (which is declared in another part of the code &#8211; see <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener noreferrer">here</a>).  Declaring the input shape is only required of the first layer &#8211; Keras is good enough to work out the size of the tensors flowing through the model from there.</p>
+<p>Also notice that we don&#8217;t have to declare any weights or bias variables like we do in <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">TensorFlow</a>, Keras sorts that out for us.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next we add a 2D max pooling layer.  The definition of the layer is dead easy.  We simply specify the size of the pooling in the <em>x </em>and <em>y</em> directions &#8211; (2, 2) in this case, and the strides.  That&#8217;s it.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.add(Conv2D(64, (5, 5), activation=&#039;relu&#039;))
+model.add(MaxPooling2D(pool_size=(2, 2)))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next we add another convolutional + max pooling layer, with 64 output channels.  The default <em>strides</em> argument in the Conv2D() function is (1, 1) in Keras, so we can leave it out.  The default <em>strides</em> argument in Keras is to make it equal ot the pool size, so again, we can leave it out.</p>
+<p>The input tensor for this layer is (<a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener noreferrer">batch_size</a>, 28, 28,  32) &#8211; the 28 x 28 is the size of the image, and the 32 is the number of output channels from the previous layer.  However, notice we don&#8217;t have to explicitly detail what the shape of the input is &#8211; Keras will work it out for us.  This allows rapid assembling of network architectures without having to worry too much about the sizes of the tensors flowing around our networks.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.add(Flatten())
+model.add(Dense(1000, activation=&#039;relu&#039;))
+model.add(Dense(num_classes, activation=&#039;softmax&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now that we&#8217;ve built our convolutional layers in this Keras tutorial, we want to flatten the output from these to enter our fully connected layers (all this is detailed in <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">the convolutional neural network tutorial in TensorFlow</a>).  In TensorFlow, we had to figure out what the size of our output tensor from the convolutional layers was in order to flatten it, and also to determine explicitly the size of our weight and bias variables.  Sure, this isn&#8217;t too difficult &#8211; but it just makes our life easier not to have to think about it too much.</p>
+<p>The next two lines declare our fully connected layers &#8211; using the Dense() layer in Keras.  Again, it is very simple.  First we specify the size &#8211; in line with our architecture, we specify 1000 nodes, each activated by a ReLU function.  The second is our soft-max classification, or output layer, which is the size of the number of our classes (10 in this case, for our 10 possible hand-written digits).</p>
+<p>That&#8217;s it &#8211; we have successfully developed the architecture of our CNN in only 8 lines.  Now let&#8217;s see what we have to do to train the model and perform predictions.</p>
+<h2>Training and evaluating our convolutional neural network</h2>
+<p>We have now developed the architecture of the CNN in Keras, but we haven&#8217;t specified the loss function, or told the framework what type of optimiser to use (i.e. <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/">gradient descent</a>, Adam optimiser etc.).  In Keras, this can be performed in one command:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.compile(loss=keras.losses.categorical_crossentropy,
+              optimizer=keras.optimizers.SGD(lr=0.01),
+              metrics=[&#039;accuracy&#039;])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Keras supplies many loss functions (or you can build your own) as can be seen <a href="https://keras.io/losses/" target="_blank" rel="noopener noreferrer">here</a>.  In this case, we will use the standard cross entropy for categorical class classification (keras.losses.categorical_crossentropy).  Keras also supplies many optimisers &#8211; as can be seen <a href="https://keras.io/optimizers/" target="_blank" rel="noopener noreferrer">here</a>.  In this case, we&#8217;ll use the Adam optimizer (keras.optimizers.Adam) as we did in the <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">CNN TensorFlow tutorial</a>.  Finally, we can specify a metric that will be calculated when we run evaluate() on the model.  In TensorFlow we would have to <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">define an accuracy calculating operation</a> which we would need to call in order to assess the accuracy.  In this case, Keras makes it easy for us.  See <a href="https://keras.io/metrics/" target="_blank" rel="noopener noreferrer">here</a> for a list of metrics that can be used.</p>
+<p>Next, we want to train our model.  This can be done by again running a single command in Keras:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.fit(x_train, y_train,
+          batch_size=batch_size,
+          epochs=epochs,
+          verbose=1,
+          validation_data=(x_test, y_test),
+          callbacks=[history])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This command looks similar to the syntax used in the very popular <a href="http://scikit-learn.org/" target="_blank" rel="noopener noreferrer">scikit learn</a> Python machine learning library.  We first pass in <em>all</em> of our training data &#8211; in this case <em>x_train</em> and <em>y_train</em>.  The next argument is the batch size &#8211; we don&#8217;t have to explicitly handle the batching up of our data during training in Keras, rather we just specify the batch size and it does it for us (I have a post on <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener noreferrer">mini-batch gradient descent</a> if this is unfamiliar to you).  In this case we are using a batch size of 128.  Next we pass the number of training epochs (10 in this case).  The verbose flag, set to 1 here, specifies if you want detailed information being printed in the console about the progress of the training.  During training, if verbose is set to 1, the following is output to the console:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">3328/60000 [&gt;.............................] - ETA: 87s - loss: 0.2180 - acc: 0.9336
+3456/60000 [&gt;.............................] - ETA: 87s - loss: 0.2158 - acc: 0.9349
+3584/60000 [&gt;.............................] - ETA: 87s - loss: 0.2145 - acc: 0.9350
+3712/60000 [&gt;.............................] - ETA: 86s - loss: 0.2150 - acc: 0.9348</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Finally, we pass the validation or test data to the fit function so Keras knows what data to test the metric against when evaluate() is run on the model.  Ignore the callbacks argument for the moment &#8211; that will be discussed shortly.</p>
+<p>Once the model is trained, we can then evaluate it and print the results:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">score = model.evaluate(x_test, y_test, verbose=0)
+print(&#039;Test loss:&#039;, score[0])
+print(&#039;Test accuracy:&#039;, score[1])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>After 10 epochs of training the above model, we achieve an accuracy of 99.2%, which is the same as what <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">we achieved in TensorFlow</a> for the same network.  You can see the improvement in the accuracy for each epoch in the figure below:</p>
+<figure id="attachment_359" style="width: 640px" class="wp-caption aligncenter"><img class="size-full wp-image-359" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs.png" alt="Keras tutorial - MNIST training accuracy" width="640" height="480" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs.png 640w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs-300x225.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs-326x245.png 326w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs-80x60.png 80w" sizes="(max-width: 640px) 100vw, 640px" /><figcaption class="wp-caption-text">Keras CNN MNIST training accuracy</figcaption></figure>
+<p>Keras makes things pretty easy, don&#8217;t you think? I hope this Keras tutorial has demonstrated how it can be a useful framework for rapidly prototyping deep learning solutions.</p>
+<p>As a kind of appendix I&#8217;ll show you how to keep track of the accuracy as we go through the training epochs, which enabled me to generate the graph above.</p>
+<h2>Logging metrics in Keras</h2>
+<p>Keras has a useful utility titled &#8220;callbacks&#8221; which can be utilised to track all sorts of variables during training.  You can also use it to create checkpoints which saves the model at different stages in training to help you avoid work loss in case your poor overworked computer decides to crash.  It is passed to the .fit() function as observed above.  I&#8217;ll only show you a fairly simple use case below, which logs the accuracy.</p>
+<p>To create a callback we create an inherited class which inherits from keras.callbacks.Callback:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class AccuracyHistory(keras.callbacks.Callback):
+    def on_train_begin(self, logs={}):
+        self.acc = []
+
+    def on_epoch_end(self, batch, logs={}):
+        self.acc.append(logs.get(&#039;acc&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The Callback super class that the code above inherits from has a number of methods that can be overridden in our callback definition such as <em>on_train_begin, on_epoch_end, on_batch_begin and on_batch_end.</em>  The name of these methods are fairly self explanatory, and represent moments in the training process where we can &#8220;do stuff&#8221;.  In the code above, at the beginning of training we initialise a list <em>self.acc = []</em> to store our accuracy results.  Using the <em>on_epoch_end</em><em>() </em>method, we can extract the variable we want from the <em>logs, </em>which is a dictionary that holds, as a default, the loss and accuracy during training.  We then instantiate this callback like so:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">history = AccuracyHistory()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now we can pass <em>history</em> to the .fit() function using the <em>callback</em> parameter name.  Note that .fit() takes a list for the <em>callback</em> parameter, so you have to pass it <em>history</em> like this: [history].  To access the accuracy list that we created after the training is complete, you can simply call <em>history.acc</em>, which I then also plotted:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">plt.plot(range(1,11), history.acc)
+plt.xlabel(&#039;Epochs&#039;)
+plt.ylabel(&#039;Accuracy&#039;)
+plt.show()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Hope that helps.  Have fun using Keras. As I said at the beginning of the post, if you&#8217;d like to check out more Keras awesomeness after reading this post, have a look at my <a href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/" target="_blank" rel="noopener">Keras LSTM tutorial</a>.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you&#8217;d like to dig deeper in a video course, check out this inexpensive online Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/">Keras tutorial &#8211; build a convolutional neural network in 11 lines</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/feed/</wfw:commentRss>
+		<slash:comments>3</slash:comments>
+		</item>
+		<item>
+		<title>Convolutional Neural Networks Tutorial in TensorFlow</title>
+		<link>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/</link>
+		<comments>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/#comments</comments>
+		<pubDate>Mon, 24 Apr 2017 21:30:33 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Convolutional Neural Networks]]></category>
+		<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[TensorFlow]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=249</guid>
+		<description><![CDATA[<p>In the two previous tutorial posts, an introduction to neural networks and an introduction to TensorFlow, three layer neural networks were created and used to <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" title="Convolutional Neural Networks Tutorial in TensorFlow">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/">Convolutional Neural Networks Tutorial in TensorFlow</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In the two previous tutorial posts, <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener noreferrer">an introduction to neural networks</a> and <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">an introduction to TensorFlow</a>, three layer neural networks were created and used to predict <a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank" rel="noopener noreferrer">the MNIST dataset</a>.  They performed pretty well, with a successful prediction accuracy on the order of 97-98%.  However, to take the next step in improving the accuracy of our networks, we need to delve into <em>deep learning</em>.  A particularly useful type of deep learning neural network for image classification is the <em>convolutional neural network</em>.  It should be noted that convolutional neural networks can also be used for applications other than images, such as time series prediction (recurrent neural networks are also good at time series predictions &#8211; see <a href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/" target="_blank" rel="noopener">my tutorial</a> here).  However, this tutorial will concentrate on image classification only.</p>
+<p>This convolutional neural networks tutorial will introduce these networks by building them in <a href="https://www.tensorflow.org/" target="_blank" rel="noopener noreferrer">TensorFlow</a>.  If you&#8217;re not familiar with TensorFlow, I&#8217;d suggest checking out <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">my previously mentioned tutorial</a>, which is a gentle introduction.  Otherwise, you&#8217;re welcome to wing it.  Another option is to build the convolutional neural network in Keras, which is more syntactically stream-lined &#8211; you can see how to do this my brief <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras tutorial</a>. Finally, if you&#8217;d like to see how to implement Convolutional Neural Networks using the TensorFlow Eager imperative programming API, see my <a href="http://adventuresinmachinelearning.com/tensorflow-eager-tutorial/">TensorFlow Eager tutorial</a>.</p>
+<hr />
+<p><strong>Recommended online course </strong>&#8211; Once you&#8217;re done reading this post, and if you&#8217;d like to dig deeper in a video course, I&#8217;d recommend the following inexpensive Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.807904&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fdeep-learning-convolutional-neural-networks-theano-tensorflow%2F" target="new">Deep Learning: Convolutional Neural Networks in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.807904&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>What&#8217;s the problem?</h1>
+<p>As shown in the previous tutorials, multi-layer neural networks can perform pretty well in predicting things like digits in the MNIST dataset.  This is especially true if we apply <a href="http://adventuresinmachinelearning.com/improve-neural-networks-part-1/" target="_blank" rel="noopener noreferrer">some improvements</a>.  So why do we need any other architecture?  Well, first off &#8211; the MNIST dataset is quite simple.  The images are small (only 28 x 28 pixels), are single layered (i.e. greyscale, rather than a coloured 3 layer RGB image) and include pretty simple shapes (digits only, no other objects).  Once we start trying to classify things in more complicated colour images, such as buses, cars, trains etc. , we run into problems with our accuracy.  What do we do?</p>
+<p>Well, first, we can try to increase the number of layers in our neural network to make it <em>deeper</em>.  That will increase the complexity of the network and allow us to model more complicated functions.  However, it will come at a cost &#8211; the number of parameters (i.e. weights and biases) will rapidly increase.  This makes the model more prone to <a href="http://adventuresinmachinelearning.com/improve-neural-networks-part-1/" target="_blank" rel="noopener noreferrer">overfitting</a> and will prolong training times.  In fact, learning such difficult problems can become intractable for normal neural networks.  This leads us to a solution &#8211; convolutional neural networks.</p>
+<h1>What is a convolutional neural network?</h1>
+<p>The most commonly associated idea with convolutional neural networks is the idea of a <em>&#8220;moving filter&#8221;</em> which passes through the image.  This moving filter, or convolution, applies to a certain neighbourhood of nodes (which may be the input nodes i.e. pixels) as shown below, where the filter applied is 0.5 x the node value:</p>
+<figure id="attachment_262" style="width: 733px" class="wp-caption alignnone"><img class="wp-image-262 size-full" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter.jpg" alt="Convolutional neural network tutorial - moving filter" width="733" height="312" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter.jpg 733w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-300x128.jpg 300w" sizes="(max-width: 733px) 100vw, 733px" /><figcaption class="wp-caption-text">Moving 2&#215;2 filter (all weights = 0.5)</figcaption></figure>
+<p>As can be observed, only two outputs of the moving/convolutional filter have been shown &#8211; here we are mapping a 2&#215;2 input square into a single output node.  The weight of the mapping of each input square, as previously mentioned, is 0.5 across all four inputs.  In other words, the following calculations were performed:</p>
+<p>\begin{align}<br />
+out_1 &amp;= 0.5 in_1 + 0.5 in_2 + 0.5 in_6 + 0.5 in_7 \\<br />
+&amp;= 0.5 \times 2.0 + 0.5 \times 3.0 + 0.5 \times 2.0 + 0.5 \times 1.5  \\<br />
+&amp;= 4.25 \\<br />
+out_2 &amp;= 0.5 in_2 + 0.5 in_3 + 0.5 in_7 + 0.5 in_8 \\<br />
+&amp;= 0.5 \times 3.0 + 0.5 \times 0.0 + 0.5 \times 1.5 + 0.5 \times 0.5  \\<br />
+&amp;= 2.5 \\<br />
+\end{align}</p>
+<p>In a convolution operation, this 2&#215;2 moving filter would shuffle across each possible <em>x</em> and <em>y </em>co-ordinate combination to populate the output nodes.  This operation can also be illustrated using our standard neural network node diagrams:</p>
+<figure id="attachment_269" style="width: 276px" class="wp-caption aligncenter"><img class="size-medium wp-image-269" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram-276x300.jpg" alt="Convolutional neural network tutorial - moving filter node diagram" width="276" height="300" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram-276x300.jpg 276w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-node-diagram.jpg 445w" sizes="(max-width: 276px) 100vw, 276px" /><figcaption class="wp-caption-text">Moving 2&#215;2 filter &#8211; node diagram</figcaption></figure>
+<p>The first position of the moving filter connections is shown with the blue lines, the second (x + 1) is shown with the green lines.  The weights of these connections, in this example, are all equal to 0.5.</p>
+<p>A couple of things can be observed about this convolutional operation, in comparison to our <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener noreferrer">previous understanding of standard neural networks</a>:</p>
+<ul>
+<li><em>Sparse</em> connections &#8211; notice that not every input node is connected to the output nodes.  This is contrary to fully connected neural networks, where every node in one layer is connected to every node in the following layer.</li>
+<li>Constant filter parameters / weights &#8211; each filter has constant parameters.  In other words, as the filter moves around the image the same weights are being applied.  Each filter therefore performs a certain transformation across the whole image.   This is in contrast to fully connected neural networks, which have a different weight value for every connection
+<ul>
+<li>Note, I am not saying that each weight is constant <em>witihin</em> the filter, as in the example above (i.e. with weights [0.5, 0.5, 0.5, 0.5]).  The weights<em> within</em> the filter<em> </em>could be any combination of values depending on how the filters are trained.</li>
+</ul>
+</li>
+</ul>
+<p>These two features of convolutional neural networks can significantly reduce the number of parameters required in the network, compared to fully connected neural networks.</p>
+<p>The output of the convolutional mapping is then passed through some form of non-linear activation function, often the <a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)" target="_blank" rel="noopener noreferrer">rectified linear unit activation function</a>.</p>
+<p>This step in convolutional neural networks is often called <em>feature mapping.  </em>Before we move onto the next main feature of convolutional neural networks, <em>pooling</em>, it is worth saying a few things about this idea.</p>
+<h4>Feature mapping and multiple channels</h4>
+<p>Earlier I mentioned that the filter parameters i.e. the weights, are held constant as the filter moves through the input.  This allows the filter to be trained to recognise certain features within the input data.  In the case of images, it may learn to recognise shapes such as lines, edges and other distinctive shapes.  This is why the convolution step is often called <em>feature mapping</em>.  However, in order to classify well, at each convolutional stage we usually need multiple filters.  So in reality, the moving filter diagram above looks like this:</p>
+<figure id="attachment_273" style="width: 771px" class="wp-caption alignnone"><img class="wp-image-273 size-full" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters.jpg" alt="Convolutional neural networks tutorial - multiple filters" width="771" height="312" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters.jpg 771w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters-300x121.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Moving-filter-with-multiple-filters-768x311.jpg 768w" sizes="(max-width: 771px) 100vw, 771px" /><figcaption class="wp-caption-text">Multiple convolutional filters</figcaption></figure>
+<p>On the right you can now see stacked outputs, and that the separately trained filters each produce their own 2D output (for a 2D image).  This is often referred to as having multiple <em>channels</em>.  Each of these channels will end up being trained to detect certain key features in the image.  Therefore, the output of the convolutional layer will actually be 3 dimensional (again, for a 2D image).  If the input is itself multi-channelled, as in the case of a colour image with RGB layers, the output of the convolutional layer will be <strong>4D</strong>.  Thankfully, as will be shown later, TensorFlow can handle all of this mapping quite easily.</p>
+<p>Don&#8217;t forget that the convolutional output for each node, over all the channels, are passed through an activation function.</p>
+<p>The next important part of convolutional neural networks is called <em>pooling.  </em></p>
+<h2>Pooling</h2>
+<p>The idea of pooling in convolutional neural networks is to do two things:</p>
+<ul>
+<li>Reduce the number of parameters in your network (pooling is also called &#8220;down-sampling&#8221; for this reason)</li>
+<li>To make feature detection more robust by making it more impervious to scale and orientation changes</li>
+</ul>
+<p>So what is pooling?  Again it is a &#8220;sliding window&#8221; type technique, but in this case, instead of applying weights the pooling applies some sort of statistical function over the values within the window.  Most commonly, the function used is the max() function, so <em>max pooling</em> will take the maximum value within the window.  There are other variants such as mean pooling or L2-norm pooling which are also used at times.  However, in this convolutional neural network tutorial we will only concentrate on max pooling.  The diagram below shows some max pooling in action:</p>
+<figure id="attachment_278" style="width: 807px" class="wp-caption alignnone"><img class="size-full wp-image-278" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling.jpg" alt="Convolutional neural network tutorial - max pooling example" width="807" height="364" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling.jpg 807w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling-300x135.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Max-pooling-768x346.jpg 768w" sizes="(max-width: 807px) 100vw, 807px" /><figcaption class="wp-caption-text">Max pooling example (with padding)</figcaption></figure>
+<p>We&#8217;ll go through a number of points relating to the diagram above:</p>
+<h4>Basic function</h4>
+<p>As can be observed in the diagram above, the different coloured boxes on the input nodes / squares represent a sliding 2&#215;2 window.  Max pooling is performed on the nodes within the sliding window i.e. the simple maximum is taken of the output of the nodes.  In other words:</p>
+<p>\begin{align}<br />
+out_1 &amp;= max(in_1, in_2, in_6, in_7) \\<br />
+out_2 &amp;= max(in_3, in_4, in_8, in_9) \\<br />
+out_3 &amp;= max(in_5, pad_1, in_{10}, pad_2)  \\<br />
+\end{align}</p>
+<h4>Strides and down-sampling</h4>
+<p>You may have noticed that in the convolutional / moving filter example above, the 2&#215;2 filter moved only a single place in the <em>x</em> and <em>y</em> direction through the image / input.  This led to an overlap of filter areas.  This is called a <em>stride</em> of [1, 1] &#8211; that is, the filter moves 1 step in the <em>x </em>and <em>y </em> directions.  With <em>max pooling</em>, the stride is usually set so that there is no overlap between the regions.  In this case, we need a stride of 2 (or [2, 2]) to avoid overlap.  This can be observed in the figure above when the <em>max pooling </em>box moves two steps in the <em>x</em> direction.  Notice that having a stride of 2 actually reduces the dimensionality of the output.  We have gone from a 5&#215;5 input grid (ignoring the 0.0 padding for the moment) to a 3&#215;3 output grid &#8211; this is called down-sampling, and can be used to reduce the number of parameters in the model.</p>
+<h4>Padding</h4>
+<p>In the image above, you will notice the grey shaded boxes around the outside, all with 0.0 in the middle.  These are padding nodes &#8211; dummy nodes that are introduced so that 2&#215;2 max pooling filter can make 3 steps in the <em>x </em>and <em>y </em>directions with a stride of 2, despite there being only 5 nodes to traverse in either the <em>x </em>or <em>y </em>directions.  Because the values are 0.0, with a rectified linear unit activation of the previous layer (which can&#8217;t output a negative number), these nodes will never actually be selected in the max pooling process.  TensorFlow has padding options which need to be considered, and these will be discussed later in the tutorial.</p>
+<p>This covers how pooling works, but why is it included in convolutional neural networks?</p>
+<h3>Why is pooling used in convolutional neural networks?</h3>
+<p>In addition to the function of down-sampling, pooling is used in convolutional neural networks to make the detection of certain features in the input invariant to scale and orientation changes.  Another way of thinking about what they do is that they <em>generalise</em> over lower level, more complex information.  Consider the case where we have a number of convolutional filters that, during training, have learnt to detect the digit &#8220;9&#8221; in various orientations within the input images.  In order for the convolutional neural network to learn to classify the appearance of &#8220;9&#8221; in the image correctly, it needs to activate in some way no matter what the orientation of the digit is (except when it looks like a &#8220;6&#8221; that is). That is what pooling can assist with, consider the diagram below:</p>
+<figure id="attachment_289" style="width: 793px" class="wp-caption alignnone"><img class="size-full wp-image-289" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2.jpg" alt="Convolutional neural networks tutorial - stylised representation of pooling" width="793" height="301" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2.jpg 793w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2-300x114.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Pooling-demonstration-v2-768x292.jpg 768w" sizes="(max-width: 793px) 100vw, 793px" /><figcaption class="wp-caption-text">Stylised representation of pooling</figcaption></figure>
+<p>The diagram above is a kind of stylised representation of the pooling operation.  Consider a small region of an input image that has the digit &#8220;9&#8221; in it (green box).  During training we have a few convolutional filters that have learnt to  activate when they &#8220;see&#8221; a &#8220;9&#8221; shape in the image, but they activate most strongly depending on what orientation that &#8220;9&#8221; is.  We want the convolutional neural network to recognise a &#8220;9&#8221; regardless of what orientation it is in.  So the pooling &#8220;looks&#8221; over the output of these three filters and will give a high output so long as <em>any one</em> of these filters has a high activation.</p>
+<p>Pooling acts as a <em>generaliser </em>of the lower level information and so enables us to move from high resolution <em>data</em> to lower resolution <em>information</em>.  In other words, pooling coupled with convolutional filters attempt to detect <em>objects </em>within an image.</p>
+<h2>The final picture</h2>
+<p>The image below from Wikipedia shows the final image of a fully developed convolutional neural network:</p>
+<figure id="attachment_290" style="width: 1040px" class="wp-caption alignnone"><img class="size-full wp-image-290" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn.png" alt="Convolutional neural networks tutorial - full diagram" width="1040" height="320" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn.png 1040w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-300x92.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-768x236.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/Typical_cnn-1024x315.png 1024w" sizes="(max-width: 1040px) 100vw, 1040px" /><figcaption class="wp-caption-text">Full convolutional neural network &#8211; By Aphex34 (Own work) [<a href="http://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>], <a href="https://commons.wikimedia.org/wiki/File%3ATypical_cnn.png">via Wikimedia Commons</a></figcaption></figure>Let&#8217;s step through this image from left to right.  First we have the input image of a robot.  Then multiple convolutional filters (these would include rectified linear unit activations), followed by pooling / sub-sampling.  Then we have another layer of convolution and pooling.  Notice the number of channels (the stacked blue squares) and the reduction in the <em>x, y</em> sizes of each channel as the sub-sampling / down-sampling occurs in the pooling layers.  Finally, we reach a fully connected layer before the output.  This layer hasn&#8217;t been mentioned yet, and deserves some discussion.</p>
+<h3>The fully connected layer</h3>
+<p>At the output of the convolutional-pooling layers we have moved from high resolution, low level <em>data</em> about the pixels to representations of <em>objects</em> within the image.  The purpose of these final, fully connected layers is to make classifications regarding these objects &#8211; in other words, we bolt a <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener noreferrer">standard neural network classifier</a> onto the end of a trained object detector.  As you can observe, the output of the final pooling layer is many channels of <em>x </em>x <em>y</em> matrices.  To connect the output of the pooling layer to the fully connected layer, we need to <em>flatten</em> this output into a single (N x 1) tensor.</p>
+<p>Let&#8217;s say we have 100 channels of 2 x 2 pooling matrices.  This means we need to flatten all of this data into a vector with one column and 2 x 2 x 100 = 400 rows.  I&#8217;ll show how we can do this in TensorFlow below.</p>
+<p>Now we have covered the basics of how convolutional neural networks are structured and why they are created this way.  It is now time to show how we implement such a network in TensorFlow.</p>
+<h1>A TensorFlow based convolutional neural network</h1>
+<p>TensorFlow makes it easy to create convolutional neural networks once you understand some of the nuances of the framework&#8217;s handling of them.  In this tutorial, we are going to create a convolutional neural network with the structure detailed in the image below.  The network we are going to build will perform MNIST digit classification, as we have performed in previous tutorials (<a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener noreferrer">here</a> and <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">here</a>).  As usual, the full code for this tutorial can be found <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener noreferrer">here</a>.</p>
+<figure id="attachment_293" style="width: 1725px" class="wp-caption alignnone"><img class="size-full wp-image-293" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg" alt="Convolutional neural network tutorial - example" width="1725" height="572" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg 1725w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-300x99.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-768x255.jpg 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-1024x340.jpg 1024w" sizes="(max-width: 1725px) 100vw, 1725px" /><figcaption class="wp-caption-text">Example convolutional neural network</figcaption></figure>
+<p>As can be observed, we start with the MNIST 28&#215;28 greyscale images of digits.  We then create 32, 5&#215;5 convolutional filters / channels plus ReLU (rectified linear unit) node activations.  After this, we still have a height and width of 28 nodes.  We then perform down-sampling by applying a 2&#215;2 max pooling operation with a stride of 2.  Layer 2 consists of the same structure, but now with 64 filters / channels and another stride-2 max pooling down-sample.  We then flatten the output to get a fully connected layer with 3164 nodes, followed by another hidden layer of 1000 nodes.  These layers will use ReLU node activations.  Finally, we use a softmax classification layer to output the 10 digit probabilities.</p>
+<p>Let&#8217;s step through the code.</p>
+<h2>Input data and placeholders</h2>
+<p>The code below sets up the input data and placeholders for the classifier.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">import tensorflow as tf
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets(&quot;MNIST_data/&quot;, one_hot=True)
+
+# Python optimisation variables
+learning_rate = 0.0001
+epochs = 10
+batch_size = 50
+
+# declare the training data placeholders
+# input x - for 28 x 28 pixels = 784 - this is the flattened image data that is drawn from 
+# mnist.train.nextbatch()
+x = tf.placeholder(tf.float32, [None, 784])
+# dynamically reshape the input
+x_shaped = tf.reshape(x, [-1, 28, 28, 1])
+# now declare the output data placeholder - 10 digits
+y = tf.placeholder(tf.float32, [None, 10])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>TensorFlow has a handy loader for the MNIST data which is sorted out in the first couple of lines.  After that we have some variable declarations which determine the optimisation behaviour (learning rate, batch size etc.).  Next, we declare a placeholder (see <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">this tutorial</a> for explanations of placeholders) for the image input data, <em>x</em>.  The image input data will be extracted using the mnist.train.nextbatch() function, which supplies a flattened 28&#215;28=784 node, single channel greyscale representation of the image. However, before we can use this data in the TensorFlow convolution and pooling functions, such as conv2d() and max_pool() we need to reshape the data as these functions take 4D data only.</p>
+<p>The format of the data to be supplied is [i, j, k, l] where <em>i</em> is the number of training samples, <em>j</em> is the height of the image, <em>k</em> is the weight and <em>l</em> is the channel number.  Because we have a greyscale image, <em>l </em>will always be equal to 1 (if we had an RGB image, it would be equal to 3).  The MNIST images are 28 x 28, so both <em>j </em>and <em>k</em> are equal to 28.  When we reshape the input data <em>x</em> into <em>x_shaped</em>, theoretically we don&#8217;t know the size of the first dimension of <em>x</em>, so we don&#8217;t know what <em>i</em> is.  However, tf.reshape() allows us to put -1 in place of <em>i</em> and it will dynamically reshape based on the number of training samples as the training is performed.  So we use [-1, 28, 28, 1] for the second argument in tf.reshape().</p>
+<p>Finally, we need a placeholder for our output training data, which is a [?, 10] sized tensor &#8211; where the 10 stands for the 10 possible digits to be classified.  We will use the mnist.train.next_batch() to extract the digits labels as a one-hot vector &#8211; in other words, a digit of &#8220;3&#8221; will be represented as [0, 0, 0, 1, 0, 0, 0, 0, 0, 0].</p>
+<h2>Defining the convolution layers</h2>
+<p>Because we have to create a couple of convolutional layers, it&#8217;s best to create a function to reduce repetition:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def create_new_conv_layer(input_data, num_input_channels, num_filters, filter_shape, pool_shape, name):
+    # setup the filter input shape for tf.nn.conv_2d
+    conv_filt_shape = [filter_shape[0], filter_shape[1], num_input_channels,
+                      num_filters]
+
+    # initialise weights and bias for the filter
+    weights = tf.Variable(tf.truncated_normal(conv_filt_shape, stddev=0.03),
+                                      name=name+&#039;_W&#039;)
+    bias = tf.Variable(tf.truncated_normal([num_filters]), name=name+&#039;_b&#039;)
+
+    # setup the convolutional layer operation
+    out_layer = tf.nn.conv2d(input_data, weights, [1, 1, 1, 1], padding=&#039;SAME&#039;)
+
+    # add the bias
+    out_layer += bias
+
+    # apply a ReLU non-linear activation
+    out_layer = tf.nn.relu(out_layer)
+
+    # now perform max pooling
+    ksize = [1, pool_shape[0], pool_shape[1], 1]
+    strides = [1, 2, 2, 1]
+    out_layer = tf.nn.max_pool(out_layer, ksize=ksize, strides=strides, 
+                               padding=&#039;SAME&#039;)
+
+    return out_layer</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>I&#8217;ll step through each line/block of this function below:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">conv_filt_shape = [filter_shape[0], filter_shape[1], num_input_channels,
+                      num_filters]</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This line sets up a variable to hold the shape of the weights that determine the behaviour of the 5&#215;5 convolutional filter.  The format that the conv2d() function receives for the filter is: [filter_height, filter_width, in_channels, out_channels].  The height and width of the filter are provided in the filter_shape variables (in this case [5, 5]).  The number of input channels, for the first convolutional layer is simply 1, which corresponds to the single channel greyscale MNIST image.  However, for the second convolutional layer it takes the output of the first convolutional layer, which has a 32 channel output.  Therefore, for the second convolutional layer, the input channels is 32.  As defined in the block diagram above, the number of output channels of the first layer is 32, and for the second layer it is 64.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># initialise weights and bias for the filter
+weights = tf.Variable(tf.truncated_normal(conv_filt_shape, stddev=0.03),
+                                  name=name+&#039;_W&#039;)
+bias = tf.Variable(tf.truncated_normal([num_filters]), name=name+&#039;_b&#039;)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In these lines we create the weights and bias for the convolutional filter and randomly initialise the tensors.  If you need to brush up on these concepts, check out <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener noreferrer">this tutorial</a>.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># setup the convolutional layer operation
+out_layer = tf.nn.conv2d(input_data, weights, [1, 1, 1, 1], padding=&#039;SAME&#039;)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This line is where we setup the convolutional filter operation.  The variable <em>input_data</em> is self-explanatory, as are the weights.  The size of the weights tensor show TensorFlow what size the convolutional filter should be.  The next argument [1, 1, 1, 1] is the <em>strides</em> parameter that is required in conv2d().  In this case, we want the filter to move in steps of 1 in both the <em>x </em>and <em>y</em> directions (or height and width directions).  This information is conveyed in the strides[1] and strides[2] values &#8211; both equal to 1 in this case.  The first and last values of <em>strides</em> are always equal to 1, if they were not, we would be moving the filter between training samples or between channels, which we don&#8217;t want to do.  The final parameter is the padding.  Padding determines the output size of each channel and when it is set to &#8220;SAME&#8221; it produces dimensions of:</p>
+<p><em>out_height = ceil(float(in_height) / float(strides[1]))<br />
+out_width  = ceil(float(in_width) / float(strides[2]))</em></p>
+<p>For the first convolutional layer, <em>in_height = in_width = 28</em>, and <em>strides[1] = strides[2] = 1</em>.  Therefore the padding of the input with 0.0 nodes will be arranged so that the <em>out_height = out_width = </em><em>28</em> &#8211; there will be no change in size of the output.  This padding is to avoid the fact that, when traversing a (<em>x,y)</em> sized image or input with a convolutional filter of size (<em>n,m)</em>, with a stride of 1 the output would be (<em>x-n+1,y-m+1)</em>.  So in this case, without padding, the output size would be (24,24).  We want to keep the sizes of the outputs easy to track, so we chose the &#8220;SAME&#8221; option as the padding so we keep the same size.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># add the bias
+out_layer += bias
+# apply a ReLU non-linear activation
+out_layer = tf.nn.relu(out_layer)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the two lines above, we simply add a bias to the output of the convolutional filter, then apply a ReLU non-linear activation function.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># now perform max pooling
+ksize = [1, pool_shape[0], pool_shape[1], 1]
+strides = [1, 2, 2, 1]
+out_layer = tf.nn.max_pool(out_layer, ksize=ksize, strides=strides, 
+                               padding=&#039;SAME&#039;)
+
+return out_layer</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The max_pool() function takes a tensor as its first input over which to perform the pooling.  The next two arguments <em>ksize </em>and <em>strides</em> define the operation of the pooling.  Ignoring the first and last values of these vectors (which will always be set to 1), the middle values of <em>ksize</em> (<em>pool_shape[0]</em> and <em>pool_shape[1]</em>) define the shape of the max pooling window in the <em>x </em>and <em>y </em>directions.  In this convolutional neural networks example, we are using a 2&#215;2 max pooling window size.  The same applies with the <em>strides</em> vector &#8211; because we want to down-sample, in this example we are choosing strides of size 2 in both the <em>x </em>and <em>y</em> directions (<em>strides[1]</em> and <i>strides[2]</i>)<i>. </i>This will halve the input size of the (<em>x,y</em>) dimensions.</p>
+<p>Finally, we have another example of a padding argument.  The same rules apply for the &#8216;SAME&#8217; option as for the convolutional function conv2d().  Namely:</p>
+<p><i>out_height = ceil(float(in_height) / float(strides[1]))<br />
+out_width  = ceil(float(in_width) / float(strides[2]))</i></p>
+<p>Punching in values of 2 for <em>strides[1]</em> and <em>strides[2] </em>for the first convolutional layer we get an output size of (14, 14).  This is a halving of the input size (28, 28), which is what we are looking for.  Again, TensorFlow will organise the padding so that this output shape is what is achieved, which makes things nice and clean for us.</p>
+<p>Finally we return the out_layer object, which is actually a sub-graph of its own, containing all the operations and weight variables within it.  We create the two convolutional layers in the main program by calling the following commands:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create some convolutional layers
+layer1 = create_new_conv_layer(x_shaped, 1, 32, [5, 5], [2, 2], name=&#039;layer1&#039;)
+layer2 = create_new_conv_layer(layer1, 32, 64, [5, 5], [2, 2], name=&#039;layer2&#039;)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>As you can see, the input to <em>layer1</em> is the shaped input <em>x_shaped</em> and the input to <em>layer2</em> is the output of the first layer.  Now we can move on to creating the fully connected layers.</p>
+<h3>The fully connected layers</h3>
+<p>As previously discussed, first we have to flatten out the output from the final convolutional layer.  It is now a 7&#215;7 grid of nodes with 64 channels, which equates to 3136 nodes per training sample.  We can use tf.reshape() to do what we need:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">flattened = tf.reshape(layer2, [-1, 7 * 7 * 64])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p><!--?prettify linenums=true?-->Again, we have a dynamically calculated first dimension (the -1 above), corresponding to the number of input samples in the training batch. Next we setup the first fully connected layer:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># setup some weights and bias values for this layer, then activate with ReLU
+wd1 = tf.Variable(tf.truncated_normal([7 * 7 * 64, 1000], stddev=0.03), name=&#039;wd1&#039;)
+bd1 = tf.Variable(tf.truncated_normal([1000], stddev=0.01), name=&#039;bd1&#039;)
+dense_layer1 = tf.matmul(flattened, wd1) + bd1
+dense_layer1 = tf.nn.relu(dense_layer1)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>If the above operations are unfamiliar to you, please check out my previous <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">TensorFlow tutorial</a>.  Basically we are initialising the weights of the fully connected layer, multiplying them with the flattened convolutional output, then adding a bias.  Finally, a ReLU activation is applied.  The next layer is defined by:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># another layer with softmax activations
+wd2 = tf.Variable(tf.truncated_normal([1000, 10], stddev=0.03), name=&#039;wd2&#039;)
+bd2 = tf.Variable(tf.truncated_normal([10], stddev=0.01), name=&#039;bd2&#039;)
+dense_layer2 = tf.matmul(dense_layer1, wd2) + bd2
+y_ = tf.nn.softmax(dense_layer2)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This layer connects to the output, and therefore we use a soft-max activation to produce the predicted output values <em>y_</em>.  We have now defined the basic structure of our convolutional neural network.  Let&#8217;s now define the cost function.</p>
+<h3>The cross-entropy cost function</h3>
+<p>We could develop our own <a href="https://en.wikipedia.org/wiki/Cross_entropy" target="_blank" rel="noopener noreferrer">cross-entropy cost </a>expression, as we did in the <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">previous TensorFlow tutorial</a>, based on the value <em>y_</em>.   However, then we have to be careful about handling NaN values.  Thankfully, TensorFlow provides a handy function which applies soft-max followed by cross-entropy loss:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=dense_layer2, labels=y))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The function <em>softmax_cross_entropy_with_logits()</em> takes two arguments &#8211; the first (<em>logits</em>) is the output of the matrix multiplication of the final layer (plus bias) and the second is the training target vector.  The function first takes the soft-max of the matrix multiplication, then compares it to the training target using cross-entropy.  The result is the cross-entropy calculation per training sample, so we need to reduce this tensor into a scalar (a single value).  To do this we use <em>tf.reduce_mean()</em> which takes a mean of the tensor.</p>
+<h3>The training of the convolutional neural network</h3>
+<p>The following code is the remainder of what is required to train the network.  It is a replication of what is explained in my <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">previous TensorFlow tutorial</a>, so please refer to that tutorial if anything is unclear.  We&#8217;ll be using <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener noreferrer">mini-batches</a> to train our network.  The essential structure is:</p>
+<ul>
+<li>Create an optimiser</li>
+<li>Create correct prediction and accuracy evaluation operations</li>
+<li>Initialise the operations</li>
+<li>Determine the number of batch runs within an training epoch</li>
+<li>For each epoch:
+<ul>
+<li>For each batch:
+<ul>
+<li>Extract the batch data</li>
+<li>Run the optimiser and cross-entropy operations</li>
+<li>Add to the average cost</li>
+</ul>
+</li>
+<li>Calculate the current test accuracy</li>
+<li>Print out some results</li>
+</ul>
+</li>
+<li>Calculate the final test accuracy and print</li>
+</ul>
+<p>The code to execute this is:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># add an optimiser
+optimiser = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cross_entropy)
+
+# define an accuracy assessment operation
+correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+# setup the initialisation operator
+init_op = tf.global_variables_initializer()
+
+with tf.Session() as sess:
+    # initialise the variables
+    sess.run(init_op)
+    total_batch = int(len(mnist.train.labels) / batch_size)
+    for epoch in range(epochs):
+        avg_cost = 0
+        for i in range(total_batch):
+            batch_x, batch_y = mnist.train.next_batch(batch_size=batch_size)
+            _, c = sess.run([optimiser, cross_entropy], 
+                            feed_dict={x: batch_x, y: batch_y})
+            avg_cost += c / total_batch
+        test_acc = sess.run(accuracy, 
+                       feed_dict={x: mnist.test.images, y: mnist.test.labels})
+        print(&quot;Epoch:&quot;, (epoch + 1), &quot;cost =&quot;, &quot;{:.3f}&quot;.format(avg_cost), &quot; 
+                 test accuracy: {:.3f}&quot;.format(test_acc))
+
+    print(&quot;\nTraining complete!&quot;)
+    print(sess.run(accuracy, feed_dict={x: mnist.test.images, y: mnist.test.labels}))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The final code can be found on this site&#8217;s <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener noreferrer">GitHub repository</a>.  Note the final code on that repository contains some TensorBoard visualisation operations, which have not been covered in this tutorial and will have a dedicated future article to explain.</p>
+<p>Caution:  This is a relatively large network and on a standard home computer is likely to take at least 10-20 minutes to run.</p>
+<h2>The results</h2>
+<p>Running the above code will give the following output:</p>
+<div class="code-embed-wrapper"> <pre class="language-markdown code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-markdown code-embed-code">Epoch: 1 cost = 0.739  test accuracy: 0.911
+Epoch: 2 cost = 0.169  test accuracy: 0.960
+Epoch: 3 cost = 0.100  test accuracy: 0.978
+Epoch: 4 cost = 0.074  test accuracy: 0.979
+Epoch: 5 cost = 0.057  test accuracy: 0.984
+Epoch: 6 cost = 0.047  test accuracy: 0.984
+Epoch: 7 cost = 0.040  test accuracy: 0.986
+Epoch: 8 cost = 0.034  test accuracy: 0.986
+Epoch: 9 cost = 0.029  test accuracy: 0.989
+Epoch: 10 cost = 0.025  test accuracy: 0.990
+
+Training complete!
+0.9897</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>We can also plot the test accuracy versus the number of epoch&#8217;s using TensorBoard (TensorFlow&#8217;s visualisation suite):</p>
+<figure id="attachment_304" style="width: 1276px" class="wp-caption alignnone"><img class="size-full wp-image-304" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-accuracy.jpg" alt="Convolutional neural network tutorial - MNIST accuracy" width="1276" height="612" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-accuracy.jpg 1276w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-accuracy-300x144.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-accuracy-768x368.jpg 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-accuracy-1024x491.jpg 1024w" sizes="(max-width: 1276px) 100vw, 1276px" /><figcaption class="wp-caption-text">Convolutional neural network MNIST accuracy</figcaption></figure>
+<p>As can be observed, after 10 epochs we have reached an impressive prediction accuracy of 99%.  This result has been achieved without extensive optimisation of the convolutional neural network&#8217;s parameters, and also without any form of <a href="http://adventuresinmachinelearning.com/improve-neural-networks-part-1/" target="_blank" rel="noopener noreferrer">regularisation</a>.  This is compared to the best accuracy we could achieve in our standard neural network ~98% &#8211; as can be observed in <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">the previous tutorial</a>.</p>
+<p>The accuracy difference will be even more prominent when comparing standard neural networks with convolutional neural networks on more complicated data-sets, like the <a href="https://www.cs.toronto.edu/~kriz/cifar.html" target="_blank" rel="noopener noreferrer">CIFAR data</a>.  However, that is a topic for another day.  Have fun using TensorFlow and convolutional neural networks!  By the way, if you want to see how to build a neural network in Keras, a more stream-lined framework, check out my <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras tutorial</a>. Also, if you&#8217;d like to explore more deep learning architectures in TensorFlow, check out my <a href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/" target="_blank" rel="noopener">recurrent neural networks and LSTM tutorial</a>.</p>
+<hr />
+<p><strong>Recommended online course </strong>&#8211; If you&#8217;d like to dig deeper in a video course, I&#8217;d recommend the following inexpensive Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.807904&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fdeep-learning-convolutional-neural-networks-theano-tensorflow%2F" target="new">Deep Learning: Convolutional Neural Networks in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.807904&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/">Convolutional Neural Networks Tutorial in TensorFlow</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/feed/</wfw:commentRss>
+		<slash:comments>19</slash:comments>
+		</item>
+	</channel>
+</rss>

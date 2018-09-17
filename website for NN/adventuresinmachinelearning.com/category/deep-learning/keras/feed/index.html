@@ -1,0 +1,1026 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Keras &#8211; Adventures in Machine Learning</title>
+	<atom:link href="http://adventuresinmachinelearning.com/category/deep-learning/keras/feed/" rel="self" type="application/rss+xml" />
+	<link>http://adventuresinmachinelearning.com</link>
+	<description>Learn and explore machine learning</description>
+	<lastBuildDate>Sun, 09 Sep 2018 07:53:16 +0000</lastBuildDate>
+	<language>en-AU</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.9.8</generator>
+	<item>
+		<title>Reinforcement learning tutorial using Python and Keras</title>
+		<link>http://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/</link>
+		<comments>http://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/#comments</comments>
+		<pubDate>Sat, 03 Mar 2018 03:15:48 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Keras]]></category>
+		<category><![CDATA[Reinforcement learning]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=763</guid>
+		<description><![CDATA[<p>In this post, I&#8217;m going to introduce the concept of reinforcement learning, and show you how to build an autonomous agent that can successfully play <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/" title="Reinforcement learning tutorial using Python and Keras">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/">Reinforcement learning tutorial using Python and Keras</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In this post, I&#8217;m going to introduce the concept of reinforcement learning, and show you how to build an autonomous agent that can successfully play a simple game. Reinforcement learning is an active and interesting area of machine learning research, and has been spurred on by recent successes such as the <a href="https://en.wikipedia.org/wiki/AlphaGo" target="_blank" rel="noopener">AlphaGo system</a>, which has convincingly beat the best human players in the world. This occurred in a game that was thought too difficult for machines to learn. In this tutorial, I&#8217;ll first detail some background theory while dealing with a toy game in the Open AI Gym toolkit. We&#8217;ll then create a Q table of this game using simple Python, and then create a Q network using Keras. If you&#8217;d like to scrub up on Keras, check out my <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">introductory Keras tutorial</a>. All code present in this tutorial is available on this site&#8217;s <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">Github page</a>.</p>
+<hr />
+<p><strong>Recommended online course </strong>&#8211;<strong> </strong>If you&#8217;re more of a video based learner, I&#8217;d recommend the following inexpensive Udemy online course in reinforcement learning: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1080408&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fartificial-intelligence-reinforcement-learning-in-python%2F" target="new">Artificial Intelligence: Reinforcement Learning in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1080408&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>Reinforcement learning &#8211; the basics</h1>
+<p>Reinforcement learning can be considered the third genre of the machine learning triad &#8211; unsupervised learning, supervised learning and reinforcement learning. In supervised learning, we supply the machine learning system with curated (x, y) training pairs, where the intention is for the network to learn to map x to y. In reinforcement learning, we create an <em>agent</em> which performs <em>actions </em>in an <em>environment </em>and the agent receives various <em>rewards</em> depending on what <em>state </em>it is in when it performs the action. In other words, an agent explores a kind of game, and it is trained by trying to maximize rewards in this game. This cycle is illustrated in the figure below:</p>
+<figure id="attachment_768" style="width: 381px" class="wp-caption aligncenter"><img class="size-full wp-image-768" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Reinforcement-learning-environment.png" alt="Reinforcement learning with Python and Keras - Reinforcement learning environment" width="381" height="211" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Reinforcement-learning-environment.png 381w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Reinforcement-learning-environment-300x166.png 300w" sizes="(max-width: 381px) 100vw, 381px" /><figcaption class="wp-caption-text">Reinforcement learning environment</figcaption></figure>
+<p>As can be observed above, the agent performs some action in the environment. An interpreter views this action in the environment, and feeds back an updated state that the agent now resides in, and also the reward for taking this action. The environment is not known by the agent beforehand, but rather it is discovered by the agent taking incremental steps in time. So, for instance, at time <em>t </em>the agent, in state <em>$s_{t}$</em>,  may take action <em>a</em>. This results in a new state <em>$s_{t+1}$ </em>and a reward <em>r.</em> This reward can be a positive real number, zero, or a negative real number. It is the goal of the agent to learn which <em>state dependent action</em> to take which maximizes its rewards. The way which the agent optimally learns is the subject of reinforcement learning theory and methodologies.</p>
+<p>To more meaningfully examine the theory and possible approaches behind reinforcement learning, it is useful to have a simple example in which to work through. This simple example will come from an environment available on <a href="https://gym.openai.com/envs/NChain-v0/" target="_blank" rel="noopener">Open AI Gym called NChain</a>.</p>
+<h2>Open AI Gym example</h2>
+<p>The NChain example on Open AI Gym is a simple 5 state environment. There are two possible actions in each state, move forward (action 0) and move backwards (action 1). When action 1 is taken, i.e. move backwards, there is an immediate reward of 2 given to the agent &#8211; and the agent is returned to state 0 (back to the beginning of the chain). However, when a move forward action is taken (action 0), there is no immediate reward until state 4. When the agent moves forward while in state 4, a reward of 10 is received by the agent. The agent stays in state 4 at this point also, so the reward can be repeated. There is also a random chance that the agent&#8217;s action is &#8220;flipped&#8221; by the environment (i.e. an action 0 is flipped to an action 1 and vice versa). The diagram below demonstrates this environment:</p>
+<figure id="attachment_769" style="width: 648px" class="wp-caption aligncenter"><img class=" wp-image-769" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-illustration.png" alt="Reinforcement learning - Python and Keras - NChain environment" width="648" height="207" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-illustration.png 906w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-illustration-300x96.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-illustration-768x245.png 768w" sizes="(max-width: 648px) 100vw, 648px" /><figcaption class="wp-caption-text">Open AI Gym&#8217;s NChain environment</figcaption></figure>
+<p>You can play around with this environment by first installing the Open AI Gym Python package &#8211; see instructions <a href="https://gym.openai.com/docs/" target="_blank" rel="noopener">here</a>. Then simply open up your Python command prompt and have a play &#8211; see the figure below for an example of some of the commands available:</p>
+<figure id="attachment_771" style="width: 449px" class="wp-caption aligncenter"><img class=" wp-image-771" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-Python-playaround.png" alt="Reinforcement learning - Python and Keras - NChain Python playaround" width="449" height="329" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-Python-playaround.png 795w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-Python-playaround-300x220.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-Python-playaround-768x562.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/NChain-Python-playaround-80x60.png 80w" sizes="(max-width: 449px) 100vw, 449px" /><figcaption class="wp-caption-text">NChain Python playaround</figcaption></figure>
+<p>If you examine the code above, you can observe that first the Python module is imported, and then the environment is loaded via the gym.make() command. The first step is to initalize / reset the environment by running env.reset() &#8211; this command returns the initial state of the environment &#8211; in this case 0. The first command I then run is env.step(1) &#8211; the value in the bracket is the action ID. As explained previously, action 1 represents a step back to the beginning of the chain (state 0). The step() command returns 4 variables in a tuple, these are (in order):</p>
+<ul>
+<li>The new state after the action</li>
+<li>The reward due to the action</li>
+<li>Whether the game is &#8220;done&#8221; or not &#8211; the NChain game is done after 1,000 steps</li>
+<li>Debugging information &#8211; not relevant in this example</li>
+</ul>
+<p>As can be observed, starting in state 0 and taking step(1) action, the agent stays in state 0 and gets 2 for its reward. Next, I sent a series of action 0 commands. After every action 0 command, we would expect the progression of the agent along the chain, with the state increasing in increments (i.e. 0 -&gt; 1 -&gt; 2 etc.). However, you&#8217;ll observe after the first step(0) command, that the agent stays in state 0 and gets a 2 reward. This is because of the random tendency of the environment to &#8220;flip&#8221; the action occasionally, so the agent <em>actually</em> performed a 1 action. This is just unlucky.</p>
+<p>Nevertheless, I persevere and it can be observed that the state increments as expected, but there is no immediate reward for doing so for the agent until it reaches state 4. When in state 4, an action of 0 will keep the agent in step 4 <em>and </em>give the agent a 10 reward. Not only that, the environment allows this to be done repeatedly, as long as it doesn&#8217;t produce an unlucky &#8220;flip&#8221;, which would send the agent back to state 0 &#8211; the beginning of the chain.</p>
+<p>Now that we understand the environment that will be used in this tutorial, it is time to consider what method can be used to train the agent.</p>
+<h2>A first naive heuristic for reinforcement learning</h2>
+<p>In order to train the agent effectively, we need to find a good <em>policy $\pi$ </em>which maps states to actions in an optimal way to maximize reward. There are various ways of going about finding a good or optimal policy, but first, let&#8217;s consider a naive approach.</p>
+<p>Let&#8217;s conceptualize a table, and call it a reward table, which looks like this:</p>
+<p>$$<br />
+\begin{bmatrix}<br />
+r_{s_0,a_0} &amp; r_{s_0,a_1} \\<br />
+r_{s_1,a_0} &amp; r_{s_1,a_1} \\<br />
+r_{s_2,a_0} &amp; r_{s_2,a_1} \\<br />
+r_{s_3,a_0} &amp; r_{s_3,a_1} \\<br />
+r_{s_4,a_0} &amp; r_{s_4,a_1} \\<br />
+\end{bmatrix}<br />
+$$</p>
+<p>Each of the rows corresponds to the 5 available states in the NChain environment, and each column corresponds to the 2 available actions in each state &#8211; forward and backward, 0 and 1. The value in each of these table cells corresponds to some measure of reward that the agent has &#8220;learnt&#8221; occurs when they are in that state and perform that action. So, the value $r_{s_0,a_0}$ would be, say, the sum of the rewards that the agent has received when in the past they have been in state 0 and taken action 0. This table would then let the agent choose between actions based on the summated (or average, median etc. &#8211; take your pick) amount of reward the agent has received in the past when taking actions 0 or 1.</p>
+<p>This might be a good policy &#8211; choose the action resulting in the greatest previous summated reward. Let&#8217;s give it a try, the code looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def naive_sum_reward_agent(env, num_episodes=500):
+    # this is the table that will hold our summated rewards for
+    # each action in each state
+    r_table = np.zeros((5, 2))
+    for g in range(num_episodes):
+        s = env.reset()
+        done = False
+        while not done:
+            if np.sum(r_table[s, :]) == 0:
+                # make a random selection of actions
+                a = np.random.randint(0, 2)
+            else:
+                # select the action with highest cummulative reward
+                a = np.argmax(r_table[s, :])
+            new_s, r, done, _ = env.step(a)
+            r_table[s, a] += r
+            s = new_s
+    return r_table</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the function definition, the environment is passed as the first argument, then the number of episodes (or number of games) that we will train the r_table on. We first create the r_table matrix which I presented previously and which will hold our summated rewards for each state and action. Then there is an outer loop which cycles through the number of episodes. The env.reset() command starts the game afresh each time a new episode is commenced. It also returns the starting state of the game, which is stored in the variable <em>s</em>.</p>
+<p>The second, inner loop continues until a &#8220;done&#8221; signal is returned after an action is passed to the environment. The <em>if</em> statement on the first line of the inner loop checks to see if there are any existing values in the r_table for the current state &#8211; it does this by confirming if the sum across the row is equal to 0. If it is zero, then an action is chosen at random &#8211; there is no better information available at this stage to judge which action to take.</p>
+<p>This condition will only last for a short period of time. After this point, there will be a value stored in at least one of the actions for each state, and the action will be chosen based on which column value is the largest for the row state <em>s.</em> In the code, this choice of the maximum column is executed by the numpy <em>argmax</em> function &#8211; this function returns the index of the vector / matrix with the highest value. For example, if the agent is in state 0 and we have the r_table with values [100, 1000] for the first row, action 1 will be selected as the index with the highest value is column 1.</p>
+<p>After the action has been selected and stored in <em>a</em>, this action is fed into the environment with env.step(a). This command returns the new state, the reward for this action, whether the game is &#8220;done&#8221; at this stage and the debugging information that we are not interested in. In the next line, the r_table cell corresponding to state <em>s </em>and action <em>a </em>is updated by adding the reward to whatever is already existing in the table cell.</p>
+<p>Finally the state <em>s </em>is updated to <em>new_s</em> &#8211; the new state of the agent.</p>
+<p>If we run this function, the r_table will look something like:</p>
+<p><img class="alignnone wp-image-788" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Naive-RL-model-r_table-1.png" alt="" width="177" height="101" /></p>
+<p>Examining the results above, you can observe that the most common state for the agent to be in is the first state, seeing as any action 1 will bring the agent back to this point. The least occupied state is state 4, as it is difficult for the agent to progress from state 0 to 4 without the action being &#8220;flipped&#8221; and the agent being sent back to state 0. You can get different results if you run the function multiple times, and this is because of the stochastic nature of both the environment and the algorithm.</p>
+<p>Clearly &#8211; something is wrong with this table. One would expect that in state 4, the most rewarding action for the agent would be to choose action 0, which would reward the agent with 10 points, instead of the usual 2 points for an action of 1. Not only that, but it has chosen action 0 for <em>all </em>states &#8211; this goes against intuition &#8211; surely it would be best to sometimes shoot for state 4 by choosing multiple action 0&#8217;s in a row, and that way reap the reward of multiple possible 10 scores.</p>
+<p>In fact, there are a number of issues with this way of doing reinforcement learning:</p>
+<ul>
+<li>First, once there is a reward stored in one of the columns, the agent will always choose that action from that point on. This will lead to the table being &#8220;locked in&#8221; with respect to actions after just a few steps in the game.</li>
+<li>Second, because no reward is obtained for most of the states when action 0 is picked, this model for training the agent has no way to encourage acting on <em>delayed reward</em> signal when it is appropriate for it to do so.</li>
+</ul>
+<p>Let&#8217;s see how these problems could be fixed.</p>
+<h2>Delayed reward reinforcement learning</h2>
+<p>If you want to be a medical doctor, you&#8217;re going to have to go through some pain to get there. You&#8217;ll be studying a long time before you&#8217;re free to practice on your own, and the rewards will be low while you are doing so. However, once you get to be a fully fledged MD, the rewards will be great. During your time studying, you would be operating under a delayed reward or delayed gratification paradigm in order to reach that greater reward. However, you might only be willing to undertake that period of delayed reward for a given period of time &#8211; you wouldn&#8217;t want to be studying forever, or at least, for decades.</p>
+<p>We can bring these concepts into our understanding of reinforcement learning. Let&#8217;s say we are in state 3 &#8211; in the previous case, when the agent chose action 0 to get to state 3, the reward was zero and therefore r_table[3, 0] = 0. Obviously the agent would not see this as an attractive step compared to the alternative for this state i.e. r_table[3, 1] &gt;= 2. But what if we assigned to this state the reward the agent would received if it chose action 0 in state 4? It would look like this: r_table[3, 0] = r + 10 = 10 &#8211; a much more attractive alternative!</p>
+<p>This idea of propagating possible reward from the best possible actions in future states is a core component of what is called <em>Q learning</em>. In Q learning, the Q value for each action in each state is updated when the relevant information is made available. The Q learning rule is:</p>
+<p>$$Q(s, a) = Q(s, a) + \alpha (r + \gamma \max\limits_{a&#8217;} Q(s&#8217;, a&#8217;) &#8211; Q(s, a))$$</p>
+<p>First, as you can observe, this is an <em>updating </em>rule &#8211; the existing Q value is added to, not replaced. Ignoring the $\alpha$ for the moment, we can concentrate on what&#8217;s inside the brackets. The first term, <em>r</em><em>, </em>is the reward that was obtained when action <em>a</em> was taken in state <em>s</em>. Next, we have an expression which is a bit more complicated. Ignore the $\gamma$ for the moment and focus on $\max\limits_{a&#8217;} Q(s&#8217;, a&#8217;)$. What this means is that we look at the next state <em>s&#8217;</em> after action <em>a</em> and return the maximum possible Q value in the next state. In other words, return the maximum Q value for the best possible action in the next state. In this way, the agent is looking forward to determine the best possible future rewards before making the next step <em>a</em>.</p>
+<p>The $\gamma$ value is called the <em>discounting </em>factor &#8211; this decreases the impact of future rewards on the immediate decision making in state <em>s</em>. This is important, as this represents a limited patience in the agent &#8211; it won&#8217;t study forever to get that medical degree. So $\gamma$ will always be less than 1. The &#8211; Q(s, a) term acts to restrict the growth of the Q value as the training of the agent progresses through many iterations. Finally, this whole sum is multiplied by a <em>learning rate </em>$\alpha$ which restricts the updating to ensure it doesn&#8217;t &#8220;race&#8221; to a solution &#8211; this is important for optimal convergence (see my <em> </em><a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">neural networks tutorial</a> for more on learning rate).</p>
+<p>Note that while the learning rule only examines the best action in the following state, in reality, discounted rewards still cascade down from future states. For instance, if we think of the cascading rewards from all the 0 actions (i.e. moving forward along the chain) and start at state 3, the Q reward will be $r + \gamma \max_a Q(s&#8217;, a&#8217;) = 0 + 0.95 * 10 = 9.5$ (with a $\gamma$ = 0.95). If we work back from state 3 to state 2 it will be 0 + 0.95 * 9.5 = 9.025. Likewise, the cascaded, discounted reward from to state 1 will be 0 + 0.95 * 9.025 = 8.57, and so on. Therefore, while the immediate updating calculation only looks at the maximum Q value for the next state, &#8220;upstream&#8221; rewards that have previously been discovered by the agent still cascade down into the present state and action decision. This is a simplification, due to the learning rate and random events in the environment, but represents the general idea.</p>
+<p>Now that you (hopefully) understand Q learning, let&#8217;s see what it looks like in practice:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def q_learning_with_table(env, num_episodes=500):
+    q_table = np.zeros((5, 2))
+    y = 0.95
+    lr = 0.8
+    for i in range(num_episodes):
+        s = env.reset()
+        done = False
+        while not done:
+            if np.sum(q_table[s,:]) == 0:
+                # make a random selection of actions
+                a = np.random.randint(0, 2)
+            else:
+                # select the action with largest q value in state s
+                a = np.argmax(q_table[s, :])
+            new_s, r, done, _ = env.step(a)
+            q_table[s, a] += r + lr*(y*np.max(q_table[new_s, :]) - q_table[s, a])
+            s = new_s
+    return q_table</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This function is almost exactly the same as the previous naive r_table function that was discussed. The additions and changes are:</p>
+<ul>
+<li>The variables <em>y</em> which specifies the discounting factor $\gamma$ and <em>lr</em> which is the Q table updating learning rate</li>
+<li>The line:<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">q_table[s, a] += r + lr*(y*np.max(q_table[new_s, :]) - q_table[s, a])</code></pre> <div class="code-embed-infos"> </div> </div></li>
+</ul>
+<p>This line executes the Q learning rule that was presented previously. The np.max(q_table[new_s, :]) is an easy way of selecting the maximum value in the q_table for the row new_s. After this function is run, an example q_table output is:</p>
+<p><img class="alignnone wp-image-796" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/First-model-q_table.png" alt="" width="248" height="107" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/First-model-q_table.png 313w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/First-model-q_table-300x129.png 300w" sizes="(max-width: 248px) 100vw, 248px" /></p>
+<p>This output is strange, isn&#8217;t it? Again, we would expect at least the state 4 &#8211; action 0 combination to have the highest Q score, but it doesn&#8217;t.  We might also expect the reward from this action in this state to have cascaded down through the states 0 to 3. Something has clearly gone wrong &#8211; and the answer is that there isn&#8217;t enough <em>exploration</em> going on within the agent training method.</p>
+<h2>Q learning with $\epsilon$-greedy action selection</h2>
+<p>If we think about the previous iteration of the agent training model using Q learning, the action selection policy is based solely on the maximum Q value in any given state. It is conceivable that, given the random nature of the environment, that the agent initially makes &#8220;bad&#8221; decisions. The Q values arising from these decisions may easily be &#8220;locked in&#8221; &#8211; and from that time forward, bad decisions may continue to be made by the agent because it can only ever select the maximum Q value in any given state, even if these values are not necessarily optimal. This action selection policy is called a <em>greedy </em>policy.</p>
+<p>So we need a way for the agent to eventually always choose the &#8220;best&#8221; set of actions in the environment, yet at the same time allowing the agent to not get &#8220;locked in&#8221; and giving it some space to explore alternatives. What is required is the $\epsilon$-greedy policy.</p>
+<p>The $\epsilon$-greedy policy in reinforcement learning is basically the same as the <em>greedy </em>policy, except that there is a value $\epsilon$ (which may be set to decay over time) where, if a random number is selected which is less than this value, an action is chosen completely at random. This step allows some random <em>exploration</em> of the value of various actions in various states, and can be scaled back over time to allow the algorithm to concentrate more on <em>exploiting </em>the best strategies that it has found. This mechanism can be expressed in code as:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def eps_greedy_q_learning_with_table(env, num_episodes=500):
+    q_table = np.zeros((5, 2))
+    y = 0.95
+    eps = 0.5
+    lr = 0.8
+    decay_factor = 0.999
+    for i in range(num_episodes):
+        s = env.reset()
+        eps *= decay_factor
+        done = False
+        while not done:
+            # select the action with highest cummulative reward
+            if np.random.random() &lt; eps or np.sum(q_table[s, :]) == 0:
+                a = np.random.randint(0, 2)
+            else:
+                a = np.argmax(q_table[s, :])
+            # pdb.set_trace()
+            new_s, r, done, _ = env.step(a)
+            q_table[s, a] += r + lr * (y * np.max(q_table[new_s, :]) - q_table[s, a])
+            s = new_s
+    return q_table</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This code shows the introduction of the $\epsilon$ value &#8211; <em>eps</em>. There is also an associated <em>eps</em> decay_factor which exponentially decays eps with each episode <em>eps *= decay_factor</em>. The $\epsilon$-greedy based action selection can be found in this code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">            if np.random.random() &lt; eps or np.sum(q_table[s, :]) == 0:
+                a = np.random.randint(0, 2)
+            else:
+                a = np.argmax(q_table[s, :])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first component of the <em>if </em>statement shows a random number being selected, between 0 and 1, and determining if this is below <em>eps</em>. If so, the action will be selected randomly from the two possible actions in each state. The second part of the <em>if </em>statement is a random selection if there are no values stored in the q_table so far. If neither of these conditions hold true, the action is selected as per normal by taking the action with the highest q value.</p>
+<p>The rest of the code is the same as the standard <em>greedy </em>implementation with Q learning discussed previously. This code produces a q_table which looks something like the following:</p>
+<p><img class="alignnone wp-image-800" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/eps_greedy_q_table.png" alt="" width="242" height="102" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/eps_greedy_q_table.png 306w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/eps_greedy_q_table-300x126.png 300w" sizes="(max-width: 242px) 100vw, 242px" /></p>
+<p>Finally we have a table which favors action 0 in state 4 &#8211; in other words what we would expect to happen given the reward of 10 that is up for grabs via that action in that state. Notice also that, as opposed to the previous tables from the other methods, that there are no actions with a 0 Q value &#8211; this is because the full action space has been explored via the randomness introduced by the $\epsilon$-greedy policy.</p>
+<h2>Comparing the methods</h2>
+<p>Let&#8217;s see if the last agent training model actually produces an agent that gathers the most rewards in any given game. The code below shows the three models trained and then tested over 100 iterations to see which agent performs the best over a test game. The models are trained as well as tested in each iteration because there is significant variability in the environment which messes around with the efficacy of the training &#8211; so this is an attempt to understand average performance of the different models. The main testing code looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def test_methods(env, num_iterations=100):
+    winner = np.zeros((3,))
+    for g in range(num_iterations):
+        m0_table = naive_sum_reward_agent(env, 500)
+        m1_table = q_learning_with_table(env, 500)
+        m2_table = eps_greedy_q_learning_with_table(env, 500)
+        m0 = run_game(m0_table, env)
+        m1 = run_game(m1_table, env)
+        m2 = run_game(m2_table, env)
+        w = np.argmax(np.array([m0, m1, m2]))
+        winner[w] += 1
+        print(&quot;Game {} of {}&quot;.format(g + 1, num_iterations))
+    return winner</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First, this method creates a numpy zeros array of length 3 to hold the results of the winner in each iteration &#8211; the winning method is the method that returns the highest rewards after training and playing. The run_game function looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def run_game(table, env):
+    s = env.reset()
+    tot_reward = 0
+    done = False
+    while not done:
+        a = np.argmax(table[s, :])
+        s, r, done, _ = env.step(a)
+        tot_reward += r
+    return tot_reward</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Here, it can be observed that the trained table given to the function is used for action selection, and the total reward accumulated during the game is returned. A sample outcome from this experiment (i.e. the vector w) is shown below:</p>
+[13, 22, 65]
+<p>&nbsp;</p>
+<p>As can be observed, of the 100 experiments the $\epsilon$-greedy, Q learning algorithm (i.e. the third model that was presented) wins 65 of them. This is followed by the standard greedy implementation of Q learning, which won 22 of the experiments. Finally the naive accumulated rewards method only won 13 experiments. So as can be seen, the $\epsilon$-greedy Q learning method is quite an effective way of executing reinforcement learning.</p>
+<p>So far, we have been dealing with explicit tables to hold information about the best actions and which actions to choose in any given state. However, while this is perfectly reasonable for a small environment like NChain, the table gets far too large and unwieldy for more complicated environments which have a huge number of states and potential actions.</p>
+<p>This is where neural networks can be used in reinforcement learning. Instead of having explicit tables, instead we can train a neural network to predict Q values for each action in a given state. This will be demonstrated using <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras</a> in the next section.</p>
+<h1>Reinforcement learning with Keras</h1>
+<p>To develop a neural network which can perform Q learning, the input needs to be the current state (plus potentially some other information about the environment) and it needs to output the relevant Q values for each action in that state. The Q values which are output should approach, as training progresses, the values produced in the Q learning updating rule. Therefore, the loss or cost function for the neural network should be:</p>
+<p>$$\text{loss} = (\underbrace{r + \gamma \max_{a&#8217;} Q'(s&#8217;, a&#8217;)}_{\text{target}} &#8211; \underbrace{Q(s, a)}_{\text{prediction}})^2$$</p>
+<p>The reinforcement learning architecture that we are going to build in Keras is shown below:</p>
+<figure style="width: 340px" class="wp-caption aligncenter"><img src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/Reinforcement-learning-Keras.png" alt="Reinforcement learning Python Keras - architecture" width="340" height="335" /><figcaption class="wp-caption-text">Reinforcement learning Keras architecture</figcaption></figure>
+<p>The input to the network is the one-hot encoded state vector. For instance, the vector which corresponds to state 1 is [0, 1, 0, 0, 0] and state 3 is [0, 0, 0, 1, 0]. In this case, a hidden layer of 10 nodes with sigmoid activation will be used. The output layer is a linear activated set of two nodes, corresponding to the two Q values assigned to each state to represent the two possible actions. Linear activation means that the output depends only on the linear summation of the inputs and the weights, with no additional function applied to that summation. For more on neural networks, check out my <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">comprehensive neural network tutorial</a>.</p>
+<p>Building this network is easy in Keras &#8211; to learn more about how to use Keras, check out <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">my tutorial</a>. The code below shows how it can be done in a few lines:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = Sequential()
+model.add(InputLayer(batch_input_shape=(1, 5)))
+model.add(Dense(10, activation=&#039;sigmoid&#039;))
+model.add(Dense(2, activation=&#039;linear&#039;))
+model.compile(loss=&#039;mse&#039;, optimizer=&#039;adam&#039;, metrics=[&#039;mae&#039;])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First, the model is created using the Keras Sequential API. Then an input layer is added which takes inputs corresponding to the one-hot encoded state vectors. Then the sigmoid activated hidden layer with 10 nodes is added, followed by the linear activated output layer which will yield the Q values for each action. Finally the model is compiled using a mean-squared error loss function (to correspond with the loss function defined previously) with the <a href="https://arxiv.org/abs/1412.6980" target="_blank" rel="noopener">Adam optimizer</a> being used in its default Keras state.</p>
+<p>To use this model in the training environment, the following code is run which is similar to the previous $\epsilon$-greedy Q learning methodology with an explicit Q table:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">    # now execute the q learning
+    y = 0.95
+    eps = 0.5
+    decay_factor = 0.999
+    r_avg_list = []
+    for i in range(num_episodes):
+        s = env.reset()
+        eps *= decay_factor
+        if i % 100 == 0:
+            print(&quot;Episode {} of {}&quot;.format(i + 1, num_episodes))
+        done = False
+        r_sum = 0
+        while not done:
+            if np.random.random() &lt; eps:
+                a = np.random.randint(0, 2)
+            else:
+                a = np.argmax(model.predict(np.identity(5)[s:s + 1]))
+            new_s, r, done, _ = env.step(a)
+            target = r + y * np.max(model.predict(np.identity(5)[new_s:new_s + 1]))
+            target_vec = model.predict(np.identity(5)[s:s + 1])[0]
+            target_vec[a] = target
+            model.fit(np.identity(5)[s:s + 1], target_vec.reshape(-1, 2), epochs=1, verbose=0)
+            s = new_s
+            r_sum += r
+        r_avg_list.append(r_sum / 1000)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first major difference in the Keras implementation is the following code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">            if np.random.random() &lt; eps:
+                a = np.random.randint(0, 2)
+            else:
+                a = np.argmax(model.predict(np.identity(5)[s:s + 1]))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first condition in the <em>if </em>statement is the implementation of the $\epsilon$-greedy action selection policy that has been discussed already. The second condition uses the Keras model to produce the two Q values &#8211; one for each possible state. It does this by calling the model.predict() function. Here the numpy identity function is used, with vector slicing, to produce the one-hot encoding of the current state <em>s</em>. The standard numpy argmax function is used to select the action with the highest Q value returned from the Keras model prediction.</p>
+<p>The second major difference is the following four lines:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">            target = r + y * np.max(model.predict(np.identity(5)[new_s:new_s + 1]))
+            target_vec = model.predict(np.identity(5)[s:s + 1])[0]
+            target_vec[a] = target
+            model.fit(np.identity(5)[s:s + 1], target_vec.reshape(-1, 2), epochs=1, verbose=0)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first line sets the target as the Q learning updating rule that has been previously presented. It is the reward <em>r</em> plus the discounted maximum of the predicted Q values for the new state, <em>new_s. </em>This is the value that we want the Keras model to learn to predict for state <em>s </em>and action <em>a</em> i.e. Q(s,a). However, our Keras model has an output for each of the two actions &#8211; we don&#8217;t want to alter the value for the other action, only the action <em>a </em>which has been chosen. So on the next line, <em>target_vec</em> is created which extracts both predicted Q values for state <em>s</em>. On the following line, only the Q value corresponding to the action <em>a</em> is changed to <em>target &#8211; </em>the other action&#8217;s Q value is left untouched.</p>
+<p>The final line is where the Keras model is updated in a single training step. The first argument is the current state &#8211; i.e. the one-hot encoded input to the model. The second is our target vector which is reshaped to make it have the required dimensions of (1, 2). The third argument tells the fit function that we only want to train for a single iteration and finally the <em>verbose</em> flag simply tells Keras not to print out the training progress.</p>
+<p>Running this training over 1000 game episodes reveals the following average reward for each step in the game:</p>
+<figure id="attachment_811" style="width: 455px" class="wp-caption aligncenter"><img class=" wp-image-811" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/RL-Keras-average-reward-improvement-during-training.png" alt="Reinforcement learning Python Keras - training improvement in reward" width="455" height="341" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/RL-Keras-average-reward-improvement-during-training.png 640w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/RL-Keras-average-reward-improvement-during-training-300x225.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/RL-Keras-average-reward-improvement-during-training-326x245.png 326w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/03/RL-Keras-average-reward-improvement-during-training-80x60.png 80w" sizes="(max-width: 455px) 100vw, 455px" /><figcaption class="wp-caption-text">Reinforcement learning in Keras &#8211; average reward improvement over number of episodes trained</figcaption></figure>
+<p>As can be observed, the average reward per step in the game increases over each game episode, showing that the Keras model is learning well (if a little slowly).</p>
+<p>We can also run the following code to get an output of the Q values for each of the states &#8211; this is basically getting the Keras model to reproduce our explicit Q table that was generated in previous methods:</p>
+<p>State 0 &#8211; action [[62.734287 61.350456]]
+<p>State 1 &#8211; action [[66.317955 62.27209 ]]
+<p>State 2 &#8211; action [[70.82501 63.262383]]
+<p>State 3 &#8211; action [[76.63797 64.75874]]
+<p>State 4 &#8211; action [[84.51073 66.499725]]
+<p>This output looks sensible &#8211; we can see that the Q values for each state will favor choosing action 0 (moving forward) to shoot for those big, repeated rewards in state 4. Intuitively, this seems like the best strategy.</p>
+<p>So there you have it &#8211; you should now be able to understand some basic concepts in reinforcement learning, and understand how to build Q learning models in Keras. This is just scraping the surface of reinforcement learning, so stay tuned for future posts on this topic (or check out the recommended course below) where more interesting games are played!</p>
+<hr />
+<p><strong>Recommended online course </strong>&#8211;<strong> </strong>If you&#8217;re more of a video based learner, I&#8217;d recommend the following inexpensive Udemy online course in reinforcement learning: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1080408&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fartificial-intelligence-reinforcement-learning-in-python%2F" target="new">Artificial Intelligence: Reinforcement Learning in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1080408&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/">Reinforcement learning tutorial using Python and Keras</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/feed/</wfw:commentRss>
+		<slash:comments>14</slash:comments>
+		</item>
+		<item>
+		<title>Keras LSTM tutorial &#8211; How to easily build a powerful deep learning language model</title>
+		<link>http://adventuresinmachinelearning.com/keras-lstm-tutorial/</link>
+		<comments>http://adventuresinmachinelearning.com/keras-lstm-tutorial/#comments</comments>
+		<pubDate>Sat, 03 Feb 2018 03:30:37 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[Keras]]></category>
+		<category><![CDATA[LSTMs]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=690</guid>
+		<description><![CDATA[<p>In previous posts, I introduced Keras for building convolutional neural networks and performing word embedding. The next natural step is to talk about implementing recurrent <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/" title="Keras LSTM tutorial &#8211; How to easily build a powerful deep learning language model">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/">Keras LSTM tutorial &#8211; How to easily build a powerful deep learning language model</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In previous posts, I introduced Keras for building <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener">convolutional neural networks</a> and performing <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">word embedding</a>. The next natural step is to talk about implementing recurrent neural networks in Keras. In a <a href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/" target="_blank" rel="noopener">previous tutorial of mine</a>, I gave a very comprehensive introduction to recurrent neural networks and long short term memory (LSTM) networks, implemented in TensorFlow. In this tutorial, I&#8217;ll concentrate on creating LSTM networks in Keras, briefly giving a recap or overview of how LSTMs work. In this Keras LSTM tutorial, we&#8217;ll implement a sequence-to-sequence text prediction model by utilizing a large text data set called the PTB corpus. All the code in this tutorial can be found on this <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">site&#8217;s Github repository</a>.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you are more of a video course learner, I&#8217;d recommend this inexpensive Udemy course to learn more about Keras and LSTM networks: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>A brief introduction to LSTM networks</h1>
+<h2>Recurrent neural networks</h2>
+<p>A LSTM network is a kind of recurrent neural network. A recurrent neural network is a neural network that attempts to model time or sequence dependent behaviour &#8211; such as language, stock prices, electricity demand and so on. This is performed by feeding back the output of a neural network layer at time <em>t</em> to the input of the same network layer at time <em>t + 1</em>. It looks like this:</p>
+<figure id="attachment_537" style="width: 363px" class="wp-caption aligncenter"><img class="size-full wp-image-537" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN.jpg" alt="Recurrent LSTM tutorial - RNN diagram with nodes" width="363" height="229" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN.jpg 363w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Explicit-RNN-300x189.jpg 300w" sizes="(max-width: 363px) 100vw, 363px" /><figcaption class="wp-caption-text">Recurrent neural network diagram with nodes shown</figcaption></figure>
+<p>Recurrent neural networks are &#8220;unrolled&#8221; programmatically during training and prediction, so we get something like the following:</p>
+<figure id="attachment_541" style="width: 619px" class="wp-caption aligncenter"><img class=" wp-image-541" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network.png" alt="Recurrent LSTM tutorial - unrolled RNN" width="619" height="202" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network.png 772w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network-300x98.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Recurrent-neural-network-768x251.png 768w" sizes="(max-width: 619px) 100vw, 619px" /><figcaption class="wp-caption-text">Unrolled recurrent neural network</figcaption></figure>
+<p>Here you can see that at each time step, a new word is being supplied &#8211; the output of the previous <em>F</em> (i.e. <em>$h_{t-1}$</em>) is supplied to the network at each time step also. If you&#8217;re wondering what those example words are referring to, it is an example sentence I used in my <a href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/" target="_blank" rel="noopener">previous LSTM tutorial in TensorFlow</a>: “A girl walked into a bar, and she said ‘Can I have a drink please?’.  The bartender said ‘Certainly&#8217;”.</p>
+<p>The problem with vanilla recurrent neural networks, constructed from regular neural network nodes, is that as we try to model dependencies between words or sequence values that are separated by a significant number of other words, we experience the vanishing gradient problem (and also sometimes  the exploding gradient problem) &#8211; to learn more about the vanishing gradient problem, see <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/" target="_blank" rel="noopener">my post on the topic</a>. This is because small gradients or weights (values less than 1) are multiplied many times over through the multiple time steps, and the gradients shrink asymptotically to zero. This means the weights of those earlier layers won&#8217;t be changed significantly and therefore the network won&#8217;t learn long-term dependencies.</p>
+<p>LSTM networks are a way of solving this problem.</p>
+<h2>LSTM networks</h2>
+<p>As mentioned previously, in this Keras LSTM tutorial we will be building an LSTM network for text prediction. An LSTM network is a recurrent neural network that has LSTM cell blocks in place of our standard neural network layers. These cells have various components called the input gate, the forget gate and the output gate &#8211; these will be explained more fully later. Here is a graphical representation of the LSTM cell:</p>
+<figure id="attachment_564" style="width: 600px" class="wp-caption aligncenter"><img class=" wp-image-564" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram.png" alt="Recurrent neural network LSTM tutorial - LSTM cell diagram" width="600" height="289" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram.png 669w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/LSTM-diagram-300x144.png 300w" sizes="(max-width: 600px) 100vw, 600px" /><figcaption class="wp-caption-text">LSTM cell diagram</figcaption></figure>
+<p>Notice first, on the left hand side, we have our new word/sequence value <em>$x_t$</em> being concatenated to the previous output from the cell <em>$h_{t-1}$</em>. The first step for this combined input is for it to be squashed via a <em>tanh</em> layer. The second step is that this input is passed through an <em>input gate</em>. An input gate is a layer of sigmoid activated nodes whose output is multiplied by the squashed input. These input gate sigmoids can act to &#8220;kill off&#8221; any elements of the input vector that aren&#8217;t required. A sigmoid function outputs values between 0 and 1, so the weights connecting the input to these nodes can be trained to output values close to zero to &#8220;switch off&#8221; certain input values (or, conversely, outputs close to 1 to &#8220;pass through&#8221; other values).</p>
+<p>The next step in the flow of data through this cell is the internal state / forget gate loop. LSTM cells have an internal state variable <em>$s_t$</em>. This variable, lagged one time step i.e. <em>$s_{t-1}$</em> is <em>added</em> to the input data to create an effective layer of recurrence. This <em>addition</em> operation, instead of a multiplication operation, helps to reduce the risk of vanishing gradients. However, this recurrence loop is controlled by a forget gate &#8211; this works the same as the input gate, but instead helps the network learn which state variables should be &#8220;remembered&#8221; or &#8220;forgotten&#8221;.</p>
+<p>Finally, we have an output layer <em>tanh</em> squashing function, the output of which is controlled by an <em>output </em><em>gate. </em>This gate determines which values are actually allowed as an output from the cell <em>$h_t$</em>.</p>
+<p>The mathematics of the LSTM cell looks like this:</p>
+<p><strong>Input</strong></p>
+<p>First, the input is squashed between -1 and 1 using a <em>tanh</em> activation function. This can be expressed by:</p>
+<p>$$g = tanh(b^g + x_tU^g + h_{t-1}V^g)$$</p>
+<p>Where $U^g$ and $V^g$ are the weights for the input and previous cell output, respectively, and $b^g$ is the input bias. Note that the exponents <i>g</i> are not a raised power, but rather signify that these are the input weights and bias values (as opposed to the input gate, forget gate, output gate etc.).</p>
+<p>This squashed input is then multiplied element-wise by the output of the <em>input gate, </em>which, as discussed above, is a series of sigmoid activated nodes:</p>
+<p>$$i = \sigma(b^i + x_tU^i + h_{t-1}V^i)$$</p>
+<p>The output of the input section of the LSTM cell is then given by:</p>
+<p>$$g \circ i$$</p>
+<p>Where the $\circ$ operator expresses element-wise multiplication.</p>
+<p><strong>Forget gate and state loop</strong></p>
+<p>The forget gate output is expressed as:</p>
+<p>$$f = \sigma(b^f + x_tU^f + h_{t-1}V^f)$$</p>
+<p>The output of the element-wise product of the previous state and the forget gate is expressed as $s_{t-1} \circ f$. The output from the forget gate / state loop stage is:</p>
+<p>$$s_t = s_{t-1} \circ f + g \circ i$$</p>
+<p><strong>Output gate</strong></p>
+<p>The output gate is expressed as:</p>
+<p>$$o = \sigma(b^o + x_tU^o + h_{t-1}V^o)$$</p>
+<p>So the final output of the cell , with the <em>tanh </em>squashing, can be shown as:</p>
+<p>$$h_t = tanh(s_t) \circ o$$</p>
+<h2>LSTM word embedding and hidden layer size</h2>
+<p>It should be remembered that in all of the mathematics above we are dealing with vectors i.e. the input <em>$x_t$</em> and <em>$h_{t-1}$</em> are not single valued scalars, but rather vectors of a certain length. Likewise, all the weights and bias values are matrices and vectors respectively. Now, you may be wondering, how do we represent words to input them to a neural network? The answer is word embedding. I&#8217;ve written about this extensively in previous tutorials, in particular <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/">Word2Vec word embedding tutorial in Python and TensorFlow</a> and <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/">A Word2Vec Keras tutorial</a>. Basically it involves taking a word and finding a vector representation of that word which captures some meaning of the word. In Word2Vec, this meaning is usually quantified by context &#8211; i.e. word vectors which are close together in vector space are those words which appear in sentences close to the same words.</p>
+<p>The word vectors can be learnt separately, as in <a href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/" target="_blank" rel="noopener">this tutorial</a>, or they can be learnt during the training of your Keras LSTM network. In the example to follow, we&#8217;ll be setting up what is called an <em>embedding </em>layer, to convert each word into a meaningful word vector. We have to specify the size of the embedding layer &#8211; this is the length of the vector each word is represented by &#8211; this is usually in the region of between 100-500. In other words, if the embedding layer size is 250, each word will be represented by a 250-length vector i.e. [$x_1, x_2, x_3,\ldots, x_{250}$].</p>
+<p><strong>LSTM hidden layer size</strong></p>
+<p>We usually match up the size of the embedding layer output with the number of hidden layers in the LSTM cell. You might be wondering where the hidden layers in the LSTM cell come from. In my LSTM overview diagram, I simply showed &#8220;data rails&#8221; through which our input data flowed. However, each <em>sigmoid</em>, <em>tanh</em> or <em>hidden state</em> layer in the cell is actually a set of nodes, whose number is equal to the <em>hidden layer </em>size. Therefore each of the &#8220;nodes&#8221; in the LSTM cell is actually a cluster of normal neural network nodes, as in each layer of a <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">densely connected neural network</a>.</p>
+<h2>The Keras LSTM architecture</h2>
+<p>This section will illustrate what a full LSTM architecture looks like, and show the architecture of the network that we are building in Keras. This will further illuminate some of the ideas expressed above, including the embedding layer and the tensor sizes flowing around the network. The proposed architecture looks like the following:</p>
+<p>&nbsp;</p>
+<figure id="attachment_747" style="width: 522px" class="wp-caption aligncenter"><img class=" wp-image-747" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-architecture.png" alt="Keras LSTM tutorial architecture" width="522" height="545" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-architecture.png 642w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-architecture-288x300.png 288w" sizes="(max-width: 522px) 100vw, 522px" /><figcaption class="wp-caption-text">Keras LSTM tutorial architecture</figcaption></figure>
+<p>The input shape of the text data is ordered as follows : (batch size, number of time steps, hidden size). In other words, for each batch sample and each word in the number of time steps, there is a 500 length embedding word vector to represent the input word. These embedding vectors will be learnt as part of the overall model learning. The input data is then fed into two &#8220;stacked&#8221; layers of LSTM cells (of 500 length hidden size) &#8211; in the diagram above, the LSTM network is shown as unrolled over all the time steps. The output from these unrolled cells is still (batch size, number of time steps, hidden size).</p>
+<p>This output data is then passed to a Keras layer called TimeDistributed, which will be explained more fully below. Finally, the output layer has a <em>softmax </em>activation applied to it. This output is compared to the training <em>y</em> data for each batch, and the error and gradient back propagation is performed from there in Keras. The training <em>y </em>data in this case is the input <em>x </em>words advanced one time step &#8211; in other words, at each time step the model is trying to predict the very next word in the sequence. However, it does this at <em>every </em>time step &#8211; hence the output layer has the same number of time steps as the input layer. This will be made more clear later.</p>
+<h1>Building the Keras LSTM model</h1>
+<p>In this section, each line of code to create the Keras LSTM architecture shown above will be stepped through and discussed. However, I&#8217;ll only briefly discuss the text preprocessing code which mostly uses the code found on the TensorFlow site <a href="https://github.com/tensorflow/models/tree/master/tutorials/rnn/ptb" target="_blank" rel="noopener">here</a>. The complete code for this Keras LSTM tutorial can be found at <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">this site&#8217;s Github repository</a> and is called keras_lstm.py. Note, you first have to download the <a href="http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz" target="_blank" rel="noopener">Penn Tree Bank (PTB)</a> dataset which will be used as the training and validation corpus. You&#8217;ll need to change the <em>data_path </em>variable in the Github code to match the location of this downloaded data.</p>
+<h2>The text preprocessing code</h2>
+<p>In order to get the text data into the right shape for input into the Keras LSTM model, each unique word in the corpus must be assigned a unique integer index. Then the text corpus needs to be re-constituted in order, but rather than text words we have the integer identifiers in order. The three functions which do this in the code are <em>read_words, build_vocab </em>and <em>file_to_word_ids. </em>I won’t go into these functions in detail, but basically, they first split the given text file into separate words and sentence based characters (i.e. end-of-sentence &lt;eos&gt;). Then, each unique word is identified and assigned a unique integer. Finally, the original text file is converted into a list of these unique integers, where each word is substituted with its new integer identifier. This allows the text data to be consumed in the neural network.</p>
+<p>The <em>load_data</em> function which I created to run these functions is shown below:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def load_data():
+    # get the data paths
+    train_path = os.path.join(data_path, &quot;ptb.train.txt&quot;)
+    valid_path = os.path.join(data_path, &quot;ptb.valid.txt&quot;)
+    test_path = os.path.join(data_path, &quot;ptb.test.txt&quot;)
+
+    # build the complete vocabulary, then convert text data to list of integers
+    word_to_id = build_vocab(train_path)
+    train_data = file_to_word_ids(train_path, word_to_id)
+    valid_data = file_to_word_ids(valid_path, word_to_id)
+    test_data = file_to_word_ids(test_path, word_to_id)
+    vocabulary = len(word_to_id)
+    reversed_dictionary = dict(zip(word_to_id.values(), word_to_id.keys()))
+
+    print(train_data[:5])
+    print(word_to_id)
+    print(vocabulary)
+    print(&quot; &quot;.join([reversed_dictionary[x] for x in train_data[:10]]))
+    return train_data, valid_data, test_data, vocabulary, reversed_dictionary</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>To call this function, we can run:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">train_data, valid_data, test_data, vocabulary, reversed_dictionary = load_data()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The three outputs from this function are the training data, validation data and test data from the data set, respectively, but with each word represented as an integer in a list. Some information is printed out during the running of <em>load_data()</em>, one of which is <em>print(train_data[:5]) &#8211; </em>this produces the following output:</p>
+<blockquote>[9970, 9971, 9972, 9974, 9975]</blockquote>
+<p>As you can observe, the training data is comprised of a list of integers, as expected.</p>
+<p>Next, the output <em>vocabulary</em> is simply the size of our text corpus. When words are incorporated into the training data, every single unique word is not considered &#8211; rather, in natural language processing, the text data is usually limited to a certain <em>N </em>number of the most common words. In this case <em>N = vocabulary = 10,000</em>.</p>
+<p>Finally, <em>reversed_dictionary </em>is a Python dictionary where the key is the unique integer identifier of a word, and the associated value is the word in text. This allows us to work backwards from predicted integer words that our model will produce, and translate them back to real text. For instance, the following code converts the integers in <em>train_data </em>back to text which is then printed: <em>print(&#8221; &#8220;.join([reversed_dictionary[x] for x in train_data[100:110]]))</em>. This code snippet produces:</p>
+<blockquote><p>workers exposed to it more than N years ago researchers</p></blockquote>
+<p>That&#8217;s about all the explanation required with regard to the text pre-processing, so let&#8217;s progress to setting up the input data generator which will feed samples into our Keras LSTM model.</p>
+<h2>Creating the Keras LSTM data generators</h2>
+<p>When training neural networks, we generally feed data into them in small batches, called mini-batches or just &#8220;batches&#8221; (for more information on mini-batch gradient descent, see my tutorial <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener">here</a>). Keras has  some handy functions which can extract training data automatically from a pre-supplied Python iterator/generator object and input it to the model. One of these Keras functions is called <em>fit_generator. </em>The first argument to <em>fit_generator</em> is the Python iterator function that we will create, and it will be used to extract batches of data during the training process. This function in Keras will handle all of the data extraction, input into the model, executing gradient steps, logging metrics such as accuracy and executing <em>callbacks</em> (these will be discussed later). The Python iterator function needs to have a form like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">while True:
+    #do some things to create a batch of data (x, y)
+   yield x, y</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In this case, I have created a generator class which contains a method which implements such a structure. The initialization of this class looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class KerasBatchGenerator(object):
+
+    def __init__(self, data, num_steps, batch_size, vocabulary, skip_step=5):
+        self.data = data
+        self.num_steps = num_steps
+        self.batch_size = batch_size
+        self.vocabulary = vocabulary
+        # this will track the progress of the batches sequentially through the
+        # data set - once the data reaches the end of the data set it will reset
+        # back to zero
+        self.current_idx = 0
+        # skip_step is the number of words which will be skipped before the next
+        # batch is skimmed from the data set
+        self.skip_step = skip_step</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Here the <em>KerasBatchGenerator</em> object takes our data as the first argument. Note, this data can be either training, validation or test data &#8211; multiple instances of the same class can be created and used in the various stages of our machine learning development cycle &#8211; training, validation tuning, test. The next argument supplied is called <em>num_steps &#8211; </em>this is the number of words that we will feed into the time distributed input layer of the network. In other words (pun intended), this is the set of words that the model will learn from to predict the words coming after. The argument <em>batch_size </em>is pretty self-explanatory, and we&#8217;ve discussed <em>vocabulary</em> already (it is equal to 10,000 in this case). Finally <em>skip_steps </em>is the number of words we want to skip over between training samples within each batch. To make this a bit clearer, consider the following sentence:</p>
+<p><em>&#8220;The cat sat on the mat, and ate his</em> <em>hat. </em><em>Then he jumped up and spat</em>&#8220;</p>
+<p>If <em>num_steps </em>is set to 5, the data consumed as the input data for a given sample would be &#8220;The cat sat on the&#8221;. In this case, because we are predicted the very next word in the sequence via our model, for each time step, the matching output <em>y </em>or target data would be &#8220;cat sat on the mat&#8221;. Finally, the <em>skip_steps</em> is the number of words to skip over before the next data batch is taken. If, in this example, it is <em>skip_steps=num_steps</em> the next 5 input words for the next batch would be &#8220;mat and ate his hat&#8221;. Hopefully that makes sense.</p>
+<p>One final item in the initialization of the class needs to be discussed. This is variable <em>current_idx</em> which is initialized at zero. This variable is required to track the extraction of data through the full data set &#8211; once the full data set has been consumed in the training, we need to reset <em>current_idx</em> to zero so that the data consumption starts from the beginning of the data set again. In other words it is basically a data set location pointer.</p>
+<p>Ok, now we need to discuss the <em>generator </em>method that will be called during <em>fit_generator</em>:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">def generate(self):
+    x = np.zeros((self.batch_size, self.num_steps))
+    y = np.zeros((self.batch_size, self.num_steps, self.vocabulary))
+    while True:
+        for i in range(self.batch_size):
+            if self.current_idx + self.num_steps &gt;= len(self.data):
+                # reset the index back to the start of the data set
+                self.current_idx = 0
+            x[i, :] = self.data[self.current_idx:self.current_idx + self.num_steps]
+            temp_y = self.data[self.current_idx + 1:self.current_idx + self.num_steps + 1]
+            # convert all of temp_y into a one hot representation
+            y[i, :, :] = to_categorical(temp_y, num_classes=self.vocabulary)
+            self.current_idx += self.skip_step
+        yield x, y</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the first couple of lines our x and y output arrays are created. The size of variable <em>x </em>is fairly straight forward to understand &#8211; it&#8217;s first dimension is the number of samples we specify in the batch. The second dimension is the number of words we are going to base our predictions on. The size of variable <em>y</em> is a little more complicated. First it has the batch size as the first dimension, then it has the number of time steps as the second, as discussed above. However, <em>y</em> has an additional third dimension, equal to the size of our vocabulary, in this case 10,000.</p>
+<p>The reason for this is that the output layer of our Keras LSTM network will be a standard <em>softmax </em>layer, which will assign a probability to each of the 10,000 possible words. The one word with the highest probability will be the predicted word &#8211; in other words, the Keras LSTM network will predict one word out of 10,000 possible <em>categories</em>. Therefore, in order to train this network, we need to create a training sample for each word that has a 1 in the location of the <em>true</em> word, and zeros in all the other 9,999 locations. It will look something like this: (0, 0, 0, &#8230;, 1, 0, &#8230;, 0, 0) &#8211; this is called a one-hot representation, or alternatively, a categorical representation. Therefore, for each target word, there needs to be a 10,000 length vector with only one of the elements in this vector set to 1.</p>
+<p>Ok, now onto the <em>while True: yield x, y</em> paradigm that was discussed earlier for the generator. In the first line, we enter into a for loop of size <em>batch_size, </em>to populate all the data in the batch. Next, there is a condition to test regarding whether we need to reset the <em>current_idx </em>pointer. Remember that for each training sample we consume <em>num_steps</em> words. Therefore, if the current index point plus <em>num_steps </em>is greater than the length of the data set, then the <em>current_idx</em> pointer needs to be reset to zero to start over with the data set.</p>
+<p>After this check is performed, the input data is consumed into the <em>x </em>array. The data indices consumed is pretty straight-forward to understand &#8211; it is the current index to the current-index-plus-<em>nu</em><em>m_steps </em>number of words. Next, a temporary <em>y </em>variable is populated which works in pretty much the same way &#8211; the only difference is that the starting point and the end point of the data consumption is advanced by 1 (i.e. + 1). If this is confusing, please refer to the &#8220;cat sat on the mat etc.&#8221; example discussed above.</p>
+<p>The final step is converting each of the target words in each sample into the one-hot or categorical representation that was discussed previously. To do this, you can use the Keras <em>to_categorical </em>function. This function takes a series of integers as its first arguments and adds an additional dimension to the vector of integers &#8211; this dimension is the one-hot representation of each integer. It&#8217;s size is specified by the second argument passed to the function. So say we have a series of integers with a shape (100, 1) and we pass it to the <em>to_categorical </em>function and specify the size to be equal to 10,000 &#8211; the returned shape will be (100, 10000). For instance, let&#8217;s say the series / vector of integers looked like: (0, 1, 2, 3, &#8230;.), the <em>to_categorical</em> output would look like:</p>
+<p>(1, 0, 0, 0, 0, &#8230;.)</p>
+<p>(0, 1, 0, 0, 0, &#8230;.)</p>
+<p>(0, 0, 1, 0, 0, &#8230;.)</p>
+<p>and so on&#8230;</p>
+<p>Here the &#8220;&#8230;&#8221; represents a whole lot of zeroes ensuring that the total number of elements associated with each integer is 10,000. Hopefully that makes sense.</p>
+<p>The final two lines of the generator function are straight-forward &#8211; first, the <em>current_idx</em> pointer is incremented by <em>skip_step</em> whose role was discussed previously. The last line yields the batch of <em>x </em>and <em>y </em>data.</p>
+<p>Now that the generator class has been created, we need to create instances of it. As mentioned previously, we can setup instances of the same class to correspond to the training and validation data. In the code, this looks like the following:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">train_data_generator = KerasBatchGenerator(train_data, num_steps, batch_size, vocabulary,
+                                           skip_step=num_steps)
+valid_data_generator = KerasBatchGenerator(valid_data, num_steps, batch_size, vocabulary,
+                                           skip_step=num_steps)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now that the input data for our Keras LSTM code is all setup and ready to go, it is time to create the LSTM network itself.</p>
+<h2>Creating the Keras LSTM structure</h2>
+<p>In this example, the Sequential way of building deep learning networks will be used. This way of building networks was introduced in my <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras tutorial – build a convolutional neural network in 11 lines</a>. The alternate way of building networks in Keras is the Functional API, which I used in my <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" target="_blank" rel="noopener">Word2Vec Keras tutorial</a>. Basically, the sequential methodology allows you to easily stack layers into your network without worrying too much about all the tensors (and their shapes) flowing through the model. However, you still have to keep your wits about you for some of the more complicated layers, as will be discussed below. In this example, it looks like the following:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = Sequential()
+model.add(Embedding(vocabulary, hidden_size, input_length=num_steps))
+model.add(LSTM(hidden_size, return_sequences=True))
+model.add(LSTM(hidden_size, return_sequences=True))
+if use_dropout:
+    model.add(Dropout(0.5))
+model.add(TimeDistributed(Dense(vocabulary)))
+model.add(Activation(&#039;softmax&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first step involves creating a Keras model with the Sequential() constructor. The first layer in the network, as per the architecture diagram shown previously, is a word embedding layer. This will convert our words (referenced by integers in the data) into meaningful embedding vectors. This Embedding() layer takes the size of the vocabulary as its first argument, then the size of the resultant embedding vector that you want as the next argument. Finally, because this layer is the first layer in the network, we must specify the &#8220;length&#8221; of the input i.e. the number of steps/words in each sample.</p>
+<p>It&#8217;s worthwhile keeping track of the Tensor shapes in the network &#8211; in this case, the input to the embedding layer is (batch_size, num_steps) and the output is (batch_size, num_steps, hidden_size). Note that Keras, in the Sequential model, always maintains the batch size as the first dimension. It receives the batch size from the Keras fitting function (i.e. <em>fit_generator</em> in this case), and therefore it is rarely (never?) included in the definitions of the Sequential model layers.</p>
+<p>The next layer is the first of our two LSTM layers. To specify an LSTM layer, first you have to provide the number of nodes in the hidden layers within the LSTM cell, e.g. the number of cells in the forget gate layer, the <em>tanh </em>squashing input layer and so on. The next argument that is specified in the code above is the <em>return_sequences=True </em>argument. What this does is ensure that the LSTM cell returns all of the outputs from the unrolled LSTM cell through time. If this argument is left out, the LSTM cell will simply provide the output of the LSTM cell from the last time step. The diagram below shows what I mean:</p>
+<figure id="attachment_737" style="width: 647px" class="wp-caption aligncenter"><img class=" wp-image-737" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram.png" alt="Keras LSTM tutorial - return sequences argument comparison" width="647" height="174" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram.png 1124w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram-300x81.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram-768x206.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/01/Keras-LSTM-return-sequences-diagram-1024x275.png 1024w" sizes="(max-width: 647px) 100vw, 647px" /><figcaption class="wp-caption-text">Keras LSTM return sequences argument comparison</figcaption></figure>
+<p>As can be observed in the diagram above, there is only one output when <em>return_sequences=False</em> &#8211; $<em>h_t$ . </em>However, when <em>return_sequences=True</em> all of the unrolled outputs from the LSTM cells are returned <em>$h_0 &#8230; h_t$</em>. In this case, we want the latter arrangement. Why? Well, in this example we are trying to predict the very next word in the sequence. However, if we are trying to train the model, it is best to be able to compare the LSTM cell output at each time step with the very next word in the sequence &#8211; in this way we get <em>num_steps</em> sources to correct errors in the model (via <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/">back-propagation</a>) rather than just one for each sample.</p>
+<p>Therefore, for both stacked LSTM layers, we want to return all the sequences. The output shape of each LSTM layer is (<em>batch_size, num_steps, hidden_size).</em></p>
+<p>The next layer in our Keras LSTM network is a dropout layer to prevent overfitting. After that, there is a special Keras layer for use in recurrent neural networks called TimeDistributed. This function adds an independent layer for each time step in the recurrent model. So, for instance, if we have 10 time steps in a model, a TimeDistributed layer operating on a Dense layer would produce 10 independent Dense layers, one for each time step. The activation for these dense layers is set to be softmax in the final layer of our Keras LSTM model.</p>
+<h2>Compiling and running the Keras LSTM model</h2>
+<p>The next step in Keras, once you&#8217;ve completed your model, is to run the compile command on the model. It looks like this:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.compile(loss=&#039;categorical_crossentropy&#039;, optimizer=&#039;adam&#039;, metrics=[&#039;categorical_accuracy&#039;])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In this command, the type of loss that Keras should use to train the model needs to be specified. In this case, we are using &#8216;categorical_crossentropy&#8217; which is cross entropy applied in cases where there are many classes or categories, of which only one is true. Next, in this example, the optimizer that will be used is the <a href="https://arxiv.org/abs/1412.6980" target="_blank" rel="noopener">Adam optimizer</a> &#8211; an effective &#8220;all round&#8221; optimizer with adaptive stepping. Finally, a metric is specified &#8211; &#8216;categorical_accuracy&#8217;, which can let us see how the accuracy is improving during training.</p>
+<p>The next line of code involves creating a Keras <em>callback </em>&#8211; callbacks are certain functions which Keras can optionally call, usually after the end of a training epoch. For more on callbacks, see my <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras tutorial</a>. The callback that is used in this example is a model checkpoint callback &#8211; this callback saves the model after each epoch, which can be handy for when you are running long-term training.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">checkpointer = ModelCheckpoint(filepath=data_path + &#039;/model-{epoch:02d}.hdf5&#039;, verbose=1)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Note that the model checkpoint function can include the epoch in its naming of the model, which is good for keeping track of things.</p>
+<p>The final step in training the Keras LSTM model is to call the aforementioned <em>fit_generator </em>function. The line below shows you how to do this:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.fit_generator(train_data_generator.generate(), len(train_data)//(batch_size*num_steps), num_epochs,
+                        validation_data=valid_data_generator.generate(),
+                        validation_steps=len(valid_data)//(batch_size*num_steps), callbacks=[checkpointer])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first argument to <em>fit_generator</em> is our generator function that was explained earlier. The next argument is the number of iterations to run for each training epoch. The value given <em>len(train_data)//(batch_size*num_steps)</em> ensures that the whole data set is run through the model in each epoch. Likewise, a generator for the smaller validation data set is called, with the same argument for the number of iterations to run. At the end of each epoch, the validation data will be run through the model and the accuracy will be returned. Finally, the model checkpoint callback explained above is supplied via the callbacks argument in <em>fit_generator</em>. Now the model is good to go!</p>
+<p>Before some results are presented &#8211; some caveats are required. First the PTB data set is a <em>serious </em>text data set &#8211; not a toy problem to demonstrate how good LSTM models are. Therefore, in order to get good results, you&#8217;ll likely have to run the model over many epochs, and the model will need to have a significant level of complexity. Therefore, it is likely to take a long time on a CPU machine, and I&#8217;d suggest running it on a machine with a good GPU if you want to try and replicate things. If you don&#8217;t have a GPU machine yourself, you can create an Amazon EC2 instance as shown in <a href="http://adventuresinmachinelearning.com/tensorflow-amazon-aws/" target="_blank" rel="noopener">my Amazon AWS tutorial</a>. I&#8217;m in the latter camp, and wasn&#8217;t looking to give <em>too </em>many dollars to Amazon to train, optimize learning parameters and so on. However, I&#8217;ve run the model up to 40 epochs and gotten some reasonable initial results. My model parameters for the results presented below are as follows:</p>
+<blockquote><p><em>num_steps=30</em></p>
+<p><em>batch_size=20</em></p>
+<p><em>hidden_size=500</em></p></blockquote>
+<p>After 40 epochs, training data set accuracy was around 40%, while validation set accuracy reached approximately 20-25%. This is the sort of output you&#8217;ll see while running the training session:</p>
+<figure id="attachment_749" style="width: 1122px" class="wp-caption alignnone"><img class="size-full wp-image-749" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output.png" alt="Keras LSTM tutorial - example training output" width="1122" height="48" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output.png 1122w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output-300x13.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output-768x33.png 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-training-output-1024x44.png 1024w" sizes="(max-width: 1122px) 100vw, 1122px" /><figcaption class="wp-caption-text">Keras LSTM tutorial &#8211; example training output</figcaption></figure>
+<h2>The Keras LSTM results</h2>
+<p>In order to test the trained Keras LSTM model, one can compare the predicted word outputs against what the actual word sequences are in the training and test data set. The code below is a snippet of how to do this, where the comparison is against the predicted model output and the <em>training </em>data set (the same can be done with the <em>test_data </em>data).</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = load_model(data_path + &quot;\model-40.hdf5&quot;)
+dummy_iters = 40
+example_training_generator = KerasBatchGenerator(train_data, num_steps, 1, vocabulary,
+                                                     skip_step=1)
+print(&quot;Training data:&quot;)
+for i in range(dummy_iters):
+    dummy = next(example_training_generator.generate())
+num_predict = 10
+true_print_out = &quot;Actual words: &quot;
+pred_print_out = &quot;Predicted words: &quot;
+for i in range(num_predict):
+    data = next(example_training_generator.generate())
+    prediction = model.predict(data[0])
+    predict_word = np.argmax(prediction[:, num_steps-1, :])
+    true_print_out += reversed_dictionary[train_data[num_steps + dummy_iters + i]] + &quot; &quot;
+    pred_print_out += reversed_dictionary[predict_word] + &quot; &quot;
+print(true_print_out)
+print(pred_print_out)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the code above, first the model is reloaded from the trained data (in the example above, it is the checkpoint from the 40th epoch of training). Then another KerasBatchGenerator class is created, as was discussed previously &#8211; in this case, a batch of length 1 is used, as we only want one <em>num_steps</em> worth of text data to compare. Then a loop of dummy data extractions from the generator is created &#8211; this is to control where in the data-set the comparison sentences are drawn from. The second loop, from 0 to <em>num_predict </em>is where the interesting stuff is happening.</p>
+<p>First, a batch of data is extracted from the generator and this is passed to the <em>model.predict() </em>method. This returns <em>num_steps </em>worth of predicted words &#8211; however, each word is represented by a <em>categorical</em> or one hot output. In other words, each word is represented by a vector of 10,000 items, with most being zero and only one element being equal to 1. The index of this &#8220;1&#8221; is the integer representation of the actual English word. So to extract the index where this &#8220;1&#8221; occurs, we can use the<em> np.argmax() </em>function. This function identifies the index where the maximum value occurs in a vector &#8211; in this case the maximum value is 1, compared to all the zeros, so this is a handy function for us to use.</p>
+<p>Once the index has been identified, it can be translated into an actual English word by using the <em>reverse_dictionary </em>that was constructed during the data pre-processing. This English word is then added to the predicted words string, and finally the actual and predicted words are returned.</p>
+<p>The output below is the comparison between the actual and predicted words after 10 epochs of training on the <em>training</em> data set:</p>
+<figure id="attachment_743" style="width: 885px" class="wp-caption aligncenter"><img class="size-full wp-image-743" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-10-epochs-training.png" alt="Keras LSTM tutorial - comparison on the training data set after 10 epochs" width="885" height="50" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-10-epochs-training.png 885w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-10-epochs-training-300x17.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-10-epochs-training-768x43.png 768w" sizes="(max-width: 885px) 100vw, 885px" /><figcaption class="wp-caption-text">Comparison on the training data set after 10 epochs of training</figcaption></figure>
+<p>As can be observed, while some words match, after 10 epochs of training the match is pretty poor. By the way &#8220;&lt;unk&gt;&#8221; refers to words not included in the 10,000 length vocabulary of the data set. Alternatively, if we look at the comparison after 40 epochs of training (again, just on the <em>training </em>data set):</p>
+<figure id="attachment_744" style="width: 869px" class="wp-caption aligncenter"><img class="size-full wp-image-744" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training.png" alt="Keras LSTM tutorial - comparison on the training data set after 40 epochs" width="869" height="57" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training.png 869w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-300x20.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-768x50.png 768w" sizes="(max-width: 869px) 100vw, 869px" /><figcaption class="wp-caption-text">Comparison on the training data set after 40 epochs of training</figcaption></figure>
+<p>It can be observed that the match is quite good between the actual and predicted words in the <em>training</em> set.</p>
+<p>However, when we look at the test data set, the match after 40 epochs of training isn&#8217;t quite as good:</p>
+<figure id="attachment_745" style="width: 687px" class="wp-caption aligncenter"><img class=" wp-image-745" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-test-set.png" alt="Keras LSTM tutorial - comparison on the test data set after 40 epochs" width="687" height="53" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-test-set.png 749w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/02/Keras-LSTM-tutorial-40-epochs-training-test-set-300x23.png 300w" sizes="(max-width: 687px) 100vw, 687px" /><figcaption class="wp-caption-text">Comparison on the test data set after 40 epochs of training</figcaption></figure>
+<p>Despite there not being a perfect correspondence between the predicted and actual words, you can see that there is a rough correspondence and the predicted sub-sentence at least makes some grammatical sense. So not so bad after all. However, in order to train a Keras LSTM network which can perform well on this realistic, large text corpus, more training and optimization is required. I will leave it up to you, the reader, to experiment further if you desire. However, the current code is sufficient for you to gain an understanding of how to build a Keras LSTM network, along with an understanding of the theory behind LSTM networks.</p>
+<p>I hope this (large) tutorial is a help to you in understanding Keras LSTM networks, and LSTM networks in general.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you are more of a video course learner, I&#8217;d recommend this inexpensive Udemy course to learn more about Keras and LSTM networks: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/">Keras LSTM tutorial &#8211; How to easily build a powerful deep learning language model</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/keras-lstm-tutorial/feed/</wfw:commentRss>
+		<slash:comments>10</slash:comments>
+		</item>
+		<item>
+		<title>Python gensim Word2Vec tutorial with TensorFlow and Keras</title>
+		<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/</link>
+		<comments>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/#comments</comments>
+		<pubDate>Fri, 01 Sep 2017 22:24:41 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[gensim]]></category>
+		<category><![CDATA[Keras]]></category>
+		<category><![CDATA[NLP]]></category>
+		<category><![CDATA[TensorFlow]]></category>
+		<category><![CDATA[Word2Vec]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=517</guid>
+		<description><![CDATA[<p>I&#8217;ve been dedicating quite a bit of time recently to Word2Vec tutorials because of the importance of the Word2Vec concept for natural language processing (NLP) <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/" title="Python gensim Word2Vec tutorial with TensorFlow and Keras">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/">Python gensim Word2Vec tutorial with TensorFlow and Keras</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>I&#8217;ve been dedicating quite a bit of time recently to Word2Vec tutorials because of the importance of the Word2Vec concept for natural language processing (NLP) and also because I&#8217;ll soon be presenting some tutorials on recurrent neural networks and LSTMs for sequence prediction/NLP (UPDATE: I&#8217;ve completed a comprehensive tutorial on these topics &#8211; <a href="http://adventuresinmachinelearning.com/recurrent-neural-networks-lstm-tutorial-tensorflow/" target="_blank" rel="noopener">Recurrent neural networks and LSTM tutorial in Python and TensorFlow</a>).  There are also some very interesting ideas floating around such as <a href="https://deeplearning4j.org/thoughtvectors" target="_blank" rel="noopener">thought vectors</a> which require an understanding of the Word2Vec concept.  My two Word2Vec tutorials are <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">Word2Vec word embedding tutorial in Python and TensorFlow</a> and <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" target="_blank" rel="noopener">A Word2Vec Keras tutorial</a> showing the concepts of Word2Vec and implementing in TensorFlow and Keras, respectively.  In this tutorial, I am going to show you how you can use the original Google Word2Vec C code to generate word vectors, using the Python gensim library which wraps this cod,e and apply the results to TensorFlow and Keras.</p>
+<p>The gensim Word2Vec implementation is very fast due to its C implementation &#8211; but to use it properly you will first need to install the <a href="http://cython.org/" target="_blank" rel="noopener">Cython library</a>. In this tutorial, I&#8217;ll show how to load the resulting embedding layer generated by gensim into TensorFlow and Keras embedding implementations.  Because of gensim&#8217;s blazing fast C wrapped code, this is a good alternative to running native Word2Vec embeddings in TensorFlow and Keras.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you are more of a video course learner, check out this inexpensive Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.918390&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fnatural-language-processing-with-deep-learning-in-python%2F" target="new">Natural Language Processing with Deep Learning in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.918390&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>Word2Vec and gensim</h1>
+<p>I&#8217;ve devoted plenty of words to explaining Word2Vec in my previous tutorials (<a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">here</a> and <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" target="_blank" rel="noopener">here</a>) so I&#8217;ll only briefly introduce the Word2Vec concepts here.  For further details, check out those tutorials. Here&#8217;s the (relatively) quick version &#8211; for each text data set that we create, we have to create a <em>vocabulary</em>. The <em>vocabulary</em> is the list of unique words within the text.  Often it is &gt;10,000 words for serious data sets.  Machine learning models generally can&#8217;t take raw word inputs, so we first need to convert our data set into some number format &#8211; generally a list of unique integers.</p>
+<p>Neural network based models like vector inputs. We, therefore, need to convert the integers into vectors.  A naive way of converting integers into vectors is to convert them into one-hot vectors &#8211; these are vectors where all of the values are set to zero, except for one i.e. [0, 0, 0, &#8230;, 1, &#8230;, 0, 0].  The &#8220;one-hot&#8221; value is located at the array index which matches the unique integer representation of the word. Therefore, our input one-hot vector must be at least the size of the vocabulary in length &#8211; i.e. &gt;10,000 words.</p>
+<p>There are two main problems with this type of representation of words &#8211; the first is that it is inefficient. Each word is represented by a 10,000 word plus vector, which for neural networks means a heck of a lot of associated weights between the input layer and the first hidden layer (generally millions).  The second is that it loses all contextual meaning of the words.  We need a way of representing words that is both efficient and yet retains some of the original meaning of the word and its relation to other words. Enter word embedding and Word2Vec.</p>
+<h2>Word embedding and Word2Vec</h2>
+<p>Word embedding involves creating better vector representations of words &#8211; both in terms of efficiency and maintaining meaning. For instance, a word embedding layer may involve creating a 10,000 x 300 sized matrix, whereby we look up a 300 length vector representation for each of the 10,000 words in our vocabulary.  This new, 300 length vector is obviously a lot more efficient than a 10,000 length one-hot representation.  But we also need to create this 300 length vector in such a way as to preserve some semblance of the meaning of the word.</p>
+<p>Word2Vec does this by taking the <em>context </em>of words surrounding the <em>target </em>word.  So, if we have a context window of 2, the context of the <em>target</em> word &#8220;sat&#8221; in the sentence &#8220;the cat sat on the mat&#8221; is the list of words [&#8220;the&#8221;, &#8220;cat&#8221;, &#8220;on&#8221;, &#8220;the&#8221;]. In Word2Vec, the meaning of a word is roughly translatable to context &#8211; and it basically works. Target words which share similar common context words often have similar meanings. The way Word2Vec trains the embedding vectors is via a neural network of sorts &#8211; the neural network, given a one-hot representation of a <em>target</em> word, tries to predict the most likely context words.  For an introduction to neural networks, see <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">this tutorial</a>.</p>
+<p>Here&#8217;s a naive way of performing the neural network training using an output softmax layer:</p>
+<figure id="attachment_395" style="width: 676px" class="wp-caption alignnone"><img class="size-full wp-image-395" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/Word2Vec-softmax.jpg" alt="gensim word embedding softmax trainer" width="676" height="425" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/Word2Vec-softmax.jpg 676w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/Word2Vec-softmax-300x189.jpg 300w" sizes="(max-width: 676px) 100vw, 676px" /><figcaption class="wp-caption-text">A word embedding softmax trainer</figcaption></figure>
+<p>In this network, the 300 node hidden layer weights are training by trying to predict (via a softmax output layer) genuine, high probability context words.  Once the training is complete, the output softmax layer is discarded and what is of real value is the 10,000 x 300 weight matrix connecting the input to the hidden layer. This is our embedding matrix, and we can look up any member of our 10,000-word vocabulary and get it&#8217;s 300 length vector representation.</p>
+<p>It turns out that this softmax way of training the embedding layer is very inefficient, due to the millions of weights that need to be involved in updating and calculating the softmax values. Therefore, a concept called <em>negative sampling </em>is used in the real Word2Vec, which involves training the layer with real context words and a few <em>negative samples</em> which are chosen randomly from outside the context.  For more details on this, see my <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" target="_blank" rel="noopener">Word2Vec Keras tutorial</a>.</p>
+<p>Now we understand what Word2Vec training of embedding layers involves, let&#8217;s talk about the gensim Word2Vec module.</p>
+<h2>A gensim Word2Vec tutorial</h2>
+<figure id="attachment_532" style="width: 1139px" class="wp-caption alignnone"><img class="size-full wp-image-532" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Closest-words-output.jpg" alt="gensim Word2Vec - nearest words" width="1139" height="327" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Closest-words-output.jpg 1139w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Closest-words-output-300x86.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Closest-words-output-768x220.jpg 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/09/Closest-words-output-1024x294.jpg 1024w" sizes="(max-width: 1139px) 100vw, 1139px" /><figcaption class="wp-caption-text">Nearest words by cosine similarity</figcaption></figure>
+<p>This section will give a brief introduction to the gensim Word2Vec module.  The gensim library is an open-source Python library that specializes in vector space and topic modeling.  It can be made very fast with the use of the Cython Python model, which allows C code to be run inside the Python environment. This is good for our purposes, as the <a href="https://code.google.com/archive/p/word2vec/" target="_blank" rel="noopener">original Google Word2Vec implementation</a> is written in C, and gensim has a wrapper for this code, which will be explained below.</p>
+<p>For this tutorial, we are going to use the <em>text8</em> corpus sourced from <a href="http://mattmahoney.net/dc/" target="_blank" rel="noopener">here</a> for our text data. All the code for this tutorial can be found on this site&#8217;s <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">Github repository</a>.</p>
+<p>First off, we need to download the <em>text8.zip</em> file (if required) and extract it:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">url = &#039;http://mattmahoney.net/dc/&#039;
+filename = maybe_download(&#039;text8.zip&#039;, url, 31344016)
+root_path = &quot;C:\\Users\Andy\PycharmProjects\\adventures-in-ml-code\\&quot;
+if not os.path.exists((root_path + filename).strip(&#039;.zip&#039;)):
+    zipfile.ZipFile(root_path+filename).extractall()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This is all fairly straightforward Python file handling, downloading and zip file manipulation, so I won&#8217;t go into it here.</p>
+<p>The next step that is required is to create an iterator for gensim to extract its data from.  We can cheat a little bit here and use a supplied iterator that gensim provides for the <em>text8</em> corpus:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">sentences = word2vec.Text8Corpus((root_path + filename).strip(&#039;.zip&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The required input to the gensim Word2Vec module is an <a href="http://pymbook.readthedocs.io/en/latest/igd.html" target="_blank" rel="noopener">iterator object</a>, which sequentially supplies sentences from which gensim will train the embedding layer. The line above shows the supplied gensim iterator for the <em>text8</em> corpus, but below shows another generic form that could be used in its place for a different data set (not actually implemented in the code for this tutorial), where the data set also contains multiple files:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class MySentences(object):
+    def __init__(self, dirname):
+        self.dirname = dirname
+ 
+    def __iter__(self):
+        for fname in os.listdir(self.dirname):
+            for line in open(os.path.join(self.dirname, fname)):
+                yield line.split()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This capability of gensim is great, as it means you can setup iterators which cycle through the data without having to load the entire data set into memory.  This is vital, as some text data sets are huge  i.e. tens of GB.</p>
+<p>After we&#8217;ve setup the iterator object, it is dead simple to train our word vectors:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">logging.basicConfig(format=&#039;%(asctime)s : %(levelname)s : %(message)s&#039;, level=logging.INFO)
+model = word2vec.Word2Vec(sentences, iter=10, min_count=10, size=300, workers=4)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first line just lets us see the INFO logging that gensim provides as it trains. The second line will execute the training on the provided <em>sentences</em> iterator.  The first optional argument <em>iter</em> specifies how many times the training code will run through the data set to train the neural network (kind of like the number of training epochs). The gensim training code will actually run through all the data <em>iter+1</em> time, as the first pass involves collecting all the unique words, creating dictionaries etc.  The next argument,<em> min_count,</em> specifies the minimum amount of times that the word has to appear in the corpus before it is included in the vocabulary &#8211; this allows us to easily eliminate rare words and reduce our vocabulary size.  The third argument is the size of the resultant word vector &#8211; in this case, we set it to 300. In other words, each word in our vocabulary, after training, will be represented by a 300 length word vector. Finally, if we are using Cython, we can specify how many parallel workers we would like to work on the data &#8211; this will speed up the training process. There are <a href="https://radimrehurek.com/gensim/models/word2vec.html" target="_blank" rel="noopener">lots of other arguments</a>, but these are the main ones to consider.</p>
+<p>Let&#8217;s examine our results and see what else gensim can do.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># get the word vector of &quot;the&quot;
+print(model.wv[&#039;the&#039;])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This returns a 300 length numpy vector &#8211; as you can see, each word vector can be retrieved from the model via a dictionary key i.e. a word within our vocabulary.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># get the most common words
+print(model.wv.index2word[0], model.wv.index2word[1], model.wv.index2word[2])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The word vectors are also arranged within the <em>wv</em> object with indexes &#8211; the lowest index (i.e. 0) represents the most common word, the highest (i.e. the length of the vocabulary minus 1) the least common word.  The above code returns: &#8220;the of and&#8221;, which is unsurprising, as these are very common words.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># get the least common words
+vocab_size = len(model.wv.vocab)
+print(model.wv.index2word[vocab_size - 1], model.wv.index2word[vocab_size - 2], model.wv.index2word[vocab_size - 3])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The discovered vocabulary is found in <em>model.wv.vocab</em> &#8211; by taking the length of this dictionary, we can determine the vocabulary size (in this case, it is 47,134 elements long). The code above returns: &#8220;zanetti markschies absentia&#8221; &#8211; rare words indeed.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># find the index of the 2nd most common word (&quot;of&quot;)
+print(&#039;Index of &quot;of&quot; is: {}&#039;.format(model.wv.vocab[&#039;of&#039;].index))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>We can also go the other way i.e. retrieve the index of a word we supply.  In this case, we are getting the index of the second most common word &#8220;of&#8221;. As expected the above code returns &#8220;Index of &#8220;of&#8221; is: 1&#8243;.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># some similarity fun
+print(model.wv.similarity(&#039;woman&#039;, &#039;man&#039;), model.wv.similarity(&#039;man&#039;, &#039;elephant&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>We can also easily extract similarity measures between word vectors (gensim uses <a href="https://en.wikipedia.org/wiki/Cosine_similarity" target="_blank" rel="noopener">cosine similarity</a>). The above code returns &#8220;0.6599 0.2955&#8221;, which again makes sense given the context such words are generally used in.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># what doesn&#039;t fit?
+print(model.wv.doesnt_match(&quot;green blue red zebra&quot;.split()))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This fun function determines which word doesn&#8217;t match the context of the others &#8211; in this case, &#8220;zebra&#8221; is returned.</p>
+<p>We also want to able to convert our data set from a list of words to a list of integer indexes, based on the vocabulary developed by gensim.  To do so, we can use the following code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># convert the input data into a list of integer indexes aligning with the wv indexes
+# Read the data into a list of strings.
+def read_data(filename):
+    &quot;&quot;&quot;Extract the first file enclosed in a zip file as a list of words.&quot;&quot;&quot;
+    with zipfile.ZipFile(filename) as f:
+        data = f.read(f.namelist()[0]).split()
+    return data
+
+def convert_data_to_index(string_data, wv):
+    index_data = []
+    for word in string_data:
+        if word in wv:
+            index_data.append(wv.vocab[word].index)
+    return index_data
+
+str_data = read_data(root_path + filename)
+index_data = convert_data_to_index(str_data, model.wv)
+print(str_data[:4], index_data[:4])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first function, <em>read_data</em> simply extracts the zip file data and returns a list of strings in the same order as our original text data set.  The second function loops through each word in the data set, determines if it is in the vocabulary*, and if so, adds the matching integer index to a list.  The code above returns: &#8220;[&#8216;anarchism&#8217;, &#8216;originated&#8217;, &#8216;as&#8217;, &#8216;a&#8217;] [5237, 3080, 11, 5]&#8221;.</p>
+<p>* Remember that some words in the data set will be missing from the vocabulary if they are very rare in the corpus.</p>
+<p>We can also save and reload our trained word vectors/embeddings by the following simple code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># save and reload the model
+model.save(root_path + &quot;mymodel&quot;)
+model = gensim.models.Word2Vec.load(root_path + &quot;mymodel&quot;)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Finally, I&#8217;ll show you how we can extract the embedding weights from the gensim Word2Vec embedding layer and store it in a numpy array, ready for use in TensorFlow and Keras.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># convert the wv word vectors into a numpy matrix that is suitable for insertion
+# into our TensorFlow and Keras models
+embedding_matrix = np.zeros((len(model.wv.vocab), vector_dim))
+for i in range(len(model.wv.vocab)):
+    embedding_vector = model.wv[model.wv.index2word[i]]
+    if embedding_vector is not None:
+        embedding_matrix[i] = embedding_vector</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In this case, we first create an appropriately sized numpy zeros array.  Then we loop through each word in the vocabulary, grabbing the word vector associated with that word by using the <em>wv</em> dictionary.  We then add the word vector into our numpy array.</p>
+<p>So there we have it &#8211; gensim Word2Vec is a great little library that can execute the word embedding process very quickly, and also has a host of other useful functionality.</p>
+<p>Now I will show how you can use pre-trained gensim embedding layers in our TensorFlow and Keras models.</p>
+<h1>Using gensim Word2Vec embeddings in TensorFlow</h1>
+<p>For this application, we&#8217;ll setup a dummy TensorFlow network with an embedding layer and measure the similarity between some words.  If you&#8217;re not up to speed with TensorFlow, I suggest you check out my <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener">TensorFlow tutorial</a> or this online course <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.772462&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fdata-science-deep-learning-in-theano-tensorflow%2F" target="new">Data Science: Practical Deep Learning in Theano + TensorFlow</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.772462&amp;type=2&amp;subid=0" width="1" height="1" border="0" />.  Also, it&#8217;s probably a good idea to check out my <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">Word2Vec TensorFlow tutorial</a> to understand how the embedding layer works.</p>
+<p>The first step is to select some random words from the top 100 most common words in our text data set.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">valid_size = 16  # Random set of words to evaluate similarity on.
+valid_window = 100  # Only pick dev samples in the head of the distribution.
+valid_examples = np.random.choice(valid_window, valid_size, replace=False)
+valid_dataset = tf.constant(valid_examples, dtype=tf.int32)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The last line saves the array of 16 random words into a TensorFlow constant <em>valid_dataset.</em></p>
+<p>For the next step, we take the embedding matrix from our gensim Word2Vec simulation and &#8220;implant it&#8221; into a TensorFlow variable which we use as our embedding layer.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># embedding layer weights are frozen to avoid updating embeddings while training
+saved_embeddings = tf.constant(embedding_matrix)
+embedding = tf.Variable(initial_value=saved_embeddings, trainable=False)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Note that in the second line above for the TensorFlow variable declaration, I&#8217;ve set the <em>trainable</em> argument to <em>False. </em>If we were using this layer in, say, training a recurrent neural network, if we didn&#8217;t set this argument to <em>False</em> our embedding layer would be trained in TensorFlow with negative performance impacts. It&#8217;s probably not an overall bad strategy, i.e. starting with a gensim embedding matrix and then training further using something like a recurrent NN, but if you want your embedding layer fixed for performance reasons, you need to set <em>trainable</em> to <em>False</em>.</p>
+<p>The next chunk of code calculates the similarity between each of the word vectors using the <a href="https://en.wikipedia.org/wiki/Cosine_similarity" target="_blank" rel="noopener">cosine similarity</a> measure. It is explained more fully in my <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">Word2Vec TensorFlow tutorial</a>, but basically it calculates the norm of all the embedding vectors, then performs a dot product between the validation words and all other word vectors.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create the cosine similarity operations
+norm = tf.sqrt(tf.reduce_sum(tf.square(embedding), 1, keep_dims=True))
+normalized_embeddings = embedding / norm
+valid_embeddings = tf.nn.embedding_lookup(
+      normalized_embeddings, valid_dataset)
+similarity = tf.matmul(valid_embeddings, normalized_embeddings, transpose_b=True)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now we can run our TensorFlow session and sort the eight words which are closest to our validation example words.  Again, this code is explained in more detail in the previously mentioned tutorial.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Add variable initializer.
+init = tf.global_variables_initializer()
+
+with tf.Session() as sess:
+    sess.run(init)
+    # call our similarity operation
+    sim = similarity.eval()
+    # run through each valid example, finding closest words
+    for i in range(valid_size):
+        valid_word = wv.index2word[i]
+        top_k = 8  # number of nearest neighbors
+        nearest = (-sim[i, :]).argsort()[1:top_k + 1]
+        log_str = &#039;Nearest to %s:&#039; % valid_word
+            for k in range(top_k):
+            close_word = wv.index2word[nearest[k]]
+            log_str = &#039;%s %s,&#039; % (log_str, close_word)
+        print(log_str)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This code will produce lines like:</p>
+<blockquote><p>Nearest to two: three, five, zero, four, six, one, seven, eight</p></blockquote>
+<p>As you can see, our Word2Vec embeddings produced by gensim have the expected results &#8211; in this example, we have number words being grouped together in similarity which makes sense.</p>
+<p>Next up, let&#8217;s see how we can use the gensim Word2Vec embeddings in Keras.</p>
+<h1>Using gensim Word2Vec embeddings in Keras</h1>
+<p>We can perform similar steps with a Keras model. In this case, following the example code previously shown in <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" target="_blank" rel="noopener">the Keras Word2Vec tutorial</a>, our model takes two single word samples as input and finds the similarity between them.  The top 8 closest words loop is therefore slightly different than the previous example:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">valid_size = 16  # Random set of words to evaluate similarity on.
+valid_window = 100  # Only pick dev samples in the head of the distribution.
+valid_examples = np.random.choice(valid_window, valid_size, replace=False)
+# input words - in this case we do sample by sample evaluations of the similarity
+valid_word = Input((1,), dtype=&#039;int32&#039;)
+other_word = Input((1,), dtype=&#039;int32&#039;)
+# setup the embedding layer
+embeddings = Embedding(input_dim=embedding_matrix.shape[0], output_dim=embedding_matrix.shape[1],
+                      weights=[embedding_matrix])
+embedded_a = embeddings(valid_word)
+embedded_b = embeddings(other_word)
+similarity = merge([embedded_a, embedded_b], mode=&#039;cos&#039;, dot_axes=2)
+# create the Keras model
+k_model = Model(input=[valid_word, other_word], output=similarity)
+
+def get_sim(valid_word_idx, vocab_size):
+    sim = np.zeros((vocab_size,))
+    in_arr1 = np.zeros((1,))
+        in_arr2 = np.zeros((1,))
+    in_arr1[0,] = valid_word_idx
+    for i in range(vocab_size):
+        in_arr2[0,] = i
+        out = k_model.predict_on_batch([in_arr1, in_arr2])
+        sim[i] = out
+    return sim
+
+# now run the model and get the closest words to the valid examples
+for i in range(valid_size):
+    valid_word = wv.index2word[valid_examples[i]]
+    top_k = 8  # number of nearest neighbors
+    sim = get_sim(valid_examples[i], len(wv.vocab))
+    nearest = (-sim).argsort()[1:top_k + 1]
+    log_str = &#039;Nearest to %s:&#039; % valid_word
+    for k in range(top_k):
+        close_word = wv.index2word[nearest[k]]
+        log_str = &#039;%s %s,&#039; % (log_str, close_word)
+    print(log_str)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>As you can see when I setup the <em>embeddings</em> layer (using Keras&#8217; dedicated <em>Embedding()</em> layer), all we need to do is specify the input and output dimensions (vocabulary size and embedding vector length, respectively) and then assign the gensim <em>embedding_matrix </em>to the <em>weights</em> argument. All the remaining logic is a copy from the <a href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" target="_blank" rel="noopener">Keras Word2Vec tutorial</a>, so check that post out for more details.</p>
+<p>The code produces lines like:</p>
+<blockquote><p>Nearest to when: unless, if, where, whenever, then, before, once, finally</p></blockquote>
+<p>Here we can see that <a href="https://en.wikipedia.org/wiki/Conjunction_(grammar)" target="_blank" rel="noopener">subordinating conjunction</a> word types have been grouped together &#8211; which is a good, expected result.</p>
+<p>So that wraps up the tutorial &#8211; in this post, I&#8217;ve shown you how to use gensim to create Word2Vec word embeddings in a quick and efficient fashion.  I then gave an overview of how to &#8220;upload&#8221; these learned embeddings into TensorFlow and Keras.  I hope it has been helpful.</p>
+<p>&nbsp;</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you are more of a video course learner, check out this inexpensive Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.918390&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fnatural-language-processing-with-deep-learning-in-python%2F" target="new">Natural Language Processing with Deep Learning in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.918390&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/">Python gensim Word2Vec tutorial with TensorFlow and Keras</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/feed/</wfw:commentRss>
+		<slash:comments>7</slash:comments>
+		</item>
+		<item>
+		<title>A Word2Vec Keras tutorial</title>
+		<link>http://adventuresinmachinelearning.com/word2vec-keras-tutorial/</link>
+		<comments>http://adventuresinmachinelearning.com/word2vec-keras-tutorial/#comments</comments>
+		<pubDate>Wed, 30 Aug 2017 11:08:40 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[Keras]]></category>
+		<category><![CDATA[NLP]]></category>
+		<category><![CDATA[Word2Vec]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=496</guid>
+		<description><![CDATA[<p>Understanding Word2Vec word embedding is a critical component in your machine learning journey.  Word embedding is a necessary step in performing efficient natural language processing <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/" title="A Word2Vec Keras tutorial">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/">A Word2Vec Keras tutorial</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>Understanding Word2Vec word embedding is a critical component in your machine learning journey.  Word embedding is a necessary step in performing efficient natural language processing in your machine learning models.  This tutorial will show you how to perform Word2Vec word embeddings in the Keras deep learning framework &#8211; to get an introduction to Keras, check out <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">my tutorial</a> (or the recommended course below).  In a <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">previous post</a>, I introduced Word2Vec implementations in TensorFlow.  In that tutorial, I showed how using a naive, softmax-based word embedding training regime results in an extremely slow training of our embedding layer when we have large word vocabularies.  To get around this problem, a technique called &#8220;negative sampling&#8221; has been proposed, and a custom loss function has been created in TensorFlow to allow this (<em>nce_loss</em>).</p>
+<p>Unfortunately, this loss function doesn&#8217;t exist in Keras, so in this tutorial, we are going to implement it ourselves.  This is a fortunate omission, as implementing it ourselves will help us to understand how negative sampling works and therefore better understand the Word2Vec Keras process.</p>
+<hr />
+<p><strong>Recommended online courses: </strong>If you&#8217;d like to dig deeper into Keras via a video course, check out this inexpensive online Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" />.  Also, if you&#8217;d like to do a video course in natural language processing concepts, check out this Udemy course:  <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.918390&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fnatural-language-processing-with-deep-learning-in-python%2F" target="new">Natural Language Processing with Deep Learning in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.918390&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>Word embedding</h1>
+<p>If we have a document or documents that we are using to try to train some sort of natural language machine learning system (i.e. a chatbot), we need to create a vocabulary of the most common words in that document.  This vocabulary can be greater than 10,000 words in length in some instances. To represent a word to our machine learning model, a naive way would be to use a one-hot vector representation i.e. a 10,000-word vector full of zeros except for one element, representing our word, which is set to 1.  However, this is an inefficient way of doing things &#8211; a 10,000-word vector is an unwieldy object to train with.  Another issue is that these one-hot vectors hold no information about the meaning of the word, how it is used in language and what is its usual context (i.e. what other words it generally appears close to).</p>
+<p>Enter word embeddings &#8211; word embeddings try to &#8220;compress&#8221; large one-hot word vectors into much smaller vectors (a few hundred elements) which preserve some of the meaning and context of the word. Word2Vec is the most common process of word embedding and will be explained below.</p>
+<h2>Context, Word2Vec and the skip-gram model</h2>
+<p>The context of the word is the key measure of meaning that is utilized in Word2Vec.  The context of the word &#8220;sat&#8221; in the sentence &#8220;the cat sat on the mat&#8221; is (&#8220;the&#8221;, &#8220;cat&#8221;, &#8220;on&#8221;, &#8220;the&#8221;, &#8220;mat&#8221;).  In other words, it is the words which commonly occur around the <em>target </em>word &#8220;sat&#8221;. Words which have similar contexts share meaning under Word2Vec, and their reduced vector representations will be similar.  In the skip-gram model version of Word2Vec (more on this later), the goal is to take a <em>target</em> word i.e. &#8220;sat&#8221; and predict the surrounding context words.  This involves an iterative learning process.</p>
+<p>The end product of this learning will be an embedding layer in a network &#8211; this embedding layer is a kind of lookup table &#8211; the rows are vector representations of each word in our vocabulary.  Here&#8217;s a simplified example (using dummy values) of what this looks like, where <em>vocabulary_size=7 </em>and <em>embedding_size=3</em>:</p>
+<p>\begin{equation}<br />
+\begin{array}{c|c c c}<br />
+anarchism &amp; 0.5 &amp; 0.1 &amp; -0.1\\<br />
+originated &amp; -0.5 &amp; 0.3 &amp; 0.9 \\<br />
+as &amp; 0.3 &amp; -0.5 &amp; -0.3 \\<br />
+a &amp; 0.7 &amp; 0.2 &amp; -0.3\\<br />
+term &amp; 0.8 &amp; 0.1 &amp; -0.1 \\<br />
+of &amp; 0.4 &amp; -0.6 &amp; -0.1 \\<br />
+abuse &amp; 0.7 &amp; 0.1 &amp; -0.4<br />
+\end{array}<br />
+\end{equation}</p>
+<p>As you can see, each word (row) is represented by a vector of size 3.  Learning this embedding layer/lookup table can be performed using a simple neural network and an output softmax layer &#8211; see the diagram below:</p>
+<figure id="attachment_395" style="width: 604px" class="wp-caption aligncenter"><img class=" wp-image-395" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/Word2Vec-softmax.jpg" alt="Word2Vec softmax trainer" width="604" height="380" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/Word2Vec-softmax.jpg 676w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/Word2Vec-softmax-300x189.jpg 300w" sizes="(max-width: 604px) 100vw, 604px" /><figcaption class="wp-caption-text">A softmax trainer for word embedding</figcaption></figure>
+<p>The idea of the neural network above is to supply our input <em>target</em> words as one-hot vectors.  Then, via a hidden layer, we want to train the neural network to increase the probability of valid context words, while decreasing the probability of invalid context words (i.e. words that never show up in the surrounding context of the target words).  This involves using a softmax function on the output layer.  Once training is complete, the output layer is discarded, and our embedding vectors are the weights of the hidden layer.</p>
+<p>There are two variants of the Word2Vec paradigm &#8211; skip-gram and CBOW.  The skip-gram variant takes a target word and tries to predict the surrounding context words, while the CBOW (continuous bag of words) variant takes a set of context words and tries to predict a target word.  In this case, we will be considering the skip-gram variant (for more details &#8211; see <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">this tutorial</a>).</p>
+<h2>The softmax issue and negative sampling</h2>
+<p>The problem with using a full softmax output layer is that it is very computationally expensive.  Consider the definition of the softmax function:</p>
+<p>$$P(y = j \mid x) = \frac{e^{x^T w_j}}{\sum_{k=1}^K e^{x^T w_k}}$$</p>
+<p>Here the probability of the output being class <em>j</em> is calculated by multiplying the output of the hidden layer and the weights connecting to the class <em>j</em> output on the numerator and dividing it by the same product but over <em>all the remaining weights</em>.  When the output is a 10,000-word one-hot vector, we are talking millions of weights that need to be updated in any gradient based training of the output layer.  This gets seriously time-consuming and inefficient, as demonstrated in my <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">TensorFlow Word2Vec tutorial</a>.</p>
+<p>There&#8217;s another solution called negative sampling.  It is described in the <a href="https://arxiv.org/pdf/1310.4546.pdf" target="_blank" rel="noopener">original Word2Vec paper</a> by Mikolov et al.  It works by reinforcing the strength of weights which link a target word to its context words, but rather than reducing the value of <em>all</em> those weights which aren&#8217;t in the context, it simply samples a small number of them &#8211; these are called the &#8220;negative samples&#8221;.</p>
+<p>To train the embedding layer using negative samples in Keras, we can re-imagine the way we train our network.  Instead of constructing our network so that the output layer is a multi-class softmax layer, we can change it into a simple binary classifier.  For words that are in the context of the target word, we want our network to output a 1, and for our negative samples, we want our network to output a 0. Therefore, the output layer of our Word2Vec Keras network is simply a single node with a sigmoid activation function.</p>
+<p>We also need a way of ensuring that, as the network trains, words which are similar end up having similar embedding vectors.  Therefore, we want to ensure that the trained network will always output a 1 when it is supplied words which are in the same context, but 0 when it is supplied words which are never in the same context. Therefore, we need a vector similarity score supplied to the output sigmoid layer &#8211; with similar vectors outputting a high score and un-similar vectors outputting a low score.  The most typical similarity measure used between two vectors is the <a href="https://en.wikipedia.org/wiki/Cosine_similarity" target="_blank" rel="noopener">cosine similarity</a> score:</p>
+<p>$$similarity = cos(\theta) = \frac{\textbf{A}\cdot\textbf{B}}{\parallel\textbf{A}\parallel_2 \parallel \textbf{B} \parallel_2}$$</p>
+<p>The denominator of this measure acts to normalize the result &#8211; the real similarity operation is on the numerator: the <a href="https://en.wikipedia.org/wiki/Dot_product" target="_blank" rel="noopener">dot product</a> between vectors<strong> <em>A </em></strong>and <strong><em>B</em></strong>.  In other words, to get a simple, non-normalized measure of similarity between two vectors, you simply apply a dot product operation between them.</p>
+<p>So with all that in mind, our new negative sampling network for the planned Word2Vec Keras implementation features:</p>
+<ul>
+<li>An (integer) input of a target word and a real or negative context word</li>
+<li>An embedding layer lookup (i.e. looking up the integer index of the word in the embedding matrix to get the word vector)</li>
+<li>The application of a dot product operation</li>
+<li>The output sigmoid layer</li>
+</ul>
+<p>This architecture of this implementation looks like:</p>
+<figure id="attachment_505" style="width: 931px" class="wp-caption alignnone"><img class="size-full wp-image-505" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/Negative-sampling-architecture-1.jpg" alt="Word2Vec Keras - negative sampling architecture" width="931" height="211" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/Negative-sampling-architecture-1.jpg 931w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/Negative-sampling-architecture-1-300x68.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/Negative-sampling-architecture-1-768x174.jpg 768w" sizes="(max-width: 931px) 100vw, 931px" /><figcaption class="wp-caption-text">Word2Vec Keras &#8211; negative sampling architecture</figcaption></figure>
+<p>Let&#8217;s go through this architecture more carefully.  First, each of the words in our vocabulary is assigned an integer index between 0 and the size of our vocabulary (in this case, 10,000).  We pass two words into the network, one the target word and the other either a word from the surrounding context or a negative sample.  We &#8220;look up&#8221; these indexes as the rows of our embedding layer (10,000 x 300 weight tensor) to retrieve our 300 length word vectors.  We then perform a dot product operation between these vectors to get the similarity.  Finally, we output the similarity to a sigmoid layer to give us a 1 or 0 indicator which we can match with the label given to the Context word (1 for a true context word, 0 for a negative sample).</p>
+<p>The back-propagation of our errors will work to update the embedding layer to ensure that words which are truly similar to each other (i.e. share contexts) have vectors such that they return high similarity scores. Let&#8217;s now implement this architecture in Keras and we can test whether this turns out to be the case.</p>
+<h1>A Word2Vec Keras implementation</h1>
+<p>This section will show you how to create your own Word2Vec Keras implementation &#8211; the code is hosted on this site&#8217;s <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">Github repository</a>.</p>
+<h2>Data extraction</h2>
+<p>To develop our Word2Vec Keras implementation, we first need some data.  As in my <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">Word2Vec TensorFlow tutorial</a>, we&#8217;ll be using a document data set from <a href="http://mattmahoney.net/dc/" target="_blank" rel="noopener">here</a>.  To extract the information, I&#8217;ll be using some of the same text extraction functions from the aforementioned <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">Word2Vec tutorial</a>, in particular, the <em>collect_data</em> function &#8211; check out that tutorial for further details.  Basically, the function calls other functions which download the data, then a function that converts the text data into a string of integers &#8211; with each word in the vocabulary represented by a unique integer.  To call this function, we run:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">vocab_size = 10000
+data, count, dictionary, reverse_dictionary = collect_data(vocabulary_size=vocab_size)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first 7 words in the dataset are:</p>
+[&#8216;anarchism&#8217;, &#8216;originated&#8217;, &#8216;as&#8217;, &#8216;a&#8217;, &#8216;term&#8217;, &#8216;of&#8217;, &#8216;abuse&#8217;]
+<p>After running collect_data, the new representation of these words (<em>data</em>) is:</p>
+[5239, 3082, 12, 6, 195, 2, 3134]
+<p>There are also two dictionaries returned from <em>collect_data &#8211; </em>the first where you can look up a word and get its integer representation, and the second the reverse i.e. you look up a word&#8217;s integer and you get its actual English representation.</p>
+<p>Next, we need to define some constants for the training and also create a validation set of words so we can check the learning progress of our word vectors.</p>
+<h2>Constants and the validation set</h2>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">window_size = 3
+vector_dim = 300
+epochs = 1000000
+
+valid_size = 16     # Random set of words to evaluate similarity on.
+valid_window = 100  # Only pick dev samples in the head of the distribution.
+valid_examples = np.random.choice(valid_window, valid_size, replace=False)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first constant, <em>window_size</em>, is the window of words around the target word that will be used to draw the context words from.  The second constant<em>, vector_dim</em>, is the size of each of our word embedding vectors &#8211; in this case, our embedding layer will be of size 10,000 x 300.  Finally, we have a large <em>epochs </em>variable &#8211; this designates the number of training iterations we are going to run.  Word embedding, even with negative sampling, can be a time-consuming process.</p>
+<p>The next set of commands relate to the words we are going to check to see what other words grow in similarity to this validation set. During training, we will check which words begin to be deemed similar by the word embedding vectors and make sure these line up with our understanding of the meaning of these words.  In this case, we will select 16 words to check, and pick these words randomly from the top 100 most common words in the data-set (<em>collect_data </em>has assigned the most common words in the data set integers in ascending order i.e. the most common word is assigned 1, the next most common 2, etc.).</p>
+<p>Next, we are going to look at a handy function in Keras which does all the skip-gram / context processing for us.</p>
+<h2>The skip-gram function in Keras</h2>
+<p>To train our data set using negative sampling and the skip-gram method, we need to create data samples for both valid context words and for negative samples. This involves scanning through the data set and picking target words, then randomly selecting context words from within the window of words around the target word (i.e. if the target word is &#8220;on&#8221; from &#8220;the cat sat on the mat&#8221;, with a window size of 2 the words &#8220;cat&#8221;, &#8220;sat&#8221;, &#8220;the&#8221;, &#8220;mat&#8221; could all be randomly selected as valid context words).  It also involves randomly selecting negative samples outside of the selected target word context. Finally, we also need to set a label of 1 or 0, depending on whether the supplied context word is a true context word or a negative sample.  Thankfully, Keras has a function (<em>skipgrams</em>) which does all that for us &#8211; consider the following code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">sampling_table = sequence.make_sampling_table(vocab_size)
+couples, labels = skipgrams(data, vocab_size, window_size=window_size, sampling_table=sampling_table)
+word_target, word_context = zip(*couples)
+word_target = np.array(word_target, dtype=&quot;int32&quot;)
+word_context = np.array(word_context, dtype=&quot;int32&quot;)
+
+print(couples[:10], labels[:10])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Ignoring the first line for the moment (<em>make_sampling_table)</em>, the Keras <em>skipgrams</em> function does exactly what we want of it &#8211; it returns the word couples in the form of (<em>target, context</em>) and also gives a matching label of 1 or 0 depending on whether <em>context</em> is a true context word or a negative sample. By default, it returns randomly shuffled <em>couples</em> and <em>labels</em>.  In the code above, we then split the <em>couples </em>tuple into separate <em>word_target </em>and <em>word_context</em> variables and make sure they are the right type.  The print function produces the following instructive output:</p>
+<p><em>couples</em>:</p>
+[[6503, 5], [187, 6754], [1154, 3870], [670, 1450], [4554, 1], [1037, 250], [734, 4521], [1398, 7], [4495, 3374], [2881, 8637]]
+<p><em>labels</em>:</p>
+[1, 0, 1, 0, 1, 1, 0, 1, 0, 0]
+<p>The <em>make_sampling_table()</em> operation creates a table that <em>skipgrams </em>uses to ensure it produces negative samples in a balanced manner and not just the most common words.  The <em>skipgrams</em> operation by default selects the same amount of negative samples as it does true context words.</p>
+<p>We&#8217;ll feed the produced arrays (<em>word_target, word_context</em>) into our Keras model later &#8211; now onto the Word2Vec Keras model itself.</p>
+<h2>The Keras functional API and the embedding layers</h2>
+<p>In this Word2Vec Keras implementation, we&#8217;ll be using the Keras <a href="https://keras.io/getting-started/functional-api-guide/" target="_blank" rel="noopener">functional API</a>.  In my <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">previous Keras tutorial</a>, I used the Keras sequential layer framework. This sequential layer framework allows the developer to easily bolt together layers, with the tensor outputs from each layer flowing easily and implicitly into the next layer.  In this case, we are going to do some things which are a little tricky &#8211; the sharing of a single embedding layer between two tensors, and an auxiliary output to measure similarity &#8211; and therefore we can&#8217;t use a straightforward sequential implementation.</p>
+<p>Thankfully, the functional API is also pretty easy to use.  I&#8217;ll introduce it as we move through the code. The first thing we need to do is specify the structure of our model, as per the architecture diagram which I have shown above. As an initial step, we&#8217;ll create our input variables and embedding layer:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create some input variables
+input_target = Input((1,))
+input_context = Input((1,))
+
+embedding = Embedding(vocab_size, vector_dim, input_length=1, name=&#039;embedding&#039;)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First off, we need to specify what tensors are going to be input to our model, along with their size. In this case, we are just going to supply individual target and context words, so the input size for each input variable is simply (1,).  Next, we create an embedding layer, which Keras already has specified as a layer for us &#8211; Embedding().  The first argument to this layer definition is the number of rows of our embedding layer &#8211; which is the size of our vocabulary (10,000).  The second is the size of each word&#8217;s embedding vector (the columns) &#8211; in this case, 300. We also specify the input length to the layer &#8211; in this case, it matches our input variables i.e. 1.  Finally, we give it a name, as we will want to access the weights of this layer after we&#8217;ve trained it, and we can easily access the layer weights using the name.</p>
+<p>The weights for this layer are initialized automatically, but you can also specify an optional <em>embeddings_initializer </em>argument whereby you supply a <a href="https://keras.io/initializers/" target="_blank" rel="noopener">Keras initializer object</a>.  Next, as per our architecture, we need to look up an embedding vector (length = 300) for our target and context words, by supplying the embedding layer with the word&#8217;s unique integer value:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">target = embedding(input_target)
+target = Reshape((vector_dim, 1))(target)
+context = embedding(input_context)
+context = Reshape((vector_dim, 1))(context)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>As can be observed in the code above, the embedding vector is easily retrieved by supplying the word integer (i.e. <em>input_target </em>and <em>input_context</em>) in brackets to the previously created <em>embedding</em> operation/layer. For each word vector, we then use a Keras <em>Reshape</em> layer to reshape it ready for our upcoming dot product and similarity operation, as per our architecture.</p>
+<p>The next layer involves calculating our cosine similarity between the supplied word vectors:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># setup a cosine similarity operation which will be output in a secondary model
+similarity = merge([target, context], mode=&#039;cos&#039;, dot_axes=0)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>As can be observed, Keras supplies a <em>merge </em>operation with a <em>mode </em>argument which we can set to &#8216;cos&#8217; &#8211; this is the cosine similarity between the two word vectors, <em>target</em>, and <em>context.</em> This <em>similarity</em> operation will be returned via the output of a secondary model &#8211; but more on how this is performed later.</p>
+<p>The next step is to continue on with our primary model architecture, and the dot product as our measure of similarity which we are going to use in the primary flow of the negative sampling architecture:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># now perform the dot product operation to get a similarity measure
+dot_product = merge([target, context], mode=&#039;dot&#039;, dot_axes=1)
+dot_product = Reshape((1,))(dot_product)
+# add the sigmoid output layer
+output = Dense(1, activation=&#039;sigmoid&#039;)(dot_product)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Again, we use the Keras <em>merge</em> operation and apply it to our <em>target</em> and <em>context</em> word vectors, with the <em>mode</em> argument set to &#8216;dot&#8217; to get the simple dot product.  We then do another Reshape layer, and take the reshaped dot product value (a single data point/scalar) and apply it to a Keras <em>Dense</em> layer, with the activation function of the layer set to &#8216;sigmoid&#8217;.  This is the output of our Word2Vec Keras architecture.</p>
+<p>Next, we need to gather everything into a Keras model and compile it, ready for training:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create the primary training model
+model = Model(input=[input_target, input_context], output=output)
+model.compile(loss=&#039;binary_crossentropy&#039;, optimizer=&#039;rmsprop&#039;)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Here, we create the functional API based model for our Word2Vec Keras architecture.  What the model definition requires is a specification of the input arrays to the model (these need to be <a href="http://www.numpy.org/" target="_blank" rel="noopener">numpy</a> arrays) and an output tensor &#8211; these are supplied as per the previously explained architecture.  We then compile the model, by supplying a loss function that we are going to use (in this case, binary cross entropy i.e. cross entropy when the labels are either 0 or 1) and an optimizer (in this case, <a href="http://ruder.io/optimizing-gradient-descent/" target="_blank" rel="noopener">rmsprop</a>).  The loss function is applied to the <em>output</em> variable.</p>
+<p>The question now is, if we want to use the <em>similarity </em>operation which we defined in the architecture to allow us to check on how things are progressing during training, how do we access it? We could output it via the <em>model</em> definition (i.e. <em>output</em>=[<em>similarity</em>, <em>output</em>]) but then Keras would be trying to apply the loss function and the optimizer to this value during training and this isn&#8217;t what we created the operation for.</p>
+<p>There is another way, which is quite handy &#8211; we create another model:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># create a secondary validation model to run our similarity checks during training
+validation_model = Model(input=[input_target, input_context], output=similarity)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>We can now use this <em>validation_model</em> to access the <em>similarity </em>operation, and this model will actually <em>share</em> the embedding layer with the primary model.  Note, because this model won&#8217;t be involved in training, we don&#8217;t have to run a Keras <em>compile</em> operation on it.</p>
+<p>Now we are ready to train the model &#8211; but first, let&#8217;s setup a function to print out the words with the closest similarity to our validation examples (<em>valid_examples</em>).</p>
+<h2>The similarity callback</h2>
+<p>We want to create a &#8220;callback&#8221; which we can use to figure out which words are closest in similarity to our validation examples, so we can monitor the training progress of our embedding layer.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class SimilarityCallback:
+    def run_sim(self):
+        for i in range(valid_size):
+            valid_word = reverse_dictionary[valid_examples[i]]
+            top_k = 8  # number of nearest neighbors
+            sim = self._get_sim(valid_examples[i])
+            nearest = (-sim).argsort()[1:top_k + 1]
+            log_str = &#039;Nearest to %s:&#039; % valid_word
+            for k in range(top_k):
+                close_word = reverse_dictionary[nearest[k]]
+                log_str = &#039;%s %s,&#039; % (log_str, close_word)
+            print(log_str)
+
+    @staticmethod
+    def _get_sim(valid_word_idx):
+        sim = np.zeros((vocab_size,))
+        in_arr1 = np.zeros((1,))
+        in_arr2 = np.zeros((1,))
+        for i in range(vocab_size):
+            in_arr1[0,] = valid_word_idx
+            in_arr2[0,] = i
+            out = validation_model.predict_on_batch([in_arr1, in_arr2])
+            sim[i] = out
+        return sim
+sim_cb = SimilarityCallback()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This class runs through all the <em>valid_examples </em>and gets the similarity score between the given validation word and all the other words in the vocabulary.  It gets the similarity score by running <em>_get_sim</em>(), which features a loop which runs through each word in the vocabulary, and runs a <em>predict_on_batch</em>() operation on the validation model &#8211; this basically looks up the embedding vectors for the two supplied words (the <em>valid_example</em> and the looped vocabulary example) and returns the <em>similarity </em>operation result.  The main loop then sorts the similarity in descending order and creates a string to print out the top 8 words with the closest similarity to the validation example.</p>
+<p>The output of this callback will be seen during our training loop, which is presented below.</p>
+<h2>The training loop</h2>
+<p>The main training loop of the model is:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">arr_1 = np.zeros((1,))
+arr_2 = np.zeros((1,))
+arr_3 = np.zeros((1,))
+for cnt in range(epochs):
+    idx = np.random.randint(0, len(labels)-1)
+    arr_1[0,] = word_target[idx]
+    arr_2[0,] = word_context[idx]
+    arr_3[0,] = labels[idx]
+    loss = model.train_on_batch([arr_1, arr_2], arr_3)
+    if i % 100 == 0:
+        print(&quot;Iteration {}, loss={}&quot;.format(cnt, loss))
+    if cnt % 10000 == 0:
+        sim_cb.run_sim()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In this loop, we run through the total number of epochs.  First, we select a random index from our <em>word_target, word_context </em>and <em>labels</em> arrays and place the values in dummy numpy arrays.  Then we supply the input ([<em>word_target, word_context</em>]) and outputs (<em>labels</em>) to the primary model and run a <em>train_on_batch</em>() operation.  This returns the current loss evaluation, <em>loss,</em> of the model and prints it. Every 10,000 iterations we also run functions in the SimilarityCallback.</p>
+<p>Here are some of the word similarity outputs for the validation example word &#8220;eight&#8221; as we progress through the training iterations:</p>
+<p><strong>Iterations = 0:</strong></p>
+<p>Nearest to eight: much, holocaust, representations, density, fire, senators, dirty, fc</p>
+<p><strong>Iterations = 50,000:</strong></p>
+<p>Nearest to eight: six, finest, championships, mathematical, floor, pg, smoke, recurring</p>
+<p><strong>Iterations = 200,000:</strong></p>
+<p>Nearest to eight: six, five, two, one, nine, seven, three, four</p>
+<p>As can be observed, at the start of the training, all sorts of random words are associated with &#8220;six&#8221;.  However, as the training iterations increase, slowly other word numbers are associated with &#8220;six&#8221; until finally all of the closest 8 words are number words.</p>
+<p>There you have it &#8211; in this Word2Vec Keras tutorial, I&#8217;ve shown you how the Word2Vec methodology works with negative sampling, and how to implement it in Keras using its functional API.  In the <a href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/" target="_blank" rel="noopener">next tutorial</a>, I will show you how to reload trained embedding weights into both Keras and TensorFlow. You can also checkout how embedding layers work in LSTM networks in <a href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/">this tutorial</a>.</p>
+<p>&nbsp;</p>
+<hr />
+<p><strong>Recommended online courses: </strong>If you&#8217;d like to dig deeper into Keras via a video course, check out this inexpensive online Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" />.  Also, if you&#8217;d like to do a video course in natural language processing concepts, check out this Udemy course:  <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.918390&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fnatural-language-processing-with-deep-learning-in-python%2F" target="new">Natural Language Processing with Deep Learning in Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.918390&amp;type=2&amp;subid=0" width="1" height="1" border="0" />.</p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/word2vec-keras-tutorial/">A Word2Vec Keras tutorial</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/word2vec-keras-tutorial/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+		</item>
+		<item>
+		<title>Keras tutorial &#8211; build a convolutional neural network in 11 lines</title>
+		<link>http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/</link>
+		<comments>http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/#comments</comments>
+		<pubDate>Wed, 17 May 2017 19:06:04 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Convolutional Neural Networks]]></category>
+		<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[Keras]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=349</guid>
+		<description><![CDATA[<p>In a previous tutorial, I demonstrated how to create a convolutional neural network (CNN) using TensorFlow to classify the MNIST handwritten digit dataset.  TensorFlow is a brilliant tool, <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" title="Keras tutorial &#8211; build a convolutional neural network in 11 lines">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/">Keras tutorial &#8211; build a convolutional neural network in 11 lines</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">a previous tutorial</a>, I demonstrated how to create a convolutional neural network (CNN) using TensorFlow to classify the MNIST handwritten digit dataset.  TensorFlow is a brilliant tool, with lots of power and flexibility.  However, for quick prototyping work it can be a bit verbose.  Enter <a href="https://keras.io/" target="_blank" rel="noopener noreferrer">Keras</a> and this Keras tutorial.  Keras is a higher level library which operates over either TensorFlow or <a href="http://www.deeplearning.net/software/theano/" target="_blank" rel="noopener noreferrer">Theano</a>, and is intended to stream-line the process of building deep learning networks.  In fact, what was accomplished in the <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">previous tutorial in TensorFlow</a> in around 42 lines* can be replicated in only 11 lines* in Keras.  This Keras tutorial will show you how to do this.</p>
+<p>*excluding input data preparation and visualisation</p>
+<p>This Keras tutorial will show you how to build a CNN to achieve &gt;99% accuracy with the MNIST dataset.  It will be precisely the same structure as that built in <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">my previous convolutional neural network tutorial</a> and the figure below shows the architecture of the network:</p>
+<figure id="attachment_293" style="width: 1725px" class="wp-caption aligncenter"><img class="wp-image-293 size-full" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg" alt="Keras tutorial - network" width="1725" height="572" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram.jpg 1725w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-300x99.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-768x255.jpg 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/04/CNN-example-block-diagram-1024x340.jpg 1024w" sizes="(max-width: 1725px) 100vw, 1725px" /><figcaption class="wp-caption-text">Convolutional neural network that will be built</figcaption></figure>
+<p>The full code of this Keras tutorial can be found <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener noreferrer">here</a>. If you&#8217;d like to check out more Keras awesomeness after reading this post, have a look at my <a href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/" target="_blank" rel="noopener">Keras LSTM tutorial</a> or my <a href="http://adventuresinmachinelearning.com/reinforcement-learning-tutorial-python-keras/">Keras Reinforcement Learning tutorial</a>. Also check out my tutorial on <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-in-pytorch/" target="_blank" rel="noopener">Convolutional Neural Networks in PyTorch</a> if you&#8217;re interested in the PyTorch library.</p>
+<hr />
+<p><strong>Recommended online course: </strong>After you&#8217;ve finished reading, and if you&#8217;d like to dig deeper in a video course, check out this inexpensive online Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h2>The main code in this Keras tutorial</h2>
+<p>The code below is the &#8220;guts&#8221; of the CNN structure that will be used in this Keras tutorial:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = Sequential()
+model.add(Conv2D(32, kernel_size=(5, 5), strides=(1, 1),
+                 activation=&#039;relu&#039;,
+                 input_shape=input_shape))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Conv2D(64, (5, 5), activation=&#039;relu&#039;))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Flatten())
+model.add(Dense(1000, activation=&#039;relu&#039;))
+model.add(Dense(num_classes, activation=&#039;softmax&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>I&#8217;ll go through most of the lines in turn, explaining as we go.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model = Sequential()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Models in Keras can come in two forms &#8211; Sequential and via the Functional API.  For most deep learning networks that you build, the Sequential model is likely what you will use.  It allows you to easily stack sequential layers (and even recurrent layers) of the network in order from input to output.  The functional API allows you to build more complicated architectures, and it won&#8217;t be covered in this tutorial.</p>
+<p>The first line declares the model type as Sequential().</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.add(Conv2D(32, kernel_size=(5, 5), strides=(1, 1),
+                 activation=&#039;relu&#039;,
+                 input_shape=input_shape))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next, we add a 2D convolutional layer to process the 2D MNIST input images.  The first argument passed to the <a href="https://keras.io/layers/convolutional/#conv2d" target="_blank" rel="noopener noreferrer">Conv2D()</a> layer function is the number of output channels &#8211; in this case we have 32 output channels (as per the architecture shown at the beginning).  The next input is the kernel_size, which in this case we have chosen to be a 5&#215;5 moving window, followed by the strides in the <em>x </em>and <em>y </em>directions (1, 1).  Next, the activation function is a rectified linear unit and finally we have to supply the model with the size of the input to the layer (which is declared in another part of the code &#8211; see <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener noreferrer">here</a>).  Declaring the input shape is only required of the first layer &#8211; Keras is good enough to work out the size of the tensors flowing through the model from there.</p>
+<p>Also notice that we don&#8217;t have to declare any weights or bias variables like we do in <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">TensorFlow</a>, Keras sorts that out for us.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next we add a 2D max pooling layer.  The definition of the layer is dead easy.  We simply specify the size of the pooling in the <em>x </em>and <em>y</em> directions &#8211; (2, 2) in this case, and the strides.  That&#8217;s it.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.add(Conv2D(64, (5, 5), activation=&#039;relu&#039;))
+model.add(MaxPooling2D(pool_size=(2, 2)))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Next we add another convolutional + max pooling layer, with 64 output channels.  The default <em>strides</em> argument in the Conv2D() function is (1, 1) in Keras, so we can leave it out.  The default <em>strides</em> argument in Keras is to make it equal ot the pool size, so again, we can leave it out.</p>
+<p>The input tensor for this layer is (<a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener noreferrer">batch_size</a>, 28, 28,  32) &#8211; the 28 x 28 is the size of the image, and the 32 is the number of output channels from the previous layer.  However, notice we don&#8217;t have to explicitly detail what the shape of the input is &#8211; Keras will work it out for us.  This allows rapid assembling of network architectures without having to worry too much about the sizes of the tensors flowing around our networks.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.add(Flatten())
+model.add(Dense(1000, activation=&#039;relu&#039;))
+model.add(Dense(num_classes, activation=&#039;softmax&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now that we&#8217;ve built our convolutional layers in this Keras tutorial, we want to flatten the output from these to enter our fully connected layers (all this is detailed in <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">the convolutional neural network tutorial in TensorFlow</a>).  In TensorFlow, we had to figure out what the size of our output tensor from the convolutional layers was in order to flatten it, and also to determine explicitly the size of our weight and bias variables.  Sure, this isn&#8217;t too difficult &#8211; but it just makes our life easier not to have to think about it too much.</p>
+<p>The next two lines declare our fully connected layers &#8211; using the Dense() layer in Keras.  Again, it is very simple.  First we specify the size &#8211; in line with our architecture, we specify 1000 nodes, each activated by a ReLU function.  The second is our soft-max classification, or output layer, which is the size of the number of our classes (10 in this case, for our 10 possible hand-written digits).</p>
+<p>That&#8217;s it &#8211; we have successfully developed the architecture of our CNN in only 8 lines.  Now let&#8217;s see what we have to do to train the model and perform predictions.</p>
+<h2>Training and evaluating our convolutional neural network</h2>
+<p>We have now developed the architecture of the CNN in Keras, but we haven&#8217;t specified the loss function, or told the framework what type of optimiser to use (i.e. <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/">gradient descent</a>, Adam optimiser etc.).  In Keras, this can be performed in one command:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.compile(loss=keras.losses.categorical_crossentropy,
+              optimizer=keras.optimizers.SGD(lr=0.01),
+              metrics=[&#039;accuracy&#039;])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Keras supplies many loss functions (or you can build your own) as can be seen <a href="https://keras.io/losses/" target="_blank" rel="noopener noreferrer">here</a>.  In this case, we will use the standard cross entropy for categorical class classification (keras.losses.categorical_crossentropy).  Keras also supplies many optimisers &#8211; as can be seen <a href="https://keras.io/optimizers/" target="_blank" rel="noopener noreferrer">here</a>.  In this case, we&#8217;ll use the Adam optimizer (keras.optimizers.Adam) as we did in the <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">CNN TensorFlow tutorial</a>.  Finally, we can specify a metric that will be calculated when we run evaluate() on the model.  In TensorFlow we would have to <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener noreferrer">define an accuracy calculating operation</a> which we would need to call in order to assess the accuracy.  In this case, Keras makes it easy for us.  See <a href="https://keras.io/metrics/" target="_blank" rel="noopener noreferrer">here</a> for a list of metrics that can be used.</p>
+<p>Next, we want to train our model.  This can be done by again running a single command in Keras:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">model.fit(x_train, y_train,
+          batch_size=batch_size,
+          epochs=epochs,
+          verbose=1,
+          validation_data=(x_test, y_test),
+          callbacks=[history])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>This command looks similar to the syntax used in the very popular <a href="http://scikit-learn.org/" target="_blank" rel="noopener noreferrer">scikit learn</a> Python machine learning library.  We first pass in <em>all</em> of our training data &#8211; in this case <em>x_train</em> and <em>y_train</em>.  The next argument is the batch size &#8211; we don&#8217;t have to explicitly handle the batching up of our data during training in Keras, rather we just specify the batch size and it does it for us (I have a post on <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener noreferrer">mini-batch gradient descent</a> if this is unfamiliar to you).  In this case we are using a batch size of 128.  Next we pass the number of training epochs (10 in this case).  The verbose flag, set to 1 here, specifies if you want detailed information being printed in the console about the progress of the training.  During training, if verbose is set to 1, the following is output to the console:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">3328/60000 [&gt;.............................] - ETA: 87s - loss: 0.2180 - acc: 0.9336
+3456/60000 [&gt;.............................] - ETA: 87s - loss: 0.2158 - acc: 0.9349
+3584/60000 [&gt;.............................] - ETA: 87s - loss: 0.2145 - acc: 0.9350
+3712/60000 [&gt;.............................] - ETA: 86s - loss: 0.2150 - acc: 0.9348</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Finally, we pass the validation or test data to the fit function so Keras knows what data to test the metric against when evaluate() is run on the model.  Ignore the callbacks argument for the moment &#8211; that will be discussed shortly.</p>
+<p>Once the model is trained, we can then evaluate it and print the results:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">score = model.evaluate(x_test, y_test, verbose=0)
+print(&#039;Test loss:&#039;, score[0])
+print(&#039;Test accuracy:&#039;, score[1])</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>After 10 epochs of training the above model, we achieve an accuracy of 99.2%, which is the same as what <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener noreferrer">we achieved in TensorFlow</a> for the same network.  You can see the improvement in the accuracy for each epoch in the figure below:</p>
+<figure id="attachment_359" style="width: 640px" class="wp-caption aligncenter"><img class="size-full wp-image-359" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs.png" alt="Keras tutorial - MNIST training accuracy" width="640" height="480" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs.png 640w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs-300x225.png 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs-326x245.png 326w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/05/Keras-CNN-MNIST-accuracy-vs-epochs-80x60.png 80w" sizes="(max-width: 640px) 100vw, 640px" /><figcaption class="wp-caption-text">Keras CNN MNIST training accuracy</figcaption></figure>
+<p>Keras makes things pretty easy, don&#8217;t you think? I hope this Keras tutorial has demonstrated how it can be a useful framework for rapidly prototyping deep learning solutions.</p>
+<p>As a kind of appendix I&#8217;ll show you how to keep track of the accuracy as we go through the training epochs, which enabled me to generate the graph above.</p>
+<h2>Logging metrics in Keras</h2>
+<p>Keras has a useful utility titled &#8220;callbacks&#8221; which can be utilised to track all sorts of variables during training.  You can also use it to create checkpoints which saves the model at different stages in training to help you avoid work loss in case your poor overworked computer decides to crash.  It is passed to the .fit() function as observed above.  I&#8217;ll only show you a fairly simple use case below, which logs the accuracy.</p>
+<p>To create a callback we create an inherited class which inherits from keras.callbacks.Callback:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class AccuracyHistory(keras.callbacks.Callback):
+    def on_train_begin(self, logs={}):
+        self.acc = []
+
+    def on_epoch_end(self, batch, logs={}):
+        self.acc.append(logs.get(&#039;acc&#039;))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The Callback super class that the code above inherits from has a number of methods that can be overridden in our callback definition such as <em>on_train_begin, on_epoch_end, on_batch_begin and on_batch_end.</em>  The name of these methods are fairly self explanatory, and represent moments in the training process where we can &#8220;do stuff&#8221;.  In the code above, at the beginning of training we initialise a list <em>self.acc = []</em> to store our accuracy results.  Using the <em>on_epoch_end</em><em>() </em>method, we can extract the variable we want from the <em>logs, </em>which is a dictionary that holds, as a default, the loss and accuracy during training.  We then instantiate this callback like so:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">history = AccuracyHistory()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now we can pass <em>history</em> to the .fit() function using the <em>callback</em> parameter name.  Note that .fit() takes a list for the <em>callback</em> parameter, so you have to pass it <em>history</em> like this: [history].  To access the accuracy list that we created after the training is complete, you can simply call <em>history.acc</em>, which I then also plotted:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">plt.plot(range(1,11), history.acc)
+plt.xlabel(&#039;Epochs&#039;)
+plt.ylabel(&#039;Accuracy&#039;)
+plt.show()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Hope that helps.  Have fun using Keras. As I said at the beginning of the post, if you&#8217;d like to check out more Keras awesomeness after reading this post, have a look at my <a href="http://adventuresinmachinelearning.com/keras-lstm-tutorial/" target="_blank" rel="noopener">Keras LSTM tutorial</a>.</p>
+<hr />
+<p><strong>Recommended online course: </strong>If you&#8217;d like to dig deeper in a video course, check out this inexpensive online Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1140660&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fzero-to-deep-learning%2F" target="new">Zero to Deep Learning with Python and Keras</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1140660&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/">Keras tutorial &#8211; build a convolutional neural network in 11 lines</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/feed/</wfw:commentRss>
+		<slash:comments>3</slash:comments>
+		</item>
+	</channel>
+</rss>

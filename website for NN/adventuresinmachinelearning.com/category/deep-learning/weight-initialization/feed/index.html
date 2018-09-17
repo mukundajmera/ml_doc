@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Weight initialization &#8211; Adventures in Machine Learning</title>
+	<atom:link href="http://adventuresinmachinelearning.com/category/deep-learning/weight-initialization/feed/" rel="self" type="application/rss+xml" />
+	<link>http://adventuresinmachinelearning.com</link>
+	<description>Learn and explore machine learning</description>
+	<lastBuildDate>Sun, 09 Sep 2018 07:53:16 +0000</lastBuildDate>
+	<language>en-AU</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.9.8</generator>
+	<item>
+		<title>Weight initialization tutorial in TensorFlow</title>
+		<link>http://adventuresinmachinelearning.com/weight-initialization-tutorial-tensorflow/</link>
+		<comments>http://adventuresinmachinelearning.com/weight-initialization-tutorial-tensorflow/#respond</comments>
+		<pubDate>Thu, 17 May 2018 10:28:56 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[Deep learning]]></category>
+		<category><![CDATA[TensorFlow]]></category>
+		<category><![CDATA[Weight initialization]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=879</guid>
+		<description><![CDATA[<p>In the late 80&#8217;s and 90&#8217;s, neural network research stalled due to a lack of good performance. There were a number of reasons for this, <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/weight-initialization-tutorial-tensorflow/" title="Weight initialization tutorial in TensorFlow">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/weight-initialization-tutorial-tensorflow/">Weight initialization tutorial in TensorFlow</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In the late 80&#8217;s and 90&#8217;s, neural network research stalled due to a lack of good performance. There were a number of reasons for this, outlined by the prominent AI researcher <a href="https://www.youtube.com/watch?v=MpLds0oohC8" target="_blank" rel="noopener">Geoffrey Hinton</a> &#8211; these reasons included poor computing speeds, lack of data, using the wrong type of non-linear activation functions and poor initialization of the weights in neural networks. <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/" target="_blank" rel="noopener">My post on the vanishing gradient problem and ReLUs</a> addresses the problem of the wrong kind of non-linear activation functions, and this post will deal with proper weight initialization. In particular, in this post we&#8217;ll be examining the problem with a naive normal distribution when initializing weights, and examine Xavier and He initialization as a remedy to this problem. This will be empirically studied using TensorFlow and some associated TensorBoard visualizations. Note: to run the code in this tutorial, you&#8217;ll need TensorFlow 1.8 or greater installed.</p>
+<hr />
+<p><strong>Recommended</strong><strong> online course: </strong>If you&#8217;d like to learn more about TensorFlow I&#8217;d recommend the following inexpensive Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1326292&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fcomplete-guide-to-tensorflow-for-deep-learning-with-python%2F">Complete Guide to TensorFlow for Deep Learning with Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1326292&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h2>The problem with a naive initialization of weights</h2>
+<p>The random initialization of weights is critical to learning good mappings from input to output in neural networks. Because the search space involving many weights during training is very large, there are multiple local minimums within which the back-propagation may be trapped. Effective randomization of weights ensures that the search space is adequately explored during training, resulting in the best chances of a good minimum being found during back-propagation (for more on back-propagation, see <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">my neural networks tutorial</a>). However, the weight initialization randomization function needs to be carefully chosen and specified otherwise there is a large risk that the training progress will be slowed to the point of impracticality.</p>
+<p>This is especially the case when using the historical &#8220;squashing&#8221; non-linear activation functions such as the sigmoid function and the tanh function, though it is still an issue with ReLU function, as will be seen later. The reason for this problem is that, if the weights are such that the activation functions of nodes are pushed into the &#8220;flat&#8221; regions of their curves, they are &#8220;saturated&#8221; and impede learning. Consider the plot below showing the tanh function and its first derivative:</p>
+<figure id="attachment_881" style="width: 404px" class="wp-caption aligncenter"><img class="size-full wp-image-881" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/04/Tanh-gradient.png" alt="Tanh function - weight initialization TensorFlow" width="404" height="266" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/04/Tanh-gradient.png 404w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/04/Tanh-gradient-300x198.png 300w" sizes="(max-width: 404px) 100vw, 404px" /><figcaption class="wp-caption-text">Tanh function and its first derivative</figcaption></figure>
+<p>It can observed that when abs(x) &gt; 2, the derivative of the tanh function approaches zero. Now because the back-propagation method of updating the weight values in a neural network depends on the derivative of the activation functions, this means that when nodes are pushed into such &#8220;saturation&#8221; regions, slow or no learning will take place. Therefore, we don&#8217;t want to start with weight values that push some or all of the nodes into those saturation regions, as that network just won&#8217;t work very well. The sigmoid function operates similarly, as can be observed in <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/" target="_blank" rel="noopener">my vanishing gradient</a> post.</p>
+<p>A naive initialization of weights might be to simply use a normal distribution of mean zero and unit standard deviation (i.e. 1.0). Let&#8217;s consider how this might play out using a bit of simple statistical theory. Recall that the input to a neuron in the first layer of a neural network looks like:</p>
+<p>$$in = X_1 W_1 + X_2 W_2 + X_3 W_3+ X_4 W_4 + \dots$$</p>
+<p>The input, in other words, is a summation of the respective weights and their inputs. The variance (the square of the standard deviation) of each element in this sum can be explained by the <a href="https://en.wikipedia.org/wiki/Variance#Product_of_independent_variables" target="_blank" rel="noopener">product of independent variables</a> law:</p>
+<p>$$Var(X_i W_i) = [E(X_i)]^2 Var(W_i) + [E(W_i)]^2 Var(X_i) + Var(X_i)Var(W_i)$$</p>
+<p>If we assume that the input has been appropriately scaled with a mean of 0 and a unit variance, and likewise we initialize the weights for a mean 0 and unit variance, then this results in:</p>
+<p>$$Var(X_i W_i) = 0 \times 1 + 0 \times 1 + 1 \times 1 = 1$$</p>
+<p>So each product within the total sum of <em>in</em> has a variance of 1. What is the total variance of the node input variable <em>in</em>? We can make the assumption that each product (i.e. each $X_i W_i$) is statistically independent (not quite correct for things like images, but close enough for our purposes) and then apply the <a href="https://en.wikipedia.org/wiki/Variance#Sum_of_uncorrelated_variables_(Bienaym%C3%A9_formula)" target="_blank" rel="noopener">sum of uncorrelated independent variables</a> law:</p>
+<p>$$Var(in) = \sum_{i=0}^n  Var(X_i W_i) = n \times 1 = n$$</p>
+<p>Where <em>n</em> is the number of inputs. So here, we can observe that if there are, say, 784 inputs (equal to the input size of the MNIST problem), the variance will be large and the standard deviation will be $\sqrt{Var(in)} = \sqrt{784} = 28$. This will result in the vast majority of neurons in the first layer being saturated, as most values will be &gt;&gt; |2| (i.e. the saturation regions of the functions).</p>
+<p>Clearly this is not ideal, and so another way of initializing our weight variables is desirable.</p>
+<h2>Xavier or variance scaling for weight initialization</h2>
+<p>The <a href="http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf" target="_blank" rel="noopener">Xavier method of weight initialization</a> is a big improvement on the naive way of weight scaling shown in the section above. This method has helped accelerate the field of deep learning in a big way. It takes into account the problems shown above and bases the standard deviation or the variance of the weight initialization on the number of variables involved. It thereby adjusts itself based on the number of weight values. It works on the idea that if you can keep the variance constant from layer to layer in both the feed forward direction and back-propagation direction, your network will learn optimally. This makes sense, as if the variance increases or decreases as you go through the layers, your weights will eventually saturate your non-linear neurons in either the positive or negative direction.</p>
+<p>So, how do we use this idea to work out what variance should be used to best initialize the weights? First, because the network will be learning effectively when it is operating in the linear regions of the <em>tanh</em> and <em>sigmoid</em> functions, the activation function can be approximated by a linear activation, i.e.:</p>
+<p>$$ Y = W_{1} X_{1} + W_{2} X_{2} + W_{3} X_{3} + \dots $$</p>
+<p>Therefore, with this linear activation function, we can use the same result that was arrived at above using the product of independent variables and sum of uncorrelated independent variables, namely:</p>
+<p>$$ Var(Y) = n_{in} Var(W_i)Var(X_i)$$</p>
+<p>Where $n_{in}$ is the number of inputs to each node. If we want the variance of the input ($Var(X_i)$) to be equal to the variance of the output ($Var(Y)$) this reduces to:</p>
+<p>$$ Var(W_i) = \frac{1}{n_{in}} $$</p>
+<p>Which is a preliminary result for a good initialization variance for the weights in your network. However, this is really just keeping the variance constant during the forward pass. What about trying to keep the variance constant also during back-propagation? It turns out that during back-propagation, to try to do this you need:</p>
+<p>$$ n_{i+1} Var(W_i) = 1 $$</p>
+<p>Or:</p>
+<p>$$ Var(W_i) = \frac{1}{n_{out}} $$</p>
+<p>Now there are two different ways of calculating the variance, one depending on the value of the number of inputs and the other on the number of outputs. The authors of the <a href="http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf" target="_blank" rel="noopener">original paper on Xavier initialization</a> take the average of the two:</p>
+<p>$$ n_{avg} = \frac{n_{in}  + n_{out}}{2} $$</p>
+<p>$$ Var(W_i) = \frac{1}{n_{avg}} = \frac {2}{n_{in} + n_{out}} $$</p>
+<p>That is the final result in the Xavier initialization of weights for <em>squashing </em>activation functions i.e. <em>tanh </em>and <em>sigmoid</em>. However, it turns out this isn&#8217;t quite as optimal for <a href="http://adventuresinmachinelearning.com/vanishing-gradient-problem-tensorflow/" target="_blank" rel="noopener">ReLU functions</a>.</p>
+<h2>ReLU activations and the He initialization</h2>
+<p>Consider the ReLU function &#8211; for all values less than zero, the output of the activation function is also zero. For values greater than zero, the ReLU function simply returns it&#8217;s input. In other words, half of the output is linear, like the assumption made in the analysis above &#8211; so that&#8217;s easy. However, for the other half of the inputs, for input values &lt; 0, the output is zero. If we assume that the inputs to the ReLU neurons are approximately centered about 0, then, roughly speaking, half the variance will be in line with the Xavier initialization result, and the other half will be 0.</p>
+<p>This is basically equivalent to halving the number of input nodes. So if we return to our Xavier calculations, but with half the number of input nodes, we have:</p>
+<p>$$ Var(Y) = \frac{n_{in}}{2} Var(W_i)Var(X_i) $$</p>
+<p>Again, if we want the variance of the input ($Var(X_i)$) to be equal to the variance of the output ($Var(Y)$) this reduces to:</p>
+<p>$$ Var(W_i) = \frac{2}{n_{in}} $$</p>
+<p>This is He initialization, and this initialization has been found to generally work better with ReLU activation functions.</p>
+<p>Now that we&#8217;ve reviewed the theory, let&#8217;s get to the code.</p>
+<h2>Weight initialization in TensorFlow</h2>
+<p>This section will show you how to initialize weights easily in TensorFlow. The full code can be found on <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">this site&#8217;s Github page</a>. Performing Xavier and He initialization in TensorFlow is now really straight-forward using the <em>tf.contrib.layers.variance_scaling_initializer</em>. By adjusting the available parameters, we can create either Xavier, He or other types of modern weight initializations. In this TensorFlow example, I&#8217;ll be creating a simple MNIST classifier using TensorFlow&#8217;s packaged MNIST dataset, with a simple three layer fully connected neural network architecture. I&#8217;ll also be logging various quantities so that we can visualize the variance, activations and so on in TensorBoard.</p>
+<p>First, we define a Model class to hold the neural network model:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">class Model(object):
+    def __init__(self, input_size, label_size, initialization, activation, num_layers=3,
+                 hidden_size=100):
+        self._input_size = input_size
+        self._label_size = label_size
+        self._init = initialization
+        self._activation = activation
+        # num layers does not include the input layer
+        self._num_layers = num_layers
+        self._hidden_size = hidden_size
+        self._model_def()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The above code is the class initialization function &#8211; notice that various initialization and activation functions can be passed to the model. Later on, we&#8217;ll cycle through different weight initialization and activation functions and see how they perform.</p>
+<p>In the next section, I define the model creation function inside the Model class:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">    def _model_def(self):
+        # create placeholder variables
+        self.input_images = tf.placeholder(tf.float32, shape=[None, self._input_size])
+        self.labels = tf.placeholder(tf.float32, shape=[None, self._label_size])
+        # create self._num_layers dense layers as the model
+        input = self.input_images
+        tf.summary.scalar(&quot;input_var&quot;, self._calculate_variance(input))
+        for i in range(self._num_layers - 1):
+            input = tf.layers.dense(input, self._hidden_size, kernel_initializer=self._init,
+                                    activation=self._activation, name=&#039;layer{}&#039;.format(i+1))
+            # get the input to the nodes (sans bias)
+            mat_mul_in = tf.get_default_graph().get_tensor_by_name(&quot;layer{}/MatMul:0&quot;.format(i + 1))
+            # log pre and post activation function histograms
+            tf.summary.histogram(&quot;mat_mul_hist_{}&quot;.format(i + 1), mat_mul_in)
+            tf.summary.histogram(&quot;fc_out_{}&quot;.format(i + 1), input)
+            # also log the variance of mat mul
+            tf.summary.scalar(&quot;mat_mul_var_{}&quot;.format(i + 1), self._calculate_variance(mat_mul_in))
+        # don&#039;t supply an activation for the final layer - the loss definition will
+        # supply softmax activation. This defaults to a linear activation i.e. f(x) = x
+        logits = tf.layers.dense(input, 10, name=&#039;layer{}&#039;.format(self._num_layers))
+        mat_mul_in = tf.get_default_graph().get_tensor_by_name(&quot;layer{}/MatMul:0&quot;.format(self._num_layers))
+        tf.summary.histogram(&quot;mat_mul_hist_{}&quot;.format(self._num_layers), mat_mul_in)
+        tf.summary.histogram(&quot;fc_out_{}&quot;.format(self._num_layers), input)
+        # use softmax cross entropy with logits - no need to apply softmax activation to
+        # logits
+        self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits,
+                                                                             labels=self.labels))
+        # add the loss to the summary
+        tf.summary.scalar(&#039;loss&#039;, self.loss)
+        self.optimizer = tf.train.AdamOptimizer().minimize(self.loss)
+        self.accuracy = self._compute_accuracy(logits, self.labels)
+        tf.summary.scalar(&#039;acc&#039;, self.accuracy)
+        self.merged = tf.summary.merge_all()
+        self.init_op = tf.global_variables_initializer()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>I&#8217;ll step through the major points in this function. First, there is the usual placeholders to hold the training input and output data &#8211; if you&#8217;re unfamiliar with the basics of TensorFlow, check out my introductory tutorial <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener">here</a>. Then, a scalar variable is logged called &#8220;input_var&#8221; which logs the variance of the input images, calculated via the _calculate_variance function &#8211; this will be presented later. The next step involves a loop through the layers, and here I have used the TensorFlow layers API which allows us to create densely connected layers easily. Notice that the <em>kernel_initializer</em> argument is what will initialize the weights of the layer, and <em>activation</em> is the activation function which the layer neurons will use.</p>
+<p>Next, I access the values of the matrix multiplication between the weights and inputs for each layer, and log the values. This way we can observe what the values of the inputs to each neuron is, and the variance of these inputs. We log these values as histograms. Finally, within the layer loop, the variance of the matrix multiplication input is also logged as a scalar.</p>
+<p>The remainder of this model construction function is all the standard TensorFlow operations which define the loss, the optimizer and variable initialization, and also some additional logging of variables. The next function to take notice of within the Model class is the _calculate_variance function &#8211; it looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">    def _calculate_variance(self, x):
+        mean = tf.reduce_mean(x)
+        sqr = tf.square(x - mean)
+        return tf.reduce_mean(sqr)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The function above is just a simple calculation of the <a href="https://en.wikipedia.org/wiki/Variance" target="_blank" rel="noopener">variance</a> of <em>x</em>.</p>
+<p>The main code block creates a list of various scenarios to run through, each with a different folder name in which to store the results, a different weight initialization function and finally a different activation function to supply to the neurons. The main training / analysis loop first runs a single batch of data through the network to examine initial variances. Thereafter it performs a full training run of the network so that performance indicators can be analysed.</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">if __name__ == &quot;__main__&quot;:
+    sub_folders = [&#039;first_pass_normal&#039;, &#039;first_pass_variance&#039;,
+                   &#039;full_train_normal&#039;, &#039;full_train_variance&#039;,
+                   &#039;full_train_normal_relu&#039;, &#039;full_train_variance_relu&#039;,
+                   &#039;full_train_he_relu&#039;]
+    initializers = [tf.random_normal_initializer,
+                    tf.contrib.layers.variance_scaling_initializer(factor=1.0, mode=&#039;FAN_AVG&#039;, uniform=False),
+                    tf.random_normal_initializer,
+                    tf.contrib.layers.variance_scaling_initializer(factor=1.0, mode=&#039;FAN_AVG&#039;, uniform=False),
+                    tf.random_normal_initializer,
+                    tf.contrib.layers.variance_scaling_initializer(factor=1.0, mode=&#039;FAN_AVG&#039;, uniform=False),
+                    tf.contrib.layers.variance_scaling_initializer(factor=2.0, mode=&#039;FAN_IN&#039;, uniform=False)]
+    activations = [tf.sigmoid, tf.sigmoid, tf.sigmoid, tf.sigmoid, tf.nn.relu, tf.nn.relu, tf.nn.relu]
+    assert len(sub_folders) == len(initializers) == len(activations)
+    maybe_create_folder_structure(sub_folders)
+    for i in range(len(sub_folders)):
+        tf.reset_default_graph()
+        model = Model(784, 10, initializers[i], activations[i])
+        if &quot;first_pass&quot; in sub_folders[i]:
+            init_pass_through(model, sub_folders[i])
+        else:
+            train_model(model, sub_folders[i], 30, 1000)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The most important thing to consider in the code above is the Xavier and He weight initialization<em> </em>definitions. The function used to create these is the <em>tf.contrib.layers.variance_scaling_initializer</em> which allows us to create weight initializers which are based on the number of input and output connections in order to execute the Xavier and He initialization discussed previously.</p>
+<p>The three arguments used in this function are:</p>
+<ul>
+<li>The <em>factor </em>argument, which is a multiplicative factor that is applied to the scaling. This is 1.0 for Xavier weight initialization, and 2.0 for He weight initialization</li>
+<li>The <em>mode</em> argument: this defines which is on the denominator of the variance calculation. If &#8216;FAN_IN&#8217;, the variance scaling is based solely on the number of inputs to the node. If &#8216;FAN_OUT&#8217; it is based solely on the number of outputs. If it is &#8216;FAN_AVG&#8217;, it is based on an averaging calculation, i.e. Xavier initialization. For He initialization, use &#8216;FAN_IN&#8217;</li>
+<li>The <em>uniform</em> argument: this defines whether to use a uniform distribution or a normal distribution to sample the weights from during initialization. For both Xavier and He weight initialization, you can use a normal distribution, so set this argument to False</li>
+</ul>
+<p>The other weight initialization function used in the scenarios is the <em>tf.random_normal_initializer</em> with default parameters. The default parameters for this initializer are a mean of zero, and a unit (i.e. 1.0) standard deviation / variance.</p>
+<p>After running this code, a number of interesting results are obtained.</p>
+<h2>Visualizing the TensorFlow model variables</h2>
+<p>The first thing that we want to look at is the &#8220;first pass&#8221; model results, where only one batch is passed through the model. If we look at the distribution of inputs into the first layer in TensorBoard, with our naive normally distributed weight values with a unit variance, we can see the following:</p>
+<figure id="attachment_911" style="width: 322px" class="wp-caption aligncenter"><img class=" wp-image-911" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-Mat-Mul-1.png" alt="Weight initialization - First pass distribution of inputs to the first layer" width="322" height="201" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-Mat-Mul-1.png 505w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-Mat-Mul-1-300x187.png 300w" sizes="(max-width: 322px) 100vw, 322px" /><figcaption class="wp-caption-text">First pass distribution of inputs to the first layer</figcaption></figure>
+<p>As can be observed the matrix multiplication input into the first layer is approximately normally distributed, with a standard deviation around 10. If you recall, the variance scalar of the matrix multiplication input was also been logged, and it gives a value of approximately 88. Does this make sense? I mentioned earlier that with 784 inputs (i.e. the input size of the MNIST dataset), we should expect a variance of approximately 784. What&#8217;s the explanation of this discrepancy? Well, remember I also logged the variance of the input data &#8211; it turns out that the MNIST TensorFlow dataset has a variance of 0.094. You&#8217;ll recall that we assumed a unit variance in the calculations previously shown. In this case, though, we should expect a variance of (remember that $Var(W_i)$, for the normal distribution initializer we are currently considering, is equal to 1.0):</p>
+<p>$$Var(in) = \sum_{i=0}^n Var(X_i)Var(W_i) = n Var(X_i)Var(W_i) = 784 * 0.094 * 1 = 74$$</p>
+<p>This is roughly in line with the observed variance &#8211; so we can be happy that we are on the right track. The distribution shown above is the distribution into the first layer neurons. In the first set of scenarios, we&#8217;re using a sigmoid activation function &#8211; so what does the first layer output distribution look like for this type of input distribution?</p>
+<figure id="attachment_912" style="width: 319px" class="wp-caption aligncenter"><img class=" wp-image-912" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-first-layer-output-distribution.png" alt="Weight initialization - Distribution of outputs from first layer - sigmoid activations and normal weight initialization" width="319" height="210" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-first-layer-output-distribution.png 498w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-first-layer-output-distribution-300x198.png 300w" sizes="(max-width: 319px) 100vw, 319px" /><figcaption class="wp-caption-text">Distribution of outputs from first layer &#8211; sigmoid activations and normal weight initialization</figcaption></figure>
+<p>As can be observed, the input distribution with such a relatively large variance completely saturates the first layer &#8211; with the output distribution being squeezed to the saturated regions of the sigmoid<em> </em>curve i.e. outputs close to 0 and 1 (we&#8217;d observe the same thing with a <em>tanh</em> activation). This confirms our previous analysis of the problems with a naive normally distributed weight initialization.</p>
+<p>What happens when we use the Xavier initialization configuration of the variance scaler initializer? The plot below shows the same distribution of outputs:</p>
+<figure id="attachment_913" style="width: 302px" class="wp-caption aligncenter"><img class=" wp-image-913" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-first-layer-output-Xavier-distribution.png" alt="Weight initialization - Distribution of outputs from first layer - sigmoid activations and Xavier weight initialization" width="302" height="213" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-first-layer-output-Xavier-distribution.png 463w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-first-layer-output-Xavier-distribution-300x212.png 300w" sizes="(max-width: 302px) 100vw, 302px" /><figcaption class="wp-caption-text">Distribution of outputs from first layer &#8211; sigmoid activations and Xavier weight initialization</figcaption></figure>
+<p>As can be observed, this is a very satisfactory distribution &#8211; with the output values centered around the linear region of the sigmoid function (i.e. 0.5), with no saturation occurring. This more optimal initialization results in better training outcomes also. The figure below shows the accuracy comparison between the normally initialized weight distribution and the Xavier initialized weight distribution, for the full training run scenario:</p>
+<figure id="attachment_914" style="width: 379px" class="wp-caption aligncenter"><img class=" wp-image-914" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-accuracy-comparison.png" alt="Weight initialization - Accuracy comparison between normal and Xavier initialization - sigmoid activation" width="379" height="248" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-accuracy-comparison.png 527w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-accuracy-comparison-300x196.png 300w" sizes="(max-width: 379px) 100vw, 379px" /><figcaption class="wp-caption-text">Accuracy comparison between normal (red) and Xavier initialization (light blue) &#8211; sigmoid activation</figcaption></figure>
+<p>As can be observed, Xavier initialization results in better training performance, as we should expect.</p>
+<p>The next thing to compare is the performance of normal weight initialization, Xavier initialization and He initialization for a ReLU activation function. The plot below shows the accuracy comparison during training between the three initialization techniques:</p>
+<figure id="attachment_917" style="width: 380px" class="wp-caption aligncenter"><img class=" wp-image-917" src="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-ReLU-accuracy-comparison.png" alt="Weight initialization - He, Xavier and normal comparison with ReLU activations" width="380" height="253" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-ReLU-accuracy-comparison.png 525w, http://adventuresinmachinelearning.com/wp-content/uploads/2018/05/Weight-initialization-ReLU-accuracy-comparison-300x200.png 300w" sizes="(max-width: 380px) 100vw, 380px" /><figcaption class="wp-caption-text">Accuracy comparison for ReLU activation functions and normal (red), Xavier (green) and He (grey) weight initialization</figcaption></figure>
+<p>As can be observed, the model performance is significantly greater for Xavier and He weight initialization than for the normal initialization on a ReLU network. There is little clear difference between the Xavier and He initialization, but a better average performance should be expected from He initialization for more complicated networks and problems that use a ReLU activation function.</p>
+<p>There you have it &#8211; you should now hopefully understand the drawbacks of naive, normally distributed weight initialization, and you should also understand the basics of how Xavier and He initialization work, and their performance benefits. You should also understand how to easily use such initialization methods in TensorFlow. I hope this helps you build better performing models for both sigmoid/tanh and ReLU networks.</p>
+<hr />
+<p><strong>Recommended</strong><strong> online course: </strong>If you&#8217;d like to learn more about TensorFlow I&#8217;d recommend the following inexpensive Udemy course: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1326292&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fcomplete-guide-to-tensorflow-for-deep-learning-with-python%2F">Complete Guide to TensorFlow for Deep Learning with Python</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1326292&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/weight-initialization-tutorial-tensorflow/">Weight initialization tutorial in TensorFlow</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/weight-initialization-tutorial-tensorflow/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+	</channel>
+</rss>

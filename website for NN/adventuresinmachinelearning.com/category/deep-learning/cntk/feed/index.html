@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>CNTK &#8211; Adventures in Machine Learning</title>
+	<atom:link href="http://adventuresinmachinelearning.com/category/deep-learning/cntk/feed/" rel="self" type="application/rss+xml" />
+	<link>http://adventuresinmachinelearning.com</link>
+	<description>Learn and explore machine learning</description>
+	<lastBuildDate>Sun, 09 Sep 2018 07:53:16 +0000</lastBuildDate>
+	<language>en-AU</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.9.8</generator>
+	<item>
+		<title>A Microsoft CNTK tutorial in Python &#8211; build a neural network</title>
+		<link>http://adventuresinmachinelearning.com/microsoft-cntk-tutorial/</link>
+		<comments>http://adventuresinmachinelearning.com/microsoft-cntk-tutorial/#comments</comments>
+		<pubDate>Thu, 03 Aug 2017 10:04:13 +0000</pubDate>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+				<category><![CDATA[CNTK]]></category>
+		<category><![CDATA[Deep learning]]></category>
+
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=436</guid>
+		<description><![CDATA[<p>In previous tutorials (Python TensorFlow tutorial, CNN tutorial, and the Word2Vec tutorial) on deep learning, I have taught how to build networks in the TensorFlow deep <a class="mh-excerpt-more" href="http://adventuresinmachinelearning.com/microsoft-cntk-tutorial/" title="A Microsoft CNTK tutorial in Python &#8211; build a neural network">[...]</a></p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/microsoft-cntk-tutorial/">A Microsoft CNTK tutorial in Python &#8211; build a neural network</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></description>
+				<content:encoded><![CDATA[<p>In previous tutorials (<a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener">Python TensorFlow tutorial</a>, <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener">CNN tutorial</a>, and the <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">Word2Vec tutorial</a>) on deep learning, I have taught how to build networks in the TensorFlow deep learning framework.  There is no doubt that TensorFlow is an immensely popular deep learning framework at present, with a large community supporting it.  However, there is another contending framework which I think may actually be better &#8211; it is called the <a href="https://www.microsoft.com/en-us/cognitive-toolkit/" target="_blank" rel="noopener">Microsoft Cognitive Toolkit</a>, or more commonly known as CNTK.  Why do I believe it to be better?  Two main reasons &#8211; it has a more intuitive and easy to use Python API than TensorFlow, and it is <em>faster</em>.  It also can be used as a back-end to <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">Keras</a>, but I would argue that there is little benefit to doing so as CNTK is already very streamlined.  How much faster is it?  Some <a href="http://dlbench.comp.hkbu.edu.hk/" target="_blank" rel="noopener">benchmarks</a> show that is it generally faster than TensorFlow and up to 5-10 times faster for recurrent / LSTM networks.  That&#8217;s a pretty impressive achievement.  This article is a comprehensive CNTK tutorial to teach you more about this exciting framework.</p>
+<p>Should you switch from using TensorFlow to CNTK?  TensorFlow definitely has much more hype than Microsoft&#8217;s CNTK and therefore a bigger development community, more answers on Stack Overflow and so on.  Also, many people are down on Microsoft which is often perceived as a big greedy corporation.  However, Microsoft has opened up a lot, and CNTK is now open-source, so I would recommend giving it a try.  Let me know what you think in the comments.  This post will be a comprehensive CNTK tutorial which you can use to get familiar with the framework &#8211; I suspect that you might be surprised at how streamlined it is.</p>
+<p>Before going on &#8211; if you&#8217;re not familiar with neural networks I&#8217;d recommend my <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">neural networks tutorial</a> or the course below as an introduction.  Also, CNTK uses the computational graph methodology, as does TensorFlow.  If you&#8217;re unfamiliar with this concept &#8211; check out the first section of my <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener">TensorFlow tutorial</a>.  The code for this course, which is loosely based on the CNTK tutorial <a href="https://github.com/Microsoft/CNTK/blob/v2.1/Examples/Image/Classification/MLP/Python/SimpleMNIST.py" target="_blank" rel="noopener">here</a>, can be found on this site&#8217;s <a href="https://github.com/adventuresinML/adventures-in-ml-code" target="_blank" rel="noopener">Github page</a>.  Also checkout Liping Yang&#8217;s good collection of CNTK resources <a href="http://deeplearning.lipingyang.org/microsoft-cognitive-toolkit-cntk-resources/" target="_blank" rel="noopener">here</a>.</p>
+<hr />
+<p><strong>Recommended online course for neural networks: </strong>If you like video courses, I&#8217;d recommend the following inexpensive Udemy course on neural networks: <a href="https://click.linksynergy.com/link?id=Jbc0N5ZkDzk&amp;offerid=323058.1151632&amp;type=2&amp;murl=https%3A%2F%2Fwww.udemy.com%2Fdeeplearning%2F" target="new">Deep Learning A-Z: Hands-On Artificial Neural Networks</a><img src="https://ad.linksynergy.com/fs-bin/show?id=Jbc0N5ZkDzk&amp;bids=323058.1151632&amp;type=2&amp;subid=0" width="1" height="1" border="0" /></p>
+<hr />
+<h1>CNTK inputs and variables</h1>
+<p>The first thing to learn about any deep learning framework is how it deals with input data, variables and how it executes operations/nodes in the computational graph.  In this CNTK tutorial, we&#8217;ll be creating a three layer densely connected neural network to recognize handwritten images in the MNIST data-set, so in the below explanations, I&#8217;ll be using examples from this problem.  See the above-mentioned tutorials (<a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">here</a> and <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener">here</a>) for other implementations of the MNIST classification problem.</p>
+<h2>Variables</h2>
+<p>For the MNIST classification task, each training sample will have a flattened 28 x 28 = 784 pixels grey scale input and ten labels to classify (one for each hand-written digit).  In CNTK we can declare the variables to hold this data like so:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">import cntk as C
+input_dim = 784
+num_output_classes = 10
+feature = C.input_variable(input_dim)
+label = C.input_variable(num_output_classes)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>These <em>input_variable</em> functions are like the placeholder variables in TensorFlow.  However, CNTK removes the necessity to explicitly identify the number of samples/batch size and we simply supply the dimensions for each training/evaluation sample (in TensorFlow, one had to explicitly use the &#8220;?&#8221; symbol to designate unknown batch size).  In this case, we have the flattened 28 x 28 = 784 pixel input and 10 output labels / classes.  If we wanted to maintain the un-flattened input shape for, say, a <a href="http://adventuresinmachinelearning.com/convolutional-neural-networks-tutorial-tensorflow/" target="_blank" rel="noopener">convolutional neural network</a> task, we would instead specify <em>input_dim = (1, 28, 28)</em>.</p>
+<p>As will be shown later, these variables can be easily &#8220;loaded up&#8221; with our batch training or evaluation data.</p>
+<h2>Data readers</h2>
+<p>Some of the most time consuming (and annoying tasks) in machine learning involve getting your training data into a good format, reading it into your model and setting up batch retrieval functions (if you&#8217;re not sure about what a &#8220;mini-batch&#8221; is in this context, check out my <a href="http://adventuresinmachinelearning.com/stochastic-gradient-descent/" target="_blank" rel="noopener">Stochastic Gradient Descent tutorial</a>).  The CNTK framework has some helper modules which can aid in at least some of this process.  For this tutorial, we will be using the MNIST data-set obtained from the following website &#8211; <a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a>.   To access this data, we need to download two Python files from the following repository: <a href="https://github.com/Microsoft/CNTK/tree/v2.0/Examples/Image/DataSets/MNIST">https://github.com/Microsoft/CNTK/tree/v2.0/Examples/Image/DataSets/MNIST</a> called install_mnist.py and mnist_utils.py. After running install_mnist.py, it will download the data-set into your project directory.  Once this has been done, you can run two different functions &#8211; the first of which is called <em>CTFDeserializer(). </em> <em>CTFDeserializer()</em> reads text files in a special CNTK format.  The CNTK format requires a sample per line, with the data of the sample being given a name/label using the pipe &#8220;|&#8221; delimiter.  For our MNIST case, the data has been put in the following format for a single sample:</p>
+<p>|labels 0 0 0 0 0 1 0 0 0 0 |features 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0&#8230;.</p>
+<p>As can be observed, we have two fields per sample &#8211; the label of the MNIST image, which corresponds to the one-hot designation of the digit in the image (i.e. a digit of &#8220;2&#8221; will be represented as 0 0 1 0 0 0 0 0 0 0) and the features of the image which represent each of the 784 (flattened) pixels of the image.  We read this CNTK file format by using the <em>CTFDeserializer</em><em>()</em> like follows:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">from cntk.io import MinibatchSource, CTFDeserializer, StreamDef, StreamDefs
+CTFDeserializer(path, StreamDefs(
+        features=StreamDef(field=&#039;features&#039;, shape=input_dim),
+        labels=StreamDef(field=&#039;labels&#039;, shape=num_output_classes)))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first argument to the <em>CTFDeserializer()</em> function is the path of the data it is to read from.  The second argument is a <em>StreamDefs()</em> dictionary-like object.  This object assigns a set of keys to different <em>StreamDef()</em> objects.  A <em>StreamDef()</em> object specifies what pipe (&#8220;|&#8221;) label it should be searching for in the CT file, and what the size of data per sample it should be retrieving.  So if we take the &#8220;|labels&#8221; pipe designation in the file, we know that it should be followed by the number of labels: <em>num_output_classes=10</em>.  We then feed the <em>StreamDefs()</em> object, which contains the description of each data-point per sample, to the <em>CTFDeserializer() </em>function.  When this function is called, it will read the data into the specified keys (<em>features </em>and<em> labels</em>).</p>
+<p>The next step is to setup the CNTK object which can draw random mini-batch samples from our <em>CTFDeserializer().  </em>This object is called <em>MinibatchSource()</em>.  To use it, we simply supply it a serializer, in this case, our previously mentioned <em>CTFDeserializer().  </em>It will then automatically draw random mini-batch samples from our serialized data source of a size that we will specify later when we look at the <em>training_session()</em> object.  To create the <em>MinibatchSource()</em> object, we simply do the following:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">reader_train = MinibatchSource(CTFDeserializer(path, StreamDefs(
+        features=StreamDef(field=&#039;features&#039;, shape=input_dim),
+        labels=StreamDef(field=&#039;labels&#039;, shape=num_output_classes))))</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The above variables, functions, and operations now allow us to draw data into our training and evaluation procedures in the correct fashion.</p>
+<h1>CNTK Operations</h1>
+<p>As with TensorFlow, CNTK has operations which are nodes in a computational graph.  These nodes and operations also flow into each other.  In other words, if the output of an operation <em>B</em> first requires the output of another operation <em>A</em>, then CNTK understands this relationship.  If we wish to know what the output of operation <em>B</em> is, all we have to do is call <em>B.eval()</em> and this will automatically call <em>A.eval()</em>.  In CNTK there are all sorts of operations which we can run &#8211; from simple multiplication and division to softmax and convolutional operations.  Again, if we need to explicitly evaluate any of these in our code all we have to do is call the operation by executing <em>eval()</em> on the operation name.  However, most operations we won&#8217;t have to explicitly evaluate, they will simply be evaluated implicitly during the execution of the final layer of our networks.</p>
+<p>In this MNIST example, a simple operation we need to perform is to scale the input features.  The grey scale pixel images will have maximum values up to 256 in the raw data.  It is better to scale these feature values to between 0 and 1, therefore we need to multiply all the values by 1/256 ~ 0.00390 to achieve this scaling:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">from cntk.ops import relu, element_times, constant
+scaled_input = element_times(constant(0.00390625), feature)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Here we declare a constant of 0.00390 and use the <em>element_times()</em> operation to multiply it by the input variable <em>feature</em> which we declared earlier.  This scales our input data to between 0 and 1.</p>
+<p>Now we are ready to start building our densely connected neural network using CNTK layers.</p>
+<h1>CNTK layers</h1>
+<h2>Creating a single layer</h2>
+<p>As with any deep learning framework, CNTK gives us the ability to create neural network layers.  These layers come in many flavors, such as Dense, Convolution, MaxPooling, Recurrent, and LSTM, all of which can be reviewed <a href="https://www.cntk.ai/pythondocs/layerref.html" target="_blank" rel="noopener">here</a>.  In our case, we wish to create some densely connected layers for our standard neural network classifier of the MNIST dataset.  The architecture we are going to create looks like this:</p>
+<figure id="attachment_439" style="width: 294px" class="wp-caption aligncenter"><img class=" wp-image-439" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/CNTK-Dense-example-architecture.jpg" alt="CNTK dense MNIST architecture" width="294" height="238" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/CNTK-Dense-example-architecture.jpg 413w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/07/CNTK-Dense-example-architecture-300x243.jpg 300w" sizes="(max-width: 294px) 100vw, 294px" /><figcaption class="wp-caption-text">Dense MNIST architecture example</figcaption></figure>
+<p>So basically we have our 784 flattened pixel input layer, followed up by two hidden layers both of size 200, and finally, our output layer which will be softmax activated.  So how do we create our first hidden layer?  Quite easily in CNTK:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">from cntk.ops import relu
+from cntk.layers import Dense
+hidden_layers_dim = 200
+h1 = Dense(hidden_layers_dim, activation=relu)(scaled_input)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>To create a densely connected hidden layer, as shown in the example figure above, all we need to do is declare a <em>Dense</em><em>()</em> object.  The first argument to this object is the size of the hidden layer &#8211; in this case, it is equal to 200.  Then we specify the node activation type &#8211; in this case, we will use <a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)" target="_blank" rel="noopener">rectified linear units</a> or relu.  Following this declaration, we pass the <em>scaled_input </em>variable/operation to the layer in brackets &#8211; this is the data that will be fed into the first hidden layer.  CNTK takes care of all the relevant connections and handles the dimensions of the input tensor automatically.  It also includes the weight and bias variables internally, so you don&#8217;t have to go explicitly declaring them as you do in TensorFlow.  We can supply an initialization function for these weights/bias values, by supplying an optional argument <em>init</em>.  In the absence of this argument, the initialization defaults to the <em><a href="http://andyljones.tumblr.com/post/110998971763/an-explanation-of-xavier-initialization" target="_blank" rel="noopener">glorot_uniform()</a></em> function/distribution.</p>
+<p>We can then build a hierarchical graph of operations connecting the other hidden layer and the output layer:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">h2 = Dense(hidden_layers_dim, activation=relu)(h1)
+z = Dense(num_output_classes, activation=None)(h2)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>For h2, we declare an identical dense hidden layer and feed it the output of the first layer (<em>h1</em>).  Finally, we create an output layer equal to the number of output classes, but we set the activation function here to None &#8211; this is to make the output layer nodes simple summing nodes with no activation.  We will apply the softmax function to this simple summation later.</p>
+<p>CNTK includes some additional options to make the declaration of layers easier.</p>
+<h2>Some layer creation helpers</h2>
+<p>Often one wants to supply the same initialization functions and activation functions to multiple layers, and it is often the case that we have repeating structures in our networks.  In this vein, CNTK has some helper functions/objects to make our network definitions more streamlined.  The first, and probably most important of these is the Sequential() module &#8211; this is very similar to the Sequential() paradigm used in Keras (see <a href="http://adventuresinmachinelearning.com/keras-tutorial-cnn-11-lines/" target="_blank" rel="noopener">this Keras tutorial</a>).  It allows the user to simply stack layers on top of each other in a sequential fashion without having to explicitly pass the output of one layer to the input of the next.  In this example, the use of Sequential() looks like this:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">z = Sequential([
+        Dense(hidden_layers_dim, activation=relu),
+        Dense(hidden_layers_dim, activation=relu),
+        Dense(num_output_classes)])(scaled_input)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Here we can see that we&#8217;ve simply added our two hidden layers, and the final output layer, into a list argument required by the Sequential() module.  We can reduce this code even further, by using the For() function available in the Layers CNTK interface.  This is basically an embedded <em>for</em> loop that can be used in the Sequential() module:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">num_hidden_layers = 2
+z = Sequential([For(range(num_hidden_layers), 
+lambda i: Dense(hidden_layers_dim, activation=relu)), 
+Dense(num_output_classes)])(scaled_input)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The For() loop uses a lambda function to construct the layers &#8211; in the above, this is performed over two hidden layers, with the final output layer appended to the end of this For() construction.</p>
+<p>One final construct in CNTK that can assist in stream-lining is the <em>layers.default_options()</em> module &#8211; this is not particularly useful in this example, but it can be useful in more complicated networks, so I include it here for illustrative purposes.  Basically, it allows the user to specify common activation functions, weight initialization procedures, and other options.  We use the Python <em>with</em> functionality to call it:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">with default_options(activation=relu, init=C.glorot_uniform()):
+    z = Sequential([For(range(num_hidden_layers),
+        lambda i: Dense(hidden_layers_dim)),
+        Dense(num_output_classes, activation=None)])(scaled_input)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Notice that we no longer have to specify the activation function for the hidden layers, yet we can override the default_option for the output layer to <em>None</em> which allows us to apply a softmax in the loss function (which will be demonstrated in the next section).  The same initialization of the <em>glorot_uniform()</em> is applied to each layer.</p>
+<p>We have now defined the structure of our neural network, and you can see how simple it is to do &#8211; especially using the Sequential() module in CNTK.  Now we have to setup our loss function and training session.</p>
+<h1>CNTK losses, errors, and training</h1>
+<h2>Defining the loss and error</h2>
+<p>The CNTK library has many loss functions to choose from in order to train our model.  These range from the standard cross entropy and squared error to the cosine distance (good for measuring vector similarities, such as <a href="http://adventuresinmachinelearning.com/word2vec-tutorial-tensorflow/" target="_blank" rel="noopener">word embeddings</a>) and <a href="https://www.microsoft.com/en-us/research/publication/from-ranknet-to-lambdarank-to-lambdamart-an-overview/" target="_blank" rel="noopener">lambda rank</a>.  You can also define your own custom loss functions.  For our purposes, as is often the case for classification tasks, we&#8217;ll use the <em>cross_entropy_with_softmax() </em>option:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">ce = cross_entropy_with_softmax(z, label)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Here we simply supply the output layer <em>z</em> (which you&#8217;ll remember doesn&#8217;t yet have a nonlinear activation function applied) and the <em>label</em> output variable/placeholder and we get the cross entropy loss with softmax applied to <em>z</em>.</p>
+<p>Next, we want to have some way of assessing the error (or conversely accuracy) on our test set, as well as when we are training our model.  CNTK has a few handy metrics we can use, along with the ability to define our own.  Seeing this is a classification task, we can use the handy <em>classification_error()</em> function:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">pe = classification_error(z, label)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Now we need to setup the required training objects.</p>
+<h2>Training models in CNTK</h2>
+<p>In order to perform training in CNTK, we first have to define our input map, which is simply a dictionary containing all the input and output training pairs:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">input_map = {
+        feature: reader_train.streams.features,
+        label: reader_train.streams.labels
+    }</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>Note that here we are using the <em>MinibatchSource() </em>object (with the associated reader/deserializer) called <em>reader_train</em> that we created earlier.  One can access the streams/data by using the dot notation shown above.</p>
+<p>The next step is to create a progress writer object, called ProgressPrinter.  This object allows us to output metrics, such as the loss and classification error, to the command window while training.  It also allows the ability to print the data to text files, vary printing frequency and has a number of methods <a href="https://www.cntk.ai/pythondocs/cntk.logging.progress_print.html" target="_blank" rel="noopener">which bear examining</a>.  In this case, we will just use it fairly simply:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">num_sweeps_to_train_with = 10
+# Instantiate progress writers.
+progress_writers = [ProgressPrinter(
+    tag=&#039;Training&#039;,
+    num_epochs=num_sweeps_to_train_with)]</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>In the above, the <em>tag</em> argument is what shows up in the log attached to each update.  The <em>num_epochs</em> is used to allow a counter to count up to the total number of epochs during the training.  This will become clear later as we print out the results of our training.</p>
+<h3>The learning rate schedule object</h3>
+<p>It is often the case that, during training, we wish to vary optimization variables such as the learning rate.  This can aid in convergence to an optimal solution, with learning rates often reduced as the number of epochs increase &#8211; for example, reducing the step size in our gradient descent steps (for more information about gradient descent, see my <a href="http://adventuresinmachinelearning.com/neural-networks-tutorial/" target="_blank" rel="noopener">neural networks tutorial</a>).  We can setup such a learning rate schedule using the <em>learning_rate_schedule()</em> object.  With this object, we can select a learning rate of, say, 0.1 for the first 1,000 samples, then a learning rate of 0.01 for the next 1,000 samples, then 0.001 for all remaining samples.  To do this, we would create a <em>learning_rate_schedule() </em>using the following code:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">lr = learning_rate_schedule([0.1, 0.01, 0.001], UnitType.sample, 1000)
+lr[0], lr[1000], lr[2000]
+0.1, 0.01, 0.001</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first argument in this declaration is the schedule, which is the set of learning rate values that will be used as the training progresses.  The second argument <em>UnitType.sample </em>designates that the learning rate will change depending on a number of <em>samples</em>.  The other alternative is <em>UnitType.minibatch</em> which means that the learning rate will change depending on a number of <em>mini batches</em>.  Finally, we have the epoch size, which is the number of samples in this case, that need to be processed before the next change in learning rate.</p>
+<p>In the case of our simple network, we can use the same learning rate for all samples, so we just declare our <em>lr</em> variable by:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">from cntk.learners import learning_rate_schedule, UnitType
+lr = learning_rate_schedule(1, UnitType.sample)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>For each sample, the learning rate will be 1.</p>
+<h3>The Trainer object</h3>
+<p>Next, we need to setup a Trainer object.  This module is what performs the training of our model &#8211; therefore we need to feed it a number of pieces of information.  First, we need to give it the output layer operation (the variable <em>z</em> in our case) &#8211; the prior layers will be trained using the computational graph structure.  Next, we need to give it our loss function that we are going to use for computing our gradients.  We also want to supply our metric that we will track during training.  Then we need to specify what type of optimizer to use &#8211; stochastic gradient descent, AdaGrad, Adam etc.  (see the list available <a href="https://www.cntk.ai/pythondocs/cntk.learners.html" target="_blank" rel="noopener">here</a>) and also our learning rate schedule.  Finally, we need to specify any progress writers that we wish to use.  In our case, it looks like this:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">trainer = Trainer(z, (ce, pe), [adadelta(z.parameters, lr)], progress_writers)</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>The first argument is our output layer operation <em>z</em>.  The next argument can be either the loss function alone or a tuple containing the loss function and a metric to track &#8211; this is the option we have taken here.  Third, we have a list of optimizers to use &#8211; in this case, we use a single optimizer called <em>adadelta</em><em>()</em>.  The optimizer takes the final layer&#8217;s parameters (which implicitly include the previous layer parameters via the directed computational graph &#8211; see <a href="http://adventuresinmachinelearning.com/python-tensorflow-tutorial/" target="_blank" rel="noopener">here</a> for more information) and a learning rate schedule which we have already defined.  Finally, we include our progress writer object.</p>
+<p>Now we are ready to create a training session object which we can use to train the model.</p>
+<h3>The training session object</h3>
+<p>The CNTK library has a great way of training models using the <em>training_session()</em> object.  This handles all of our mini-batch data extraction from the source, our input data, the frequency of logging and how long we want to run our training for.  This is what it looks like:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code">minibatch_size = 64
+num_samples_per_sweep = 60000
+num_sweeps_to_train_with = 10
+training_session(
+        trainer=trainer,
+        mb_source=reader_train,
+        mb_size=minibatch_size,
+        model_inputs_to_streams=input_map,
+        max_samples=num_samples_per_sweep * num_sweeps_to_train_with,
+        progress_frequency=num_samples_per_sweep
+    ).train()</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>First, we supply the <em>training_session() </em>a trainer object over which the optimization and parameter learning will occur.  Then we provide it a source from which to extract mini-batch data from &#8211; in this case, it is our <em>reader_train</em> MinibatchSource object that we created earlier.  We then let the session object know how many samples we wish to extract per mini-batch.</p>
+<p>Next comes our input map.  This matches our input variables (<em>label </em>and <em>feature</em>) with the appropriate streams from the deserializer object embedded in <em>reader_train</em>.  We then supply the maximum number of samples we wish the training session to process &#8211; once this limit of samples passed through the model has been reached, the training will cease.  Finally, we supply the frequency at which we wish to print the progress via the <em>progress_writers </em>object we created.</p>
+<p>There are other options that <em>training_session() </em>makes available, such as saving the model at checkpoints, cross validation, and testing.  These will be topics for a future post.</p>
+<p>In this case, we are going to try to cover all the data set <em>(num_samples_per_sweep=60,000) by</em> sweeping over it 10 times (<em>num_sweeps_to_train_with=10</em>).  The selection of data will be random via the mini-batches, but it is statistically likely that most of the data will be sampled in a mini-batch at some point in the 10 sweeps.</p>
+<p>This is what the output of the training looks like:</p>
+<figure id="attachment_446" style="width: 1250px" class="wp-caption alignnone"><img class="size-full wp-image-446" src="http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/CNTK-training-output.jpg" alt="CNTK training output" width="1250" height="275" srcset="http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/CNTK-training-output.jpg 1250w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/CNTK-training-output-300x66.jpg 300w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/CNTK-training-output-768x169.jpg 768w, http://adventuresinmachinelearning.com/wp-content/uploads/2017/08/CNTK-training-output-1024x225.jpg 1024w" sizes="(max-width: 1250px) 100vw, 1250px" /><figcaption class="wp-caption-text">Output from the progress writer during training</figcaption></figure>
+<p>We can see that our model error on the training data set gets down to 0.9% &#8211; not bad!</p>
+<p>However, as any machine learning practitioner will tell you, we should test our model on a separate test data set, as we may have overfitted our training set.</p>
+<h2>Testing the model</h2>
+<p>First, we need to setup another <em>MinibatchSource </em>which reads in our test data, along with a new input map that refers to the test data:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Load test data
+path = abs_path + &quot;\Test-28x28_cntk_text.txt&quot;
+
+reader_test = MinibatchSource(CTFDeserializer(path, StreamDefs(
+    features=StreamDef(field=&#039;features&#039;, shape=input_dim),
+    labels=StreamDef(field=&#039;labels&#039;, shape=num_output_classes))))
+
+input_map = {
+    feature: reader_test.streams.features,
+    label: reader_test.streams.labels
+}</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>A handy thing about the <em>MinibatchSource </em>object is that we can extract mini-batches from the reader object by using <em>.next_minibatch()</em>.  This allows us to run through a whole bunch of mini-batches from our test set to estimate what the average classification error is on our test data.  We can also feed in this mini-batch data, one batch at a time, to our trainer object to get the classification error on that batch.  To do so, the trainer object has a handy method called <em>.test_minibatch().  </em>The code below shows how all this works:</p>
+<div class="code-embed-wrapper"> <pre class="language-python code-embed-pre line-numbers"  data-start="1" data-line-offset="0"><code class="language-python code-embed-code"># Test data for trained model
+test_minibatch_size = 1024
+num_samples = 10000
+num_minibatches_to_test = num_samples / test_minibatch_size
+test_result = 0.0
+for i in range(0, int(num_minibatches_to_test)):
+    mb = reader_test.next_minibatch(test_minibatch_size, input_map=input_map)
+    eval_error = trainer.test_minibatch(mb)
+    test_result = test_result + eval_error</code></pre> <div class="code-embed-infos"> </div> </div>
+<p>By dividing the <em>test_result </em>value in the above code by the <em>num_minibatches_to_test</em> variable,<em> </em>we can get our average classification error on the test set.  In this case, it is 1.98% &#8211; pretty good for a densely connected neural network.  In a future post, I&#8217;ll show you how to create convolutional neural networks in CNTK which perform even better.</p>
+<p>So there you have it &#8211; in this post, I have shown you the basics of Microsoft&#8217;s challenge to TensorFlow &#8211; the Cognitive Toolkit or CNTK.  It is an impressive framework, with very streamlined ways of creating the model structure and training.  This coupled with proven high speeds makes it a serious competitor to TensorFlow, and well worth checking out.  I hope this post has been a help for you in getting started with this deep learning framework.</p>
+<p>&nbsp;</p>
+<p>The post <a rel="nofollow" href="http://adventuresinmachinelearning.com/microsoft-cntk-tutorial/">A Microsoft CNTK tutorial in Python &#8211; build a neural network</a> appeared first on <a rel="nofollow" href="http://adventuresinmachinelearning.com">Adventures in Machine Learning</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>http://adventuresinmachinelearning.com/microsoft-cntk-tutorial/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+		</item>
+	</channel>
+</rss>

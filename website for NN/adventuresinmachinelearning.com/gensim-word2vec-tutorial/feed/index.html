@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	
+	>
+<channel>
+	<title>Comments on: Python gensim Word2Vec tutorial with TensorFlow and Keras</title>
+	<atom:link href="http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/feed/" rel="self" type="application/rss+xml" />
+	<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/</link>
+	<description>Learn and explore machine learning</description>
+	<lastBuildDate>Sat, 08 Sep 2018 06:45:44 +0000</lastBuildDate>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.9.8</generator>
+	<item>
+		<title>By: Olivier Paalvast</title>
+		<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/#comment-4005</link>
+		<dc:creator><![CDATA[Olivier Paalvast]]></dc:creator>
+		<pubDate>Mon, 22 Jan 2018 23:18:14 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=517#comment-4005</guid>
+		<description><![CDATA[Hey, I ran into this problem as well at first. If you look back to when the model was created an option size=300 was added in :
+model = word2vec.Word2Vec(sentences, iter=10, min_count=10, size=300, workers=4)
+This 300 is the effectively the size of your model so when embedding the words your vector_dim has to be equal to 300 as well.]]></description>
+		<content:encoded><![CDATA[<p>Hey, I ran into this problem as well at first. If you look back to when the model was created an option size=300 was added in :<br />
+model = word2vec.Word2Vec(sentences, iter=10, min_count=10, size=300, workers=4)<br />
+This 300 is the effectively the size of your model so when embedding the words your vector_dim has to be equal to 300 as well.</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>By: HyunJae</title>
+		<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/#comment-3833</link>
+		<dc:creator><![CDATA[HyunJae]]></dc:creator>
+		<pubDate>Mon, 27 Nov 2017 00:59:56 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=517#comment-3833</guid>
+		<description><![CDATA[I solved it Thanks..]]></description>
+		<content:encoded><![CDATA[<p>I solved it Thanks..</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>By: HyunJae</title>
+		<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/#comment-3832</link>
+		<dc:creator><![CDATA[HyunJae]]></dc:creator>
+		<pubDate>Sun, 26 Nov 2017 23:36:46 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=517#comment-3832</guid>
+		<description><![CDATA[Hi Andy!.
+I saw your good tutorial.
+I got one problem.
+
+embedding_matrix = np.zeros((len(model.wv.vocab), vector_dim))
+
+what does vector_dim mean?
+
+I don&#039;t find about vector_dim Explanation.
+
+Can you help me?
+
+Thanks.]]></description>
+		<content:encoded><![CDATA[<p>Hi Andy!.<br />
+I saw your good tutorial.<br />
+I got one problem.</p>
+<p>embedding_matrix = np.zeros((len(model.wv.vocab), vector_dim))</p>
+<p>what does vector_dim mean?</p>
+<p>I don&#8217;t find about vector_dim Explanation.</p>
+<p>Can you help me?</p>
+<p>Thanks.</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>By: Andy</title>
+		<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/#comment-3793</link>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+		<pubDate>Fri, 10 Nov 2017 22:11:37 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=517#comment-3793</guid>
+		<description><![CDATA[Hi Mark, thanks very much for your kind comments. Unfortunately I am unable to replicate this error, so I can&#039;t think of why this may be occurring]]></description>
+		<content:encoded><![CDATA[<p>Hi Mark, thanks very much for your kind comments. Unfortunately I am unable to replicate this error, so I can&#8217;t think of why this may be occurring</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>By: Mark</title>
+		<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/#comment-3788</link>
+		<dc:creator><![CDATA[Mark]]></dc:creator>
+		<pubDate>Thu, 09 Nov 2017 20:01:36 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=517#comment-3788</guid>
+		<description><![CDATA[Hey Andy, incredibly clear and concise tutorial. Was able to follow along without even running code to visual results.
+
+I had some free time though and gave it a go to play around a bit.
+I can&#039;t seem to get any results though when executing the model built with TensorFlow.
+
+It&#039;s an error that name &#039;wv&#039; is not defined. It&#039;s picking it up after that first for statement during tf.Session().
+
+Any idea what&#039;s wrong?
+Thanks.]]></description>
+		<content:encoded><![CDATA[<p>Hey Andy, incredibly clear and concise tutorial. Was able to follow along without even running code to visual results.</p>
+<p>I had some free time though and gave it a go to play around a bit.<br />
+I can&#8217;t seem to get any results though when executing the model built with TensorFlow.</p>
+<p>It&#8217;s an error that name &#8216;wv&#8217; is not defined. It&#8217;s picking it up after that first for statement during tf.Session().</p>
+<p>Any idea what&#8217;s wrong?<br />
+Thanks.</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>By: Andy</title>
+		<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/#comment-639</link>
+		<dc:creator><![CDATA[Andy]]></dc:creator>
+		<pubDate>Fri, 15 Sep 2017 20:10:08 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=517#comment-639</guid>
+		<description><![CDATA[Thanks Dimitris - good pickup, that is an error. I&#039;ve corrected it]]></description>
+		<content:encoded><![CDATA[<p>Thanks Dimitris &#8211; good pickup, that is an error. I&#8217;ve corrected it</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>By: Dimitris</title>
+		<link>http://adventuresinmachinelearning.com/gensim-word2vec-tutorial/#comment-631</link>
+		<dc:creator><![CDATA[Dimitris]]></dc:creator>
+		<pubDate>Fri, 15 Sep 2017 14:18:56 +0000</pubDate>
+		<guid isPermaLink="false">http://adventuresinmachinelearning.com/?p=517#comment-631</guid>
+		<description><![CDATA[Hey Andy! Great article! thanks for publishing. Btw why you are initializing:
+
+`embedding_matrix = np.zeros((len(model.wv.vocab) + 1, vector_dim))` and not 
+`embedding_matrix = np.zeros((len(model.wv.vocab), vector_dim))`. It doesnt seem there is a reason to add one more row.]]></description>
+		<content:encoded><![CDATA[<p>Hey Andy! Great article! thanks for publishing. Btw why you are initializing:</p>
+<p>`embedding_matrix = np.zeros((len(model.wv.vocab) + 1, vector_dim))` and not<br />
+`embedding_matrix = np.zeros((len(model.wv.vocab), vector_dim))`. It doesnt seem there is a reason to add one more row.</p>
+]]></content:encoded>
+	</item>
+</channel>
+</rss>

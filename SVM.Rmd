@@ -1,0 +1,57 @@
+---
+title: "SVM"
+author: "Mukund Ajmera"
+date: "August 17, 2018"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+#SVM (Support Vector Machine)
+In this algorithm, we plot each data item as a point in n-dimensional space (where n is number of features you have) with the value of each feature being the value of a particular coordinate.
+These vectors are classified by optimizing the line so that the closest point in each of the groups will be the farthest away from each other.
+Default kernal type is ‘gaussian’ or linear.
+
+## What is Kernal
+The function of kernel is to take data as input and transform it into the required form.
+Type of kernal
+1. linear
+2. nonlinear
+3. polynomial
+4. radial basis function (RBF)
+5. sigmoid 
+
+###1. Linear kernel
+Here we in fact do not have any kernel, you just have "normal" dot product, thus in 2d your decision boundary is always line.
+As you can see we can separate most of points correctly, but due to the "stiffness" of our assumption - we will not ever capture all of them.
+
+![](https://i.stack.imgur.com/47IlF.png)
+
+###2. Polynomial kernel
+It is popular in image processing. when polynomial equation are used.
+![](https://d2h0cx97tjks2p.cloudfront.net/blogs/wp-content/uploads/polynomial-kernel.png)
+
+where d is the degree of the polynomial.
+
+![](https://i.stack.imgur.com/Lt4kr.png)
+
+###3. radial basis function (RBF)
+our induced space is a space of Gaussian distributions. Each point becomes probability density function of a normal distribution. In such space, dot products are integrals (as we do have infinite number of dimensions!) and consequently, we have extreme flexibility, in fact, using such kernel you can separate everything 
+
+![](https://i.stack.imgur.com/zvPU6.png)
+
+
+## Rough comparison
+
++ time of SVM learning: linear < poly < rbf
++ ability to fit any data: linear < poly < rbf
++ risk of overfitting: linear < poly < rbf
++ risk of underfitting: rbf < poly < linear
++ number of hyperparameters: linear (0) < rbf (2) < poly (3)
++ how "local" is particular kernel: linear < poly < rbf
+
+### Resource
+1. Stack [link](https://stackoverflow.com/questions/33778297/support-vector-machine-kernel-types)
+
+2. data-flair [link](https://data-flair.training/blogs/svm-kernel-functions/)
+

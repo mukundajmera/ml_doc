@@ -1,0 +1,9 @@
+outlook analysis
+
+1. Creating dashboard on web-based application showing visual representations of emails.
+2. User set important or subseting mails categories mails (based on keywords).
+3. User can configure the dashboard with keywords for his/her mails.
+4. Used data mining and text mining to preprocess data.
+5. Technologies R,Nodejs,Express,Power shell Scripting,HTML,CSS
+
+

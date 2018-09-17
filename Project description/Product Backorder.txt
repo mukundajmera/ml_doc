@@ -1,0 +1,15 @@
+Product Backorder predictions
+
+Feb 2018 – May 2018
+
+Project description
+Predict Weather product will go on backorder or not – 
+• The challenge was to determine the factors affecting product backorder using dimension deduction deduced irrelevent features and smoothing data to balance class variables using SMOTE(synthetic up and down sampling).
+• Implemented a total 9 algorithm classification model to create predictive model.
+• Understood the accuracy using Confusion matrix on test and K fold cross validation methods, out of with 4 models have given good accuracy.
+	1. Random Forest
+	2. SVM
+	3. Neural Networks
+	4. KNN
+Accuracy Approximatly around 92%
+Language used: R 

@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1536664102188.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4068880456",
+    "id" : "67090A4E",
+    "lastKnownWriteTime" : 1536664251,
+    "last_content_update" : 1536664251117,
+    "path" : "~/Desktop/nlp basics/Supervised topic modeling with TF-IDF.R",
+    "project_path" : "Supervised topic modeling with TF-IDF.R",
+    "properties" : {
+        "cursorPosition" : "83,0",
+        "scrollLine" : "70",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

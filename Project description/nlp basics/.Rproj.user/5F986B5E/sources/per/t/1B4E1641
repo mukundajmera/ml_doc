@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1536661737962.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2555324786",
+    "id" : "1B4E1641",
+    "lastKnownWriteTime" : 1536664077,
+    "last_content_update" : 1536664077800,
+    "path" : "~/Desktop/nlp basics/start.R",
+    "project_path" : "start.R",
+    "properties" : {
+        "cursorPosition" : "99,0",
+        "scrollLine" : "88",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
